@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
+import br.com.frazo.jana_c.ui.composables.NoteCard
 import com.example.notesapp.R
 import br.com.frazo.jana_c.ui.theme.NotesAppTheme
 
@@ -108,62 +109,6 @@ fun Content() {
                     expanded = expandedFabState.value
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun NoteCard(title: String, text: String) {
-    Card(
-        modifier = Modifier
-            .wrapContentHeight()
-            .fillMaxWidth()
-    ) {
-        ConstraintLayout(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .padding(horizontal = 8.dp, vertical = 16.dp)
-        ) {
-
-            val (titleRowRef, textRef) = createRefs()
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .constrainAs(titleRowRef) {
-                        start.linkTo(parent.start)
-                        top.linkTo(parent.top)
-                        end.linkTo(parent.end)
-                    },
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Justify,
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-                Icon(
-                    painter = painterResource(id = R.drawable.baseline_lightbulb_24),
-                    contentDescription = "",
-                    tint = MaterialTheme.colorScheme.tertiary
-                )
-            }
-
-            Text(
-                modifier = Modifier
-                    .constrainAs(textRef) {
-                        top.linkTo(titleRowRef.bottom)
-                        start.linkTo(parent.start)
-                    }
-                    .padding(top = 8.dp),
-                textAlign = TextAlign.Justify,
-                text = text,
-                style = MaterialTheme.typography.bodySmall
-            )
-
         }
     }
 }

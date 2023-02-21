@@ -11,8 +11,10 @@ interface NoteDataSource {
 
     fun getNotBinnedNotes(): Flow<List<Note>>
 
-    suspend fun insertAll(vararg notes: Note)
+    suspend fun insertAll(vararg notes: Note): Int
 
     suspend fun deleteAll(vararg notes: Note): Int
+
+    suspend fun updateNote(oldNote: Note, newNote: Note): Int
 
 }
