@@ -11,69 +11,51 @@ import java.time.OffsetDateTime
 class CachedNoteRepository(
     private val dataSource: NoteDataSource,
     private val cacheStrategy: CacheStrategy,
-    private val dispatchers: Dispatchers
+    dispatchers: Dispatchers
 ) : NoteRepository {
 
+    private val cacheFlow = flow {
+        getAllNotes().collectLatest {
+            cacheStrategy.invalidateCache()
+            cacheStrategy.cache(*it.toTypedArray())
+            this.emit(cacheStrategy.retrieveCache())
+        }
+    }.flowOn(dispatchers.io)
+
     override fun getAllNotes(): Flow<List<Note>> {
-        val cachedValues = cacheStrategy.retrieveCache()
-        if (cachedValues.isNotEmpty())
-            return flowOf(cachedValues)
-        val newValuesFlow = dataSource.getAll()
-        cache(newValuesFlow)
-        return newValuesFlow
+        return cacheFlow
     }
 
     override fun getBinnedNotes(): Flow<List<Note>> {
-        val cachedValues = cacheStrategy.retrieveCache()
-        if (cachedValues.isNotEmpty())
-            return flowOf(cachedValues.filter { it.binnedAt != null })
-        return getAllNotes().map { list ->
-            list.filter { it.binnedAt != null }
+        return cacheFlow.map { list ->
+            list.filter {
+                it.binnedAt != null
+            }
         }
     }
 
     override fun getNotBinnedNotes(): Flow<List<Note>> {
-        val cachedValues = cacheStrategy.retrieveCache()
-        if (cachedValues.isNotEmpty())
-            return flowOf(cachedValues.filter { it.binnedAt == null })
-        return getAllNotes().map { list ->
-            list.filter { it.binnedAt == null }
+        return cacheFlow.map { list ->
+            list.filter {
+                it.binnedAt == null
+            }
         }
     }
 
     override suspend fun addNotes(vararg notes: Note): Int {
-        val inserts = dataSource.insertAll(*notes)
-        if (inserts > 0)
-            cacheStrategy.invalidateCache()
-        return inserts
+        return dataSource.insertAll(*notes)
     }
 
     override suspend fun removeNotes(vararg notes: Note): Int {
-        val deletions = dataSource.deleteAll(*notes)
-        if (deletions > 0)
-            cacheStrategy.invalidateCache()
-        return deletions
+        return dataSource.deleteAll(*notes)
     }
 
     override suspend fun editNote(oldNote: Note, newNote: Note): Int {
-        val updates = dataSource.updateNote(oldNote, newNote)
-        if (updates > 0)
-            cacheStrategy.invalidateCache()
-        return updates
+        return dataSource.updateNote(oldNote, newNote)
     }
 
     override suspend fun binNote(note: Note): Int {
-        val updates = dataSource.updateNote(note, note.copy(binnedAt = OffsetDateTime.now()))
-        if (updates > 0)
-            cacheStrategy.invalidateCache()
-        return updates
+        return dataSource.updateNote(note, note.copy(binnedAt = OffsetDateTime.now()))
     }
 
-    private fun cache(notesFlow: Flow<List<Note>>) {
-        CoroutineScope(dispatchers.io).launch {
-            notesFlow.lastOrNull()?.let {
-                cacheStrategy.cache(*it.toTypedArray())
-            }
-        }
-    }
 }
