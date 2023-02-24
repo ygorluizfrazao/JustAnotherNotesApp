@@ -3,4 +3,8 @@
     <string name="notes_list">Notes</string>
     <string name="add_note">Add Note</string>
     <string name="bin">Bin</string>
+    <string name="no_content">Nothing to show yet.</string>
+    <string name="loading">Loading</string>
+    <string name="invalid_title">Invalid title, %1$s.</string>
+    <string name="invalid_text">Invalid text, %1$s</string>
 </resources>
