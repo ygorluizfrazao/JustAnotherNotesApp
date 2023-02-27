@@ -9,17 +9,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.VisualTransformation
-import br.com.frazo.janac.ui.composables.OutlinedTextField
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OutlinedTextField(
+fun MyTextField(
     modifier: Modifier = Modifier,
     value: String,
     label: String,
     onValueChange: (String) -> Unit,
     singleLine: Boolean = false,
     maxLines: Int = 1,
+    minLines: Int = 1,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     leadingIcon: @Composable (() -> Unit)? = {
@@ -29,11 +29,12 @@ fun OutlinedTextField(
     },
     trailingIcon: @Composable (() -> Unit)? = null,
     visualTransformation: VisualTransformation = VisualTransformation.None,
-    colors: TextFieldColors = TextFieldDefaults.outlinedTextFieldColors(),
-    isError: Boolean = false
+    colors: TextFieldColors = TextFieldDefaults.textFieldColors(),
+    isError: Boolean = false,
+    hint: String = ""
 ) {
 
-    OutlinedTextField(
+    TextField(
         value = value,
         label = {
             Text(text = label)
@@ -48,6 +49,10 @@ fun OutlinedTextField(
         trailingIcon = trailingIcon,
         visualTransformation = visualTransformation,
         colors = colors,
-        isError = isError
+        isError = isError,
+        placeholder = {
+            Text(text = hint)
+        },
+        minLines = minLines
     )
 }

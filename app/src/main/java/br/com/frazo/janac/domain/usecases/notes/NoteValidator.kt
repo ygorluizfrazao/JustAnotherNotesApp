@@ -4,7 +4,7 @@ import br.com.frazo.janac.domain.models.Note
 
 interface NoteValidator {
 
-    fun validate(note: Note): NoteValidatorResult
+    fun validate(note: Note, field: String?): NoteValidatorResult
 
     sealed class NoteValidatorResult {
 

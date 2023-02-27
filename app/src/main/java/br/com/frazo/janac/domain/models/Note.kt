@@ -9,10 +9,3 @@ data class Note(
     val binnedAt: OffsetDateTime? = null
 )
 
-fun Note.clone(
-    title: String = this.title,
-    text: String = this.text,
-    createdAt: OffsetDateTime? = this.createdAt,
-    binnedAt: OffsetDateTime? = this.binnedAt
-): Note = Note(title, text, createdAt, binnedAt)
-

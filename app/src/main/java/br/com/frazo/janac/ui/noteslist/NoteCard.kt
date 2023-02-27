@@ -1,21 +1,22 @@
 package br.com.frazo.janac.ui.noteslist
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.constraintlayout.compose.ConstraintLayout
-import br.com.frazo.janac.ui.theme.spacing
 import br.com.frazo.janac.R
+import br.com.frazo.janac.ui.theme.spacing
 
 @Composable
 fun NoteCard(
-    modifier: Modifier = Modifier, title: String, text: String
+    modifier: Modifier = Modifier,
+    title: String,
+    text: String,
+    content: (@Composable ()->Unit)? = { }
 ) {
     Card(
         modifier = modifier
@@ -24,10 +25,12 @@ fun NoteCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
-                .padding(horizontal = MaterialTheme.spacing.small, vertical = MaterialTheme.spacing.medium)
+                .padding(
+                    MaterialTheme.spacing.medium
+                )
         ) {
 
-            val (titleRowRef, textRef) = createRefs()
+            val (titleRowRef, textRef, contentRef) = createRefs()
 
             Row(
                 modifier = Modifier
@@ -37,20 +40,32 @@ fun NoteCard(
                         top.linkTo(parent.top)
                         end.linkTo(parent.end)
                     },
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Justify,
                     text = title,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleLarge,
                 )
                 Spacer(modifier = Modifier.width(MaterialTheme.spacing.medium))
-                Icon(
-                    painter = painterResource(id = R.drawable.baseline_lightbulb_24),
-                    contentDescription = "Category",
-                    tint = MaterialTheme.colorScheme.tertiary
+                ElevatedAssistChip(
+                    onClick = { /* Do something! */ },
+                    label = { Text("Idea") },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.baseline_lightbulb_24),
+                            contentDescription = "Category",
+                            tint = MaterialTheme.colorScheme.tertiary
+                        )
+                    }
                 )
+//                Icon(
+//                    painter = painterResource(id = R.drawable.baseline_lightbulb_24),
+//                    contentDescription = "Category",
+//                    tint = MaterialTheme.colorScheme.tertiary
+//                )
             }
 
             Text(
@@ -62,9 +77,19 @@ fun NoteCard(
                     .padding(top = MaterialTheme.spacing.small),
                 textAlign = TextAlign.Justify,
                 text = text,
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodyMedium
             )
 
+            content?.let {
+                Column(modifier = Modifier.constrainAs(contentRef){
+                    top.linkTo(textRef.bottom)
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                }) {
+                    Divider(modifier.fillMaxWidth().padding(top = MaterialTheme.spacing.medium))
+                    it()
+                }
+            }
         }
     }
 }

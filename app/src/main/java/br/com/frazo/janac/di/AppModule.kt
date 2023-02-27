@@ -13,12 +13,15 @@ import br.com.frazo.janac.data.repository.note.cachestrategy.CacheStrategy
 import br.com.frazo.janac.data.repository.note.cachestrategy.InMemoryCacheStrategy
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.domain.usecases.notes.LengthNoteValidator
-import br.com.frazo.janac.domain.usecases.notes.NoteValidator
 import br.com.frazo.janac.domain.usecases.notes.NoteValidatorUseCase
 import br.com.frazo.janac.domain.usecases.notes.NoteValidatorUseCaseImpl
 import br.com.frazo.janac.domain.usecases.notes.create.AddNoteUseCase
 import br.com.frazo.janac.domain.usecases.notes.create.AddNoteUseCaseImpl
 import br.com.frazo.janac.domain.usecases.notes.read.*
+import br.com.frazo.janac.domain.usecases.notes.update.BinNoteUseCase
+import br.com.frazo.janac.domain.usecases.notes.update.BinNoteUseCaseImpl
+import br.com.frazo.janac.ui.mediator.UIMediator
+import br.com.frazo.janac.ui.mediator.UIMediatorImpl
 import br.com.frazo.janac.util.Dispatchers
 import dagger.Module
 import dagger.Provides
@@ -113,5 +116,17 @@ object AppModule {
     @Singleton
     fun provideNoteValidatorUseCase(): NoteValidatorUseCase{
         return NoteValidatorUseCaseImpl(LengthNoteValidator())
+    }
+
+    @Provides
+    @Singleton
+    fun provideUIMediator(): UIMediator{
+        return UIMediatorImpl()
+    }
+
+    @Provides
+    @Singleton
+    fun provideBinNoteUseCase(noteRepository: NoteRepository): BinNoteUseCase<Int>{
+        return BinNoteUseCaseImpl(noteRepository)
     }
 }

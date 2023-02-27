@@ -1,9 +1,14 @@
 package br.com.frazo.janac.ui.noteslist
 
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.domain.usecases.notes.read.GetNotBinnedNotesUseCase
+import br.com.frazo.janac.domain.usecases.notes.update.BinNoteUseCase
+import br.com.frazo.janac.ui.mediator.UIEvent
+import br.com.frazo.janac.ui.mediator.UIMediator
+import br.com.frazo.janac.ui.mediator.UIParticipant
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -11,14 +16,17 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NotesListViewModel @Inject constructor(
-    getNotBinnedNotesUseCase: GetNotBinnedNotesUseCase<Flow<List<Note>>>
-) : ViewModel() {
+    private val getNotBinnedNotesUseCase: GetNotBinnedNotesUseCase<Flow<List<Note>>>,
+    private val binNoteUseCase: BinNoteUseCase<Int>,
+    private val mediator: UIMediator
+) : ViewModel(), UIParticipant {
 
     sealed class ScreenState {
         object Loading : ScreenState()
         data class Success(val data: List<Note>) : ScreenState()
         object NoData : ScreenState()
         data class Error(val throwable: Throwable) : ScreenState()
+
     }
 
     private val _notes = MutableStateFlow(emptyList<Note>())
@@ -27,14 +35,24 @@ class NotesListViewModel @Inject constructor(
     private val _screenState: MutableStateFlow<ScreenState> = MutableStateFlow(ScreenState.Loading)
     val screenState = _screenState.asStateFlow()
 
+    private val _addButtonExtended = MutableStateFlow(true)
+    val addButtonExtended = _addButtonExtended.asStateFlow()
+
+    private val _addDialogState = MutableStateFlow(false)
+    val addDialogState = _addDialogState.asSharedFlow()
+
     init {
+        mediator.addParticipant(this)
         viewModelScope.launch {
             getNotBinnedNotesUseCase()
                 .catch {
                     _screenState.value = ScreenState.Error(it)
                 }
                 .collectLatest {
-                    _notes.value = it
+                    _notes.value = it.sortedByDescending { note ->
+                        note.createdAt
+                    }
+                    mediator.broadCast(this@NotesListViewModel, UIEvent.NotBinnedNotesFetched(it))
                     if (it.isEmpty())
                         _screenState.value = ScreenState.NoData
                     else
@@ -42,4 +60,33 @@ class NotesListViewModel @Inject constructor(
                 }
         }
     }
+
+    fun onListState(listState: LazyListState?) {
+        _addButtonExtended.value = listState == null || listState.firstVisibleItemIndex == 0
+    }
+
+    fun addNoteClicked() {
+        _addDialogState.value = true
+    }
+
+    fun dismissDialog() {
+        _addDialogState.value = false
+    }
+
+    fun editNote(note: Note) {
+        TODO()
+    }
+
+    fun binNote(note: Note) {
+        viewModelScope.launch {
+            binNoteUseCase(note)
+        }
+    }
+
+    override fun receiveMessage(from: UIParticipant, event: UIEvent) {
+        if (event is UIEvent.NoteAdded) {
+            _addDialogState.value = false
+        }
+    }
+
 }

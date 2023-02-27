@@ -3,6 +3,7 @@ package br.com.frazo.janac.data.db.room.dao
 import androidx.room.*
 import br.com.frazo.janac.data.db.room.entities.RoomNote
 import kotlinx.coroutines.flow.Flow
+import java.time.OffsetDateTime
 
 @Dao
 interface NotesDAO {
@@ -16,8 +17,8 @@ interface NotesDAO {
     @Query("SELECT * FROM notes WHERE binned_at IS NULL")
     fun getNotBinnedNotes(): Flow<List<RoomNote>>
 
-    @Query("SELECT * FROM notes WHERE title = :title AND text = :text")
-    fun getByTitleAndText(title: String, text: String): Flow<List<RoomNote>>
+    @Query("SELECT * FROM notes WHERE created_at = :createdAt")
+    suspend fun getByCreationDate(createdAt: OffsetDateTime): List<RoomNote>
 
     @Update
     fun updateNote(roomNote: RoomNote): Int

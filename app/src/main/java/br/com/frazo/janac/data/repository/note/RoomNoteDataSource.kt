@@ -6,12 +6,8 @@ import br.com.frazo.janac.data.db.room.entities.RoomNote
 import br.com.frazo.janac.data.repository.note.mappers.toNote
 import br.com.frazo.janac.data.repository.note.mappers.toRoomNote
 import br.com.frazo.janac.domain.models.Note
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 
 class RoomNoteDataSource(database: RoomAppDatabase) : NoteDataSource {
 
@@ -44,20 +40,20 @@ class RoomNoteDataSource(database: RoomAppDatabase) : NoteDataSource {
     }
 
     override suspend fun updateNote(oldNote: Note, newNote: Note): Int {
+        if (oldNote.createdAt == null) throw Exception("Creation date cannot be null.")
         var updatesMade = 0
-        val foundNotes = notesDAO.getByTitleAndText(oldNote.title, oldNote.text).lastOrNull()
-        foundNotes?.let { roomNotes ->
+        val foundNotes = notesDAO.getByCreationDate(oldNote.createdAt)
+        foundNotes.let { roomNotes ->
             roomNotes.forEach {
                 val newRoomNote = RoomNote(
                     it.id,
                     newNote.title,
                     newNote.text,
-                    it.binnedAt
+                    newNote.binnedAt
                 )
                 updatesMade += notesDAO.updateNote(newRoomNote)
             }
         }
         return updatesMade
     }
-
 }

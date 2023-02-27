@@ -18,5 +18,9 @@ fun Note.toRoomNote(): RoomNote{
         title = title,
         text = text,
         binnedAt = binnedAt
-    )
+    ).also {roomNote ->
+        createdAt?.let {
+            roomNote.createdAt = createdAt
+        }
+    }
 }

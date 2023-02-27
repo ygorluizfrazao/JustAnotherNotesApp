@@ -3,24 +3,16 @@ package br.com.frazo.janac.data.repository.note
 import br.com.frazo.janac.data.repository.note.cachestrategy.CacheStrategy
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.util.Dispatchers
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.withContext
 import java.time.OffsetDateTime
 
 class CachedNoteRepository(
     private val noteDataSource: NoteDataSource,
     private val cacheStrategy: CacheStrategy<Note>,
-    dispatchers: Dispatchers
+    private val dispatchers: Dispatchers
 ) : NoteRepository {
-
-//    private val cacheFlow = channelFlow {
-//        noteDataSource.getAll().collectLatest {
-//            cacheStrategy.invalidateCache()
-//            cacheStrategy.cache(*it.toTypedArray())
-//            this.send(cacheStrategy.retrieveCache())
-//        }
-//    }.flowOn(dispatchers.io)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val cacheFlow = noteDataSource.getAll()
@@ -51,19 +43,30 @@ class CachedNoteRepository(
     }
 
     override suspend fun addNotes(vararg notes: Note): Int {
-        return noteDataSource.insertAll(*notes)
+        return withContext(dispatchers.io) {
+            noteDataSource.insertAll(*notes)
+        }
     }
 
     override suspend fun removeNotes(vararg notes: Note): Int {
-        return noteDataSource.deleteAll(*notes)
+        return withContext(dispatchers.io) {
+            noteDataSource.deleteAll(*notes)
+        }
     }
 
     override suspend fun editNote(oldNote: Note, newNote: Note): Int {
-        return noteDataSource.updateNote(oldNote, newNote)
+        return withContext(dispatchers.io) {
+            noteDataSource.updateNote(oldNote, newNote)
+        }
     }
 
     override suspend fun binNote(note: Note): Int {
-        return noteDataSource.updateNote(note, note.copy(binnedAt = OffsetDateTime.now()))
+        return withContext(dispatchers.io) {
+            noteDataSource.updateNote(
+                note,
+                note.copy(binnedAt = OffsetDateTime.now())
+            )
+        }
     }
 
 }

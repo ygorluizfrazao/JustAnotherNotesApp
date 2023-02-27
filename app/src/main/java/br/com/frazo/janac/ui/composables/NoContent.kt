@@ -12,7 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import br.com.frazo.janac.ui.IconResource
+import br.com.frazo.janac.ui.util.IconResource
 import br.com.frazo.janac.ui.theme.spacing
 
 @Composable
