@@ -1,6 +1,8 @@
 package br.com.frazo.janac.ui.noteslist.addnote
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,7 +16,7 @@ import br.com.frazo.janac.ui.theme.spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddNoteDialog(
+fun EditNoteDialog(
     modifier: Modifier = Modifier,
     properties: DialogProperties = DialogProperties(),
     title: String,
@@ -30,6 +32,7 @@ fun AddNoteDialog(
     onDismissRequest: () -> Unit,
     onSaveClicked: () -> Unit,
     saveButtonEnabled: Boolean = false,
+    dialogTitle: String
 ) {
     AlertDialog(
         onDismissRequest = onDismissRequest,
@@ -42,7 +45,8 @@ fun AddNoteDialog(
             Column(
                 modifier = Modifier
                     .wrapContentSize()
-                    .padding(MaterialTheme.spacing.medium),
+                    .padding(MaterialTheme.spacing.medium)
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -50,7 +54,7 @@ fun AddNoteDialog(
                         .fillMaxWidth()
                         .padding(vertical = MaterialTheme.spacing.medium),
                     textAlign = TextAlign.Center,
-                    text = stringResource(R.string.add_a_note_title),
+                    text = dialogTitle,
                     style = MaterialTheme.typography.titleLarge)
                 ValidationTextField(
                     value = title,

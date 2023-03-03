@@ -26,8 +26,10 @@ class NotesListViewModel @Inject constructor(
         data class Success(val data: List<Note>) : ScreenState()
         object NoData : ScreenState()
         data class Error(val throwable: Throwable) : ScreenState()
-
     }
+
+    data class EditNoteState(val requested: Boolean, val baseNote: Note = Note("",""))
+
 
     private val _notes = MutableStateFlow(emptyList<Note>())
     val notes = _notes.asStateFlow()
@@ -38,8 +40,9 @@ class NotesListViewModel @Inject constructor(
     private val _addButtonExtended = MutableStateFlow(true)
     val addButtonExtended = _addButtonExtended.asStateFlow()
 
-    private val _addDialogState = MutableStateFlow(false)
-    val addDialogState = _addDialogState.asSharedFlow()
+    private val _editNoteState = MutableStateFlow(EditNoteState(false))
+    val addEditNoteState = _editNoteState.asStateFlow()
+
 
     init {
         mediator.addParticipant(this)
@@ -65,16 +68,16 @@ class NotesListViewModel @Inject constructor(
         _addButtonExtended.value = listState == null || listState.firstVisibleItemIndex == 0
     }
 
-    fun addNoteClicked() {
-        _addDialogState.value = true
+    fun editNewNote() {
+        _editNoteState.value = EditNoteState(true)
     }
 
-    fun dismissDialog() {
-        _addDialogState.value = false
+    fun editNoteClear() {
+        _editNoteState.value = EditNoteState(false)
     }
 
     fun editNote(note: Note) {
-        TODO()
+        _editNoteState.value = EditNoteState(true, note)
     }
 
     fun binNote(note: Note) {
@@ -85,7 +88,7 @@ class NotesListViewModel @Inject constructor(
 
     override fun receiveMessage(from: UIParticipant, event: UIEvent) {
         if (event is UIEvent.NoteAdded) {
-            _addDialogState.value = false
+            editNoteClear()
         }
     }
 

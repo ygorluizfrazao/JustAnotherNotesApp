@@ -20,6 +20,8 @@ import br.com.frazo.janac.domain.usecases.notes.create.AddNoteUseCaseImpl
 import br.com.frazo.janac.domain.usecases.notes.read.*
 import br.com.frazo.janac.domain.usecases.notes.update.BinNoteUseCase
 import br.com.frazo.janac.domain.usecases.notes.update.BinNoteUseCaseImpl
+import br.com.frazo.janac.domain.usecases.notes.update.EditNoteUseCase
+import br.com.frazo.janac.domain.usecases.notes.update.EditNoteUseCaseImpl
 import br.com.frazo.janac.ui.mediator.UIMediator
 import br.com.frazo.janac.ui.mediator.UIMediatorImpl
 import br.com.frazo.janac.util.Dispatchers
@@ -98,6 +100,12 @@ object AppModule {
     @Singleton
     fun provideAddNoteUseCase(noteRepository: NoteRepository): AddNoteUseCase<Int> {
         return AddNoteUseCaseImpl(noteRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideEditNoteUseCase(noteRepository: NoteRepository): EditNoteUseCase<Int> {
+        return EditNoteUseCaseImpl(noteRepository)
     }
 
     @Provides

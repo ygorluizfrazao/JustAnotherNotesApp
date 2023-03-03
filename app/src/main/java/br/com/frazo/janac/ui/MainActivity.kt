@@ -3,61 +3,28 @@ package br.com.frazo.janac.ui
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import br.com.frazo.janac.R
-import br.com.frazo.janac.ui.noteslist.NotesListScreen
+import br.com.frazo.janac.ui.navigation.Navigation
+import br.com.frazo.janac.ui.navigation.Screen
 import br.com.frazo.janac.ui.theme.NotesAppTheme
-import br.com.frazo.janac.ui.theme.spacing
-import br.com.frazo.janac.ui.util.IconResource
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    sealed class Screen(
-        val route: String,
-        val startDestination: Boolean,
-        @StringRes val resourceId: Int,
-        val icon: IconResource
-    ) {
-        object NotesList : Screen(
-            "Notes List",
-            true,
-            R.string.notes_list,
-            IconResource.fromImageVector(Icons.Filled.List)
-        )
-
-        object Bin :
-            Screen(
-                "Bin",
-                false,
-                R.string.bin,
-                IconResource.fromImageVector(Icons.Filled.Delete)
-            )
-
-    }
-
-    private val navigationItems = listOf(
-        Screen.NotesList,
-        Screen.Bin
-    )
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,21 +32,15 @@ class MainActivity : ComponentActivity() {
             NotesAppTheme {
 
                 val navController = rememberNavController()
-                val startDestination by remember {
-                    derivedStateOf {
-                        navigationItems.find { it.startDestination } ?: navigationItems.first()
-                    }
-                }
-
                 val viewModel = hiltViewModel<MainViewModel>()
                 val notBinnedCount by viewModel.notBinnedNotesCount.collectAsState()
                 val binnedNotesCount by viewModel.binnedNotesCount.collectAsState()
 
                 Screen(
                     navController = navController,
-                    startDestination = startDestination,
                     notBinnedNotes = notBinnedCount,
-                    binnedNotes = binnedNotesCount
+                    binnedNotes = binnedNotesCount,
+                    navStarDestination = Screen.NotesList
                 )
 
             }
@@ -90,29 +51,27 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun Screen(
         navController: NavHostController,
-        startDestination: Screen,
         notBinnedNotes: Int,
-        binnedNotes: Int
+        binnedNotes: Int,
+        navStarDestination: Screen
     ) {
+
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination
-
-        var currentScreen by remember {
-            mutableStateOf(startDestination)
-        }
 
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            stringResource(id = currentScreen.resourceId),
+                            navController.currentDestination?.route
+                                ?: navStarDestination.route.asString(),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     },
                     navigationIcon = {
-                        if (currentDestination?.route != startDestination.route) {
+                        if (currentDestination?.route != navStarDestination.route.asString()) {
                             IconButton(onClick = {
                                 navController.popBackStack()
                             }) {
@@ -124,7 +83,9 @@ class MainActivity : ComponentActivity() {
                         }
                     },
                     actions = {
-                        IconButton(onClick = { }) {
+                        IconButton(onClick = {
+
+                        }) {
                             Icon(
                                 imageVector = Icons.Filled.Search,
                                 contentDescription = ""
@@ -151,25 +112,7 @@ class MainActivity : ComponentActivity() {
             }
         )
         { innerPadding ->
-            NavHost(
-                navController,
-                startDestination = startDestination.route,
-                Modifier.padding(innerPadding)
-            ) {
-                currentScreen = navigationItems.find {
-                    it.route == currentDestination?.route
-                } ?: startDestination
-                composable(Screen.NotesList.route) {
-                    NotesListScreen(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = MaterialTheme.spacing.medium)
-                    )
-                }
-                composable(Screen.Bin.route) {
-
-                }
-            }
+            Navigation(modifier = Modifier.padding(innerPadding), navController = navController)
         }
     }
 
@@ -181,6 +124,8 @@ class MainActivity : ComponentActivity() {
         notBinnedNotes: Int,
         binnedNotes: Int
     ) {
+
+        val context = LocalContext.current
         NavigationBarItem(
             icon = {
                 if (notBinnedNotes > 0) {
@@ -201,11 +146,13 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             },
-            label = { Text(stringResource(Screen.NotesList.resourceId)) },
+            label = { Text(Screen.NotesList.route.asString()) },
             selected =
-            currentDestination?.hierarchy?.any { it.route == Screen.NotesList.route } == true,
+            currentDestination?.hierarchy?.any {
+                it.route == Screen.NotesList.route.asString()
+            } == true,
             onClick = {
-                navController.navigate(Screen.NotesList.route) {
+                navController.navigate(Screen.NotesList.route.asString(context = context)) {
                     popUpTo(navController.graph.findStartDestination().id) {
                         saveState = true
                     }
@@ -235,11 +182,13 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             },
-            label = { Text(stringResource(Screen.Bin.resourceId)) },
+            label = { Text(Screen.Bin.route.asString()) },
             selected =
-            currentDestination?.hierarchy?.any { it.route == Screen.Bin.route } == true,
+            currentDestination?.hierarchy?.any {
+                it.route == Screen.Bin.route.asString()
+            } == true,
             onClick = {
-                navController.navigate(Screen.Bin.route) {
+                navController.navigate(Screen.Bin.route.asString(context)) {
                     popUpTo(navController.graph.findStartDestination().id) {
                         saveState = true
                     }

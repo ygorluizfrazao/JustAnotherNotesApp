@@ -29,4 +29,7 @@ interface NotesDAO {
     @Delete
     suspend fun deleteAll(vararg roomNote: RoomNote) : Int
 
+    @Query("DELETE FROM notes")
+    suspend fun deleteAllNoFilter()
+
 }

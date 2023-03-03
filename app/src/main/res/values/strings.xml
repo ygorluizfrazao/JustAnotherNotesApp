@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">JANA</string>
-    <string name="notes_list">Notes</string>
+    <string name="notes_list">Notes List</string>
     <string name="add_note">Add Note</string>
     <string name="bin">Bin</string>
     <string name="no_content">Nothing to show yet.</string>
@@ -14,4 +14,7 @@
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
     <string name="add_a_note_title">Add a note</string>
+    <string name="click_to_add_a_note">Click %1$s to add a note.</string>
+    <string name="link_alias_to_add_a_note">here</string>
+    <string name="edit_note">Edit Note</string>
 </resources>

@@ -20,15 +20,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.frazo.janac.R
+import br.com.frazo.janac.domain.extensions.isNewNote
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.ui.composables.IndeterminateLoading
 import br.com.frazo.janac.ui.composables.MyClickableText
 import br.com.frazo.janac.ui.composables.NoItemsContent
-import br.com.frazo.janac.ui.noteslist.addnote.AddNoteDialog
-import br.com.frazo.janac.ui.noteslist.addnote.AddNoteViewModel
+import br.com.frazo.janac.ui.noteslist.addnote.EditNoteDialog
+import br.com.frazo.janac.ui.noteslist.addnote.EditNoteViewModel
 import br.com.frazo.janac.ui.theme.dimensions
 import br.com.frazo.janac.ui.theme.spacing
 import br.com.frazo.janac.ui.util.IconResource
+import br.com.frazo.janac.ui.util.TextResource
 
 @Composable
 fun NotesListScreen(
@@ -38,8 +40,8 @@ fun NotesListScreen(
     val screenState by viewModel.screenState.collectAsState()
     val notesList by viewModel.notes.collectAsState(initial = emptyList())
     val addButtonState by viewModel.addButtonExtended.collectAsState(initial = true)
-    val addDialogState by viewModel.addDialogState.collectAsState(initial = false)
-    val addNoteViewModel = hiltViewModel<AddNoteViewModel>()
+    val addEditNoteState by viewModel.addEditNoteState.collectAsState()
+    val editNoteViewModel = hiltViewModel<EditNoteViewModel>()
 
     Screen(
         modifier = modifier,
@@ -47,13 +49,13 @@ fun NotesListScreen(
         notesList = notesList,
         screenState = screenState,
         addButtonState = addButtonState,
-        onAddClicked = viewModel::addNoteClicked,
-        addDialogState = addDialogState,
+        onAddClicked = viewModel::editNewNote,
+        editNoteState = addEditNoteState,
         onDialogDismiss = {
-            viewModel.dismissDialog()
-            addNoteViewModel.cancel()
+            viewModel.editNoteClear()
+            editNoteViewModel.cancel()
         },
-        addNoteViewModel = addNoteViewModel,
+        editNoteViewModel = editNoteViewModel,
         onBinNote = viewModel::binNote,
         onEditNote = viewModel::editNote
     )
@@ -77,7 +79,7 @@ fun NotesList(
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
     ) {
         items(notesList, key = {
-            it.createdAt?:it.hashCode()
+            notesList.indexOf(it)
         }) { note ->
             NoteCard(
                 modifier = Modifier.animateItemPlacement(),
@@ -111,12 +113,13 @@ fun Screen(
     addButtonState: Boolean,
     onAddClicked: () -> Unit = {},
     onListState: (LazyListState) -> Unit,
-    addDialogState: Boolean,
+    editNoteState: NotesListViewModel.EditNoteState,
     onDialogDismiss: () -> Unit,
-    addNoteViewModel: AddNoteViewModel,
+    editNoteViewModel: EditNoteViewModel,
     onBinNote: (Note) -> Unit,
     onEditNote: (Note) -> Unit
 ) {
+
     ConstraintLayout(
         modifier = modifier
     ) {
@@ -162,8 +165,12 @@ fun Screen(
                     }) {
                 MyClickableText(
                     modifier = Modifier.padding(top = MaterialTheme.spacing.small),
-                    text = "Click here to add a note.",
-                    clickableParts = mapOf(Pair("here") {
+                    text = TextResource.StringResource(
+                        R.string.click_to_add_a_note, stringResource(
+                            id = R.string.link_alias_to_add_a_note
+                        )
+                    ).asString(),
+                    clickableParts = mapOf(Pair(stringResource(id = R.string.link_alias_to_add_a_note)) {
                         onAddClicked()
                     })
                 )
@@ -196,7 +203,7 @@ fun Screen(
                 }
         ) {
             ExtendedFloatingActionButton(
-                text = { Text(text = "Add") },
+                text = { Text(text = stringResource(id = R.string.add_note)) },
                 icon = { Icon(imageVector = Icons.Rounded.Add, contentDescription = "") },
                 onClick = onAddClicked,
                 expanded = addButtonState,
@@ -204,38 +211,50 @@ fun Screen(
             )
         }
 
-        AnimatedVisibility(visible = addDialogState,
+        AnimatedVisibility(visible = editNoteState.requested,
             enter = slideInVertically {
                 it
             },
             exit = slideOutVertically { -it }) {
-            AddDialogScreen(onDialogDismiss, addNoteViewModel)
+            AddEditDialogScreen(onDialogDismiss, editNoteViewModel, editNoteState.baseNote)
         }
     }
 }
 
 @Composable
-fun AddDialogScreen(onDismissRequest: () -> Unit, addNoteViewModel: AddNoteViewModel) {
-    val noteState by addNoteViewModel.note.collectAsState()
-    val addNoteUIState by addNoteViewModel.uiState.collectAsState()
+fun AddEditDialogScreen(
+    onDismissRequest: () -> Unit,
+    editNoteViewModel: EditNoteViewModel,
+    noteToEdit: Note
+) {
 
-    AddNoteDialog(
+    val noteState by editNoteViewModel.inEditionNote.collectAsState()
+    val addNoteUIState by editNoteViewModel.uiState.collectAsState()
+
+    LaunchedEffect(key1 = noteToEdit, block = {
+        editNoteViewModel.setForEditing(noteToEdit)
+    })
+
+    EditNoteDialog(
         title = noteState.title,
-        onTitleChanged = addNoteViewModel::onTitleChanged,
+        onTitleChanged = editNoteViewModel::onTitleChanged,
         text = noteState.text,
-        onTextChanged = addNoteViewModel::onTextChanged,
+        onTextChanged = editNoteViewModel::onTextChanged,
         onDismissRequest = onDismissRequest,
-        onSaveClicked = addNoteViewModel::save,
+        onSaveClicked = editNoteViewModel::save,
         textHint = "",
         titleHint = "",
         titleErrorMessage = when (addNoteUIState) {
-            is AddNoteViewModel.UIState.TitleError -> (addNoteUIState as AddNoteViewModel.UIState.TitleError).titleInvalidError.asString()
+            is EditNoteViewModel.UIState.TitleError -> (addNoteUIState as EditNoteViewModel.UIState.TitleError).titleInvalidError.asString()
             else -> ""
         },
         textErrorMessage = when (addNoteUIState) {
-            is AddNoteViewModel.UIState.TextError -> (addNoteUIState as AddNoteViewModel.UIState.TextError).textInvalidError.asString()
+            is EditNoteViewModel.UIState.TextError -> (addNoteUIState as EditNoteViewModel.UIState.TextError).textInvalidError.asString()
             else -> ""
         },
-        saveButtonEnabled = addNoteUIState is AddNoteViewModel.UIState.CanSave
+        saveButtonEnabled = addNoteUIState is EditNoteViewModel.UIState.CanSave,
+        dialogTitle = if (noteToEdit.isNewNote()) stringResource(id = R.string.add_note) else stringResource(
+            id = R.string.edit_note
+        )
     )
 }
