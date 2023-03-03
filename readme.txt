@@ -1,1 +1,1 @@
-Just another Clean Architecture notes app, the purpose is to learn and practice JetPack Compose.
+Just another Clean Architecture notes app, the goal is to learn and practice JetPack Compose.
