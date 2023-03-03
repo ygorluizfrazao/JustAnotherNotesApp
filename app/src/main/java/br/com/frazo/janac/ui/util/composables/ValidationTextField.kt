@@ -1,6 +1,5 @@
-package br.com.frazo.janac.ui.composables
+package br.com.frazo.janac.ui.util.composables
 
-import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
@@ -16,18 +15,24 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-@SuppressLint
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ValidationOutlinedTextField(
+fun ValidationTextField(
     modifier: Modifier = Modifier,
     value: String,
     label: String,
     onValueChange: (String) -> Unit,
     singleLine: Boolean = false,
-    colors: TextFieldColors = TextFieldDefaults.outlinedTextFieldColors(),
-    errorColors: TextFieldColors? = TextFieldDefaults.outlinedTextFieldColors(),
-    maxLines: Int = 1,
+    colors: TextFieldColors = TextFieldDefaults.textFieldColors(),
+    errorColors: TextFieldColors? = TextFieldDefaults.textFieldColors(
+        errorLabelColor = MaterialTheme.colorScheme.error,
+        errorCursorColor = MaterialTheme.colorScheme.error,
+        errorIndicatorColor = MaterialTheme.colorScheme.error,
+        errorSupportingTextColor = MaterialTheme.colorScheme.error,
+    ),
+    minLines: Int = 1,
+    maxLines: Int = maxOf(1, minLines),
     maxColumns: Int = -1,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
@@ -41,22 +46,25 @@ fun ValidationOutlinedTextField(
         Icon(Icons.Default.CheckCircle, "Success", tint = Color.Green)
     },
     loadingTrailingIcon: @Composable (() -> Unit)? = {
-        CircularProgressIndicator(Modifier.wrapContentSize().scale(0.5f))
+        CircularProgressIndicator(
+            Modifier
+                .wrapContentSize()
+                .scale(0.5f)
+        )
     },
-    successColors: TextFieldColors? = TextFieldDefaults.outlinedTextFieldColors(
+    successColors: TextFieldColors? = TextFieldDefaults.textFieldColors(
         cursorColor = Color.Green,
         focusedLabelColor = Color.Green,
         unfocusedLabelColor = Color.Green,
-        focusedBorderColor = Color.Green,
-        unfocusedBorderColor = Color.Green,
     ),
-    loadingColors: TextFieldColors? = TextFieldDefaults.outlinedTextFieldColors(),
+    loadingColors: TextFieldColors? = TextFieldDefaults.textFieldColors(),
     isError: Boolean = errorMessage.isNotEmpty(),
     isSuccess: Boolean = false,
-    isLoading: Boolean = false
+    isLoading: Boolean = false,
+    hint: String = ""
 ) {
     Column(modifier = modifier) {
-        MyOutlinedTextField(
+        MyTextField(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight(),
@@ -90,7 +98,9 @@ fun ValidationOutlinedTextField(
                 loadingColors ?: colors
             else
                 colors,
-            isError = isError
+            isError = isError,
+            hint = hint,
+            minLines = minLines
         )
         Row {
             AnimatedVisibility(
@@ -103,6 +113,7 @@ fun ValidationOutlinedTextField(
                     textAlign = TextAlign.Start,
                     text = errorMessage,
                     style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error
                 )
             }
             AnimatedVisibility(

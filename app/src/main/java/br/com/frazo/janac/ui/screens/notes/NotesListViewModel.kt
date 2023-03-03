@@ -1,4 +1,4 @@
-package br.com.frazo.janac.ui.noteslist
+package br.com.frazo.janac.ui.screens.notes
 
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.lifecycle.ViewModel
@@ -86,10 +86,10 @@ class NotesListViewModel @Inject constructor(
         }
     }
 
-    override fun receiveMessage(from: UIParticipant, event: UIEvent) {
-        if (event is UIEvent.NoteAdded) {
-            editNoteClear()
-        }
-    }
+//    override fun receiveMessage(from: UIParticipant, event: UIEvent) {
+//        if (event is UIEvent.NoteCreated) {
+//            editNoteClear()
+//        }
+//    }
 
 }

@@ -1,14 +1,10 @@
-package br.com.frazo.janac.ui.noteslist
+package br.com.frazo.janac.ui.screens.notes
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -22,11 +18,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.frazo.janac.R
 import br.com.frazo.janac.domain.extensions.isNewNote
 import br.com.frazo.janac.domain.models.Note
-import br.com.frazo.janac.ui.composables.IndeterminateLoading
-import br.com.frazo.janac.ui.composables.MyClickableText
-import br.com.frazo.janac.ui.composables.NoItemsContent
-import br.com.frazo.janac.ui.noteslist.addnote.EditNoteDialog
-import br.com.frazo.janac.ui.noteslist.addnote.EditNoteViewModel
+import br.com.frazo.janac.ui.screens.composables.NotesList
+import br.com.frazo.janac.ui.util.composables.IndeterminateLoading
+import br.com.frazo.janac.ui.util.composables.MyClickableText
+import br.com.frazo.janac.ui.util.composables.NoItemsContent
+import br.com.frazo.janac.ui.screens.notes.editnote.EditNoteDialog
+import br.com.frazo.janac.ui.screens.notes.editnote.EditNoteViewModel
 import br.com.frazo.janac.ui.theme.dimensions
 import br.com.frazo.janac.ui.theme.spacing
 import br.com.frazo.janac.ui.util.IconResource
@@ -60,49 +57,6 @@ fun NotesListScreen(
         onEditNote = viewModel::editNote
     )
 
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun NotesList(
-    modifier: Modifier,
-    notesList: List<Note>,
-    onListState: (LazyListState) -> Unit,
-    onBinNote: (Note) -> Unit,
-    onEditNote: (Note) -> Unit
-) {
-    val listState = rememberLazyListState()
-    onListState(listState)
-    LazyColumn(
-        state = listState,
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
-    ) {
-        items(notesList, key = {
-            notesList.indexOf(it)
-        }) { note ->
-            NoteCard(
-                modifier = Modifier.animateItemPlacement(),
-                title = note.title,
-                text = note.text
-            ) {
-                Row(
-                    modifier = Modifier
-                        .wrapContentHeight()
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    IconButton(onClick = { onEditNote(note) }) {
-                        IconResource.fromImageVector(Icons.Filled.Edit, "").ComposeIcon()
-                    }
-                    Spacer(modifier = Modifier.width(MaterialTheme.spacing.small))
-                    IconButton(onClick = { onBinNote(note) }) {
-                        IconResource.fromImageVector(Icons.Filled.Delete, "").ComposeIcon()
-                    }
-                }
-            }
-        }
-    }
 }
 
 @Composable
@@ -141,9 +95,22 @@ fun Screen(
                     },
                 notesList = notesList,
                 onListState = onListState,
-                onBinNote = onBinNote,
-                onEditNote = onEditNote
-            )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .wrapContentHeight()
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    IconButton(onClick = { onEditNote(it) }) {
+                        IconResource.fromImageVector(Icons.Filled.Edit, "").ComposeIcon()
+                    }
+                    Spacer(modifier = Modifier.width(MaterialTheme.spacing.small))
+                    IconButton(onClick = { onBinNote(it) }) {
+                        IconResource.fromImageVector(Icons.Filled.Delete, "").ComposeIcon()
+                    }
+                }
+            }
         }
         AnimatedVisibility(visible = screenState is NotesListViewModel.ScreenState.NoData,
             enter = slideInVertically {
@@ -216,13 +183,13 @@ fun Screen(
                 it
             },
             exit = slideOutVertically { -it }) {
-            AddEditDialogScreen(onDialogDismiss, editNoteViewModel, editNoteState.baseNote)
+            EditDialogScreen(onDialogDismiss, editNoteViewModel, editNoteState.baseNote)
         }
     }
 }
 
 @Composable
-fun AddEditDialogScreen(
+fun EditDialogScreen(
     onDismissRequest: () -> Unit,
     editNoteViewModel: EditNoteViewModel,
     noteToEdit: Note

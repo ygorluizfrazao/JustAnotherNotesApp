@@ -1,4 +1,4 @@
-package br.com.frazo.janac.ui.composables
+package br.com.frazo.janac.ui.util.composables
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

@@ -4,7 +4,8 @@ import br.com.frazo.janac.domain.models.Note
 
 sealed class UIEvent{
 
-    object NoteAdded: UIEvent()
+    data class NoteCreated(val newNote: Note): UIEvent()
+    data class NoteEdited(val oldNote: Note, val newNote: Note): UIEvent()
     data class NotBinnedNotesFetched(val notes: List<Note>): UIEvent()
     data class BinnedNotesFetched(val notes: List<Note>): UIEvent()
 

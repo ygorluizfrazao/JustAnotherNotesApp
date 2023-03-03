@@ -17,4 +17,5 @@
     <string name="click_to_add_a_note">Click %1$s to add a note.</string>
     <string name="link_alias_to_add_a_note">here</string>
     <string name="edit_note">Edit Note</string>
+    <string name="all_clear_here">All clear here</string>
 </resources>

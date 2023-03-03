@@ -10,7 +10,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import br.com.frazo.janac.ui.noteslist.NotesListScreen
+import br.com.frazo.janac.ui.screens.notes.NotesListScreen
 import br.com.frazo.janac.ui.theme.spacing
 
 @Composable

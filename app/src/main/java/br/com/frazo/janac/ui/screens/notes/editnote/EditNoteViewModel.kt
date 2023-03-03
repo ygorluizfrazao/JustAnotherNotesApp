@@ -1,4 +1,4 @@
-package br.com.frazo.janac.ui.noteslist.addnote
+package br.com.frazo.janac.ui.screens.notes.editnote
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -120,16 +120,24 @@ class EditNoteViewModel @Inject constructor(
 
     fun save() {
         viewModelScope.launch {
+
             val result = if (toEditNote.isNewNote()) saveNewNote() else editNote()
             if (result > 0) {
                 _uiState.value = UIState.Saved
-                mediator.broadCast(this@EditNoteViewModel, UIEvent.NoteAdded)
+                mediator.broadCast(
+                    this@EditNoteViewModel,
+                    if (toEditNote.isNewNote()) UIEvent.NoteCreated(inEditionNote.value) else UIEvent.NoteEdited(
+                        toEditNote,
+                        inEditionNote.value
+                    )
+                )
                 reset()
             } else {
                 _uiState.value = UIState.SaveFailed(Throwable("Save Failed"))
             }
         }
     }
+
     private suspend fun saveNewNote(): Int {
         return addNoteUseCase(inEditionNote.value)
     }

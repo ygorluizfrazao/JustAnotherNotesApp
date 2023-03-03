@@ -1,4 +1,4 @@
-package br.com.frazo.janac.ui.noteslist.addnote
+package br.com.frazo.janac.ui.screens.notes.editnote
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,7 +11,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.DialogProperties
 import br.com.frazo.janac.R
-import br.com.frazo.janac.ui.composables.ValidationTextField
+import br.com.frazo.janac.ui.util.composables.ValidationTextField
 import br.com.frazo.janac.ui.theme.spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
