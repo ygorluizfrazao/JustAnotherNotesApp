@@ -22,7 +22,7 @@ import br.com.frazo.janac.ui.screens.composables.NotesList
 import br.com.frazo.janac.ui.util.composables.IndeterminateLoading
 import br.com.frazo.janac.ui.util.composables.MyClickableText
 import br.com.frazo.janac.ui.util.composables.NoItemsContent
-import br.com.frazo.janac.ui.screens.notes.editnote.EditNoteDialog
+import br.com.frazo.janac.ui.screens.composables.EditNoteDialog
 import br.com.frazo.janac.ui.screens.notes.editnote.EditNoteViewModel
 import br.com.frazo.janac.ui.theme.dimensions
 import br.com.frazo.janac.ui.theme.spacing
@@ -195,17 +195,23 @@ fun EditDialogScreen(
     noteToEdit: Note
 ) {
 
-    val noteState by editNoteViewModel.inEditionNote.collectAsState()
+    val inEditionNote by editNoteViewModel.inEditionNote.collectAsState()
     val addNoteUIState by editNoteViewModel.uiState.collectAsState()
+
+    LaunchedEffect(key1 = addNoteUIState){
+        if(addNoteUIState is EditNoteViewModel.UIState.Saved){
+            onDismissRequest()
+        }
+    }
 
     LaunchedEffect(key1 = noteToEdit, block = {
         editNoteViewModel.setForEditing(noteToEdit)
     })
 
     EditNoteDialog(
-        title = noteState.title,
+        title = inEditionNote.title,
         onTitleChanged = editNoteViewModel::onTitleChanged,
-        text = noteState.text,
+        text = inEditionNote.text,
         onTextChanged = editNoteViewModel::onTextChanged,
         onDismissRequest = onDismissRequest,
         onSaveClicked = editNoteViewModel::save,

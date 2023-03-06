@@ -17,11 +17,13 @@ import br.com.frazo.janac.domain.usecases.notes.NoteValidatorUseCase
 import br.com.frazo.janac.domain.usecases.notes.NoteValidatorUseCaseImpl
 import br.com.frazo.janac.domain.usecases.notes.create.AddNoteUseCase
 import br.com.frazo.janac.domain.usecases.notes.create.AddNoteUseCaseImpl
+import br.com.frazo.janac.domain.usecases.notes.delete.DeleteNoteUseCase
+import br.com.frazo.janac.domain.usecases.notes.delete.DeleteNoteUseCaseImpl
 import br.com.frazo.janac.domain.usecases.notes.read.*
 import br.com.frazo.janac.domain.usecases.notes.update.BinNoteUseCase
 import br.com.frazo.janac.domain.usecases.notes.update.BinNoteUseCaseImpl
-import br.com.frazo.janac.domain.usecases.notes.update.EditNoteUseCase
-import br.com.frazo.janac.domain.usecases.notes.update.EditNoteUseCaseImpl
+import br.com.frazo.janac.domain.usecases.notes.update.UpdateNoteUseCase
+import br.com.frazo.janac.domain.usecases.notes.update.UpdateNoteUseCaseImpl
 import br.com.frazo.janac.ui.mediator.UIMediator
 import br.com.frazo.janac.ui.mediator.UIMediatorImpl
 import br.com.frazo.janac.util.Dispatchers
@@ -104,8 +106,14 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideEditNoteUseCase(noteRepository: NoteRepository): EditNoteUseCase<Int> {
-        return EditNoteUseCaseImpl(noteRepository)
+    fun provideEditNoteUseCase(noteRepository: NoteRepository): UpdateNoteUseCase<Int> {
+        return UpdateNoteUseCaseImpl(noteRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideRemoveNoteUseCase(noteRepository: NoteRepository): DeleteNoteUseCase<Int> {
+        return DeleteNoteUseCaseImpl(noteRepository)
     }
 
     @Provides
@@ -122,19 +130,19 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideNoteValidatorUseCase(): NoteValidatorUseCase{
+    fun provideNoteValidatorUseCase(): NoteValidatorUseCase {
         return NoteValidatorUseCaseImpl(LengthNoteValidator())
     }
 
     @Provides
     @Singleton
-    fun provideUIMediator(): UIMediator{
+    fun provideUIMediator(): UIMediator {
         return UIMediatorImpl()
     }
 
     @Provides
     @Singleton
-    fun provideBinNoteUseCase(noteRepository: NoteRepository): BinNoteUseCase<Int>{
+    fun provideBinNoteUseCase(noteRepository: NoteRepository): BinNoteUseCase<Int> {
         return BinNoteUseCaseImpl(noteRepository)
     }
 }

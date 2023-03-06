@@ -8,7 +8,7 @@ import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.domain.usecases.notes.NoteValidator
 import br.com.frazo.janac.domain.usecases.notes.NoteValidatorUseCase
 import br.com.frazo.janac.domain.usecases.notes.create.AddNoteUseCase
-import br.com.frazo.janac.domain.usecases.notes.update.EditNoteUseCase
+import br.com.frazo.janac.domain.usecases.notes.update.UpdateNoteUseCase
 import br.com.frazo.janac.ui.mediator.UIEvent
 import br.com.frazo.janac.ui.mediator.UIMediator
 import br.com.frazo.janac.ui.mediator.UIParticipant
@@ -22,7 +22,7 @@ import javax.inject.Inject
 @HiltViewModel
 class EditNoteViewModel @Inject constructor(
     private val addNoteUseCase: AddNoteUseCase<Int>,
-    private val editNoteUseCase: EditNoteUseCase<Int>,
+    private val updateNoteUseCase: UpdateNoteUseCase<Int>,
     private val noteValidatorUseCase: NoteValidatorUseCase,
     private val mediator: UIMediator
 ) :
@@ -120,7 +120,6 @@ class EditNoteViewModel @Inject constructor(
 
     fun save() {
         viewModelScope.launch {
-
             val result = if (toEditNote.isNewNote()) saveNewNote() else editNote()
             if (result > 0) {
                 _uiState.value = UIState.Saved
@@ -131,7 +130,6 @@ class EditNoteViewModel @Inject constructor(
                         inEditionNote.value
                     )
                 )
-                reset()
             } else {
                 _uiState.value = UIState.SaveFailed(Throwable("Save Failed"))
             }
@@ -143,7 +141,7 @@ class EditNoteViewModel @Inject constructor(
     }
 
     private suspend fun editNote(): Int {
-        return editNoteUseCase(toEditNote, inEditionNote.value)
+        return updateNoteUseCase(toEditNote, inEditionNote.value)
     }
 
     fun cancel() {

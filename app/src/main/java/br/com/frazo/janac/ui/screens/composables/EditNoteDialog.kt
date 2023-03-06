@@ -1,4 +1,4 @@
-package br.com.frazo.janac.ui.screens.notes.editnote
+package br.com.frazo.janac.ui.screens.composables
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState

@@ -12,9 +12,9 @@ fun RoomNote.toNote(): Note {
     )
 }
 
-fun Note.toRoomNote(): RoomNote {
+fun Note.toRoomNote(id: Int = 0): RoomNote {
     return RoomNote(
-        id = 0,
+        id = id,
         title = title,
         text = text,
         binnedAt = binnedAt

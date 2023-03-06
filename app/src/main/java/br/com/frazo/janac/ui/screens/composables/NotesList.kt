@@ -28,7 +28,7 @@ fun NotesList(
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
     ) {
         items(notesList, key = {
-            notesList.indexOf(it)
+            it.createdAt?:it.hashCode()
         }) { note ->
             NoteCard(
                 modifier = Modifier.animateItemPlacement(),

@@ -7,11 +7,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Restore
-import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.constraintlayout.compose.ConstraintLayout
@@ -29,6 +30,20 @@ import br.com.frazo.janac.ui.util.composables.NoItemsContent
 fun BinScreen(modifier: Modifier = Modifier) {
 
     val viewModel = hiltViewModel<BinScreenViewModel>()
+    val screenState by viewModel.screenState.collectAsState()
+    val notesList by viewModel.notes.collectAsState()
+    val clearBinButtonState by viewModel.clearBinButtonExpandedState.collectAsState()
+
+    Screen(
+        modifier = modifier,
+        notesList = notesList,
+        screenState = screenState,
+        clearBinButtonState = clearBinButtonState,
+        onClearBinClicked = viewModel::clearBin,
+        onListState = viewModel::onListState,
+        onDeleteNote = viewModel::deleteNote,
+        onRestoreNote = viewModel::restoreNote
+    )
 
 }
 
@@ -38,7 +53,7 @@ fun Screen(
     notesList: List<Note>,
     screenState: BinScreenViewModel.ScreenState,
     clearBinButtonState: Boolean,
-    onClearBinClicked: () -> Unit = {},
+    onClearBinClicked: () -> Unit,
     onListState: (LazyListState) -> Unit,
     onDeleteNote: (Note) -> Unit,
     onRestoreNote: (Note) -> Unit
@@ -77,7 +92,7 @@ fun Screen(
                     }
                     Spacer(modifier = Modifier.width(MaterialTheme.spacing.small))
                     IconButton(onClick = { onDeleteNote(it) }) {
-                        IconResource.fromImageVector(Icons.Filled.Delete, "").ComposeIcon()
+                        IconResource.fromImageVector(Icons.Filled.DeleteForever, "").ComposeIcon()
                     }
                 }
             }
@@ -130,8 +145,8 @@ fun Screen(
                 }
         ) {
             ExtendedFloatingActionButton(
-                text = { Text(text = stringResource(id = R.string.add_note)) },
-                icon = { Icon(imageVector = Icons.Rounded.Add, contentDescription = "") },
+                text = { Text(text = stringResource(id = R.string.clear_bin)) },
+                icon = { Icon(imageVector = Icons.Default.DeleteForever, contentDescription = "") },
                 onClick = onClearBinClicked,
                 expanded = clearBinButtonState,
                 modifier = Modifier.padding(MaterialTheme.spacing.small)

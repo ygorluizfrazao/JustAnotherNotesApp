@@ -2,7 +2,6 @@ package br.com.frazo.janac.data.repository.note
 
 import br.com.frazo.janac.data.db.room.RoomAppDatabase
 import br.com.frazo.janac.data.db.room.dao.NotesDAO
-import br.com.frazo.janac.data.db.room.entities.RoomNote
 import br.com.frazo.janac.data.repository.note.mappers.toNote
 import br.com.frazo.janac.data.repository.note.mappers.toRoomNote
 import br.com.frazo.janac.domain.models.Note
@@ -36,7 +35,14 @@ class RoomNoteDataSource(database: RoomAppDatabase) : NoteDataSource {
     }
 
     override suspend fun deleteAll(vararg notes: Note): Int {
-        return notesDAO.deleteAll(*notes.map { it.toRoomNote() }.toTypedArray())
+
+        var itemsDeleted = 0
+        notes.map { it.toRoomNote() }.forEach {
+            val toDeleteNotes = notesDAO.getByCreationDate(it.createdAt)
+            itemsDeleted += notesDAO.deleteAll(*toDeleteNotes.toTypedArray())
+        }
+
+        return itemsDeleted
     }
 
     override suspend fun updateNote(oldNote: Note, newNote: Note): Int {
@@ -45,13 +51,7 @@ class RoomNoteDataSource(database: RoomAppDatabase) : NoteDataSource {
         val foundNotes = notesDAO.getByCreationDate(oldNote.createdAt)
         foundNotes.let { roomNotes ->
             roomNotes.forEach {
-                val newRoomNote = RoomNote(
-                    it.id,
-                    newNote.title,
-                    newNote.text,
-                    newNote.binnedAt
-                )
-                updatesMade += notesDAO.updateNote(newRoomNote)
+                updatesMade += notesDAO.updateNote(newNote.toRoomNote(it.id))
             }
         }
         return updatesMade

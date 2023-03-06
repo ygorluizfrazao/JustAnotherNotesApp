@@ -10,6 +10,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import br.com.frazo.janac.ui.screens.bin.BinScreen
 import br.com.frazo.janac.ui.screens.notes.NotesListScreen
 import br.com.frazo.janac.ui.theme.spacing
 
@@ -27,6 +28,7 @@ fun Navigation(
     ) {
 
         composable(Screen.NotesList.route.asString(context)) {
+
             NotesListScreen(
                 modifier = Modifier
                     .fillMaxSize()
@@ -36,6 +38,11 @@ fun Navigation(
 
         composable(Screen.Bin.route.asString(context)) {
 
+            BinScreen(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = MaterialTheme.spacing.medium)
+            )
         }
     }
 }

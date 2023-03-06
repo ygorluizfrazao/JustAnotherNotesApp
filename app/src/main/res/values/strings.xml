@@ -18,4 +18,9 @@
     <string name="link_alias_to_add_a_note">here</string>
     <string name="edit_note">Edit Note</string>
     <string name="all_clear_here">All clear here</string>
+    <string name="clear_bin">Delete All</string>
+    <string name="generic_error">Something wrong happened, %1$s.</string>
+    <string name="note_not_deleted">Something wrong happened, the note could not be deleted.</string>
+    <string name="note_not_restored">Something wrong happened, the note could not be restored.</string>
+    <string name="some_notes_not_deleted">Something wrong happened, some notes could not be deleted.</string>
 </resources>
