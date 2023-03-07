@@ -18,10 +18,13 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import br.com.frazo.janac.R
 import br.com.frazo.janac.ui.navigation.Navigation
 import br.com.frazo.janac.ui.navigation.Screen
 import br.com.frazo.janac.ui.theme.NotesAppTheme
+import br.com.frazo.janac.ui.theme.spacing
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -33,16 +36,12 @@ class MainActivity : ComponentActivity() {
 
                 val navController = rememberNavController()
                 val viewModel = hiltViewModel<MainViewModel>()
-                val notBinnedCount by viewModel.notBinnedNotesCount.collectAsState()
-                val binnedNotesCount by viewModel.binnedNotesCount.collectAsState()
 
                 Screen(
                     navController = navController,
-                    notBinnedNotes = notBinnedCount,
-                    binnedNotes = binnedNotesCount,
-                    navStarDestination = Screen.NotesList
+                    navStarDestination = Screen.NotesList,
+                    viewModel = viewModel
                 )
-
             }
         }
     }
@@ -51,15 +50,34 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun Screen(
         navController: NavHostController,
-        notBinnedNotes: Int,
-        binnedNotes: Int,
-        navStarDestination: Screen
+        navStarDestination: Screen,
+        viewModel: MainViewModel
     ) {
 
+        val notBinnedCount by viewModel.notBinnedNotesCount.collectAsState()
+        val binnedNotesCount by viewModel.binnedNotesCount.collectAsState()
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination
+        val snackbarHostState = remember { SnackbarHostState() }
+        val scope = rememberCoroutineScope()
+        val context = LocalContext.current
 
         Scaffold(
+            snackbarHost = {
+                SnackbarHost(snackbarHostState) { data ->
+                    Snackbar(
+                        modifier = Modifier
+                            .padding(MaterialTheme.spacing.medium),
+                        action = {
+                            TextButton(
+                                onClick = { data.dismiss() },
+                            ) { Text(data.visuals.actionLabel ?: "") }
+                        }
+                    ) {
+                        Text(data.visuals.message)
+                    }
+                }
+            },
             topBar = {
                 CenterAlignedTopAppBar(
                     title = {
@@ -84,7 +102,7 @@ class MainActivity : ComponentActivity() {
                     },
                     actions = {
                         IconButton(onClick = {
-
+                            viewModel.simulateError()
                         }) {
                             Icon(
                                 imageVector = Icons.Filled.Search,
@@ -105,14 +123,28 @@ class MainActivity : ComponentActivity() {
                     BottomNavigationItems(
                         currentDestination = currentDestination,
                         navController = navController,
-                        notBinnedNotes = notBinnedNotes,
-                        binnedNotes = binnedNotes
+                        notBinnedNotes = notBinnedCount,
+                        binnedNotes = binnedNotesCount
                     )
                 }
             }
         )
         { innerPadding ->
             Navigation(modifier = Modifier.padding(innerPadding), navController = navController)
+        }
+
+        LaunchedEffect(key1 = Unit) {
+
+            viewModel.errorMessage.collect { errorMessage ->
+                scope.launch {
+                    snackbarHostState.showSnackbar(
+                        errorMessage.asString(context),
+                        actionLabel = context.getString(R.string.uppercase_dismiss),
+                        duration = SnackbarDuration.Short
+                    )
+                }
+            }
+
         }
     }
 

@@ -6,6 +6,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.rounded.Add
@@ -28,6 +29,8 @@ import br.com.frazo.janac.ui.theme.dimensions
 import br.com.frazo.janac.ui.theme.spacing
 import br.com.frazo.janac.ui.util.IconResource
 import br.com.frazo.janac.ui.util.TextResource
+import br.com.frazo.janac.ui.util.composables.IconTextRow
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun NotesListScreen(
@@ -95,6 +98,22 @@ fun Screen(
                     },
                 notesList = notesList,
                 onListState = onListState,
+                titleEndContent = { note ->
+                    note.createdAt?.let {
+                        IconTextRow(
+                            modifier = Modifier
+                                .wrapContentHeight()
+                                .wrapContentWidth()
+                                .padding(horizontal = MaterialTheme.spacing.small),
+                            iconResource = IconResource.fromImageVector(Icons.Default.CalendarToday),
+                            textResource = TextResource.RuntimeString(
+                                note.createdAt.format(
+                                    DateTimeFormatter.ISO_LOCAL_DATE
+                                )
+                            )
+                        )
+                    }
+                }
             ) {
                 Row(
                     modifier = Modifier
@@ -198,8 +217,8 @@ fun EditDialogScreen(
     val inEditionNote by editNoteViewModel.inEditionNote.collectAsState()
     val addNoteUIState by editNoteViewModel.uiState.collectAsState()
 
-    LaunchedEffect(key1 = addNoteUIState){
-        if(addNoteUIState is EditNoteViewModel.UIState.Saved){
+    LaunchedEffect(key1 = addNoteUIState) {
+        if (addNoteUIState is EditNoteViewModel.UIState.Saved) {
             onDismissRequest()
         }
     }

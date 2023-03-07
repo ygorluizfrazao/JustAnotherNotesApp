@@ -6,9 +6,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.DeleteForever
-import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -23,8 +21,11 @@ import br.com.frazo.janac.ui.screens.composables.NotesList
 import br.com.frazo.janac.ui.theme.dimensions
 import br.com.frazo.janac.ui.theme.spacing
 import br.com.frazo.janac.ui.util.IconResource
+import br.com.frazo.janac.ui.util.TextResource
+import br.com.frazo.janac.ui.util.composables.IconTextRow
 import br.com.frazo.janac.ui.util.composables.IndeterminateLoading
 import br.com.frazo.janac.ui.util.composables.NoItemsContent
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun BinScreen(modifier: Modifier = Modifier) {
@@ -80,6 +81,22 @@ fun Screen(
                     },
                 notesList = notesList,
                 onListState = onListState,
+                titleEndContent = { note ->
+                    note.binnedAt?.let {
+                        IconTextRow(
+                            modifier = Modifier
+                                .wrapContentHeight()
+                                .wrapContentWidth()
+                                .padding(horizontal = MaterialTheme.spacing.small),
+                            iconResource = IconResource.fromImageVector(Icons.Default.Recycling),
+                            textResource = TextResource.RuntimeString(
+                                note.binnedAt.format(
+                                    DateTimeFormatter.ISO_LOCAL_DATE
+                                )
+                            )
+                        )
+                    }
+                }
             ) {
                 Row(
                     modifier = Modifier
@@ -144,13 +161,20 @@ fun Screen(
                     end.linkTo(parent.end)
                 }
         ) {
-            ExtendedFloatingActionButton(
-                text = { Text(text = stringResource(id = R.string.clear_bin)) },
-                icon = { Icon(imageVector = Icons.Default.DeleteForever, contentDescription = "") },
-                onClick = onClearBinClicked,
-                expanded = clearBinButtonState,
-                modifier = Modifier.padding(MaterialTheme.spacing.small)
-            )
+            AnimatedVisibility(visible = notesList.isNotEmpty()) {
+                ExtendedFloatingActionButton(
+                    text = { Text(text = stringResource(id = R.string.clear_bin)) },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.DeleteForever,
+                            contentDescription = ""
+                        )
+                    },
+                    onClick = onClearBinClicked,
+                    expanded = clearBinButtonState,
+                    modifier = Modifier.padding(MaterialTheme.spacing.small)
+                )
+            }
         }
     }
 }

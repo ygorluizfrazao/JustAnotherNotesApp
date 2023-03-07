@@ -18,6 +18,7 @@ fun NotesList(
     modifier: Modifier,
     notesList: List<Note>,
     onListState: (LazyListState) -> Unit,
+    titleEndContent: (@Composable (note: Note) -> Unit)? = null,
     cardFooterContent: (@Composable (note: Note) -> Unit)? = null
 ) {
     val listState = rememberLazyListState()
@@ -28,11 +29,12 @@ fun NotesList(
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
     ) {
         items(notesList, key = {
-            it.createdAt?:it.hashCode()
+            it.createdAt ?: it.hashCode()
         }) { note ->
             NoteCard(
                 modifier = Modifier.animateItemPlacement(),
                 note = note,
+                titleEndContent = titleEndContent,
                 footerContent = cardFooterContent
             )
         }

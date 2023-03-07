@@ -23,4 +23,5 @@
     <string name="note_not_deleted">Something wrong happened, the note could not be deleted.</string>
     <string name="note_not_restored">Something wrong happened, the note could not be restored.</string>
     <string name="some_notes_not_deleted">Something wrong happened, some notes could not be deleted.</string>
+    <string name="uppercase_dismiss">DISMISS</string>
 </resources>
