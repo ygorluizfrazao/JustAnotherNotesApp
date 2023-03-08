@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <string name="app_name">JANA</string>
+    <string name="notes_list">Notas</string>
+    <string name="add_note">Adicionar</string>
+    <string name="bin">Lixeira</string>
+    <string name="no_content">Nada por aqui ainda.</string>
+    <string name="loading">Carregando</string>
+    <string name="invalid_title">Título inválido, %1$s.</string>
+    <string name="invalid_text">Texto inválido, %1$s.</string>
+    <string name="title_label">Título</string>
+    <string name="note_title_hint">O título da nota</string>
+    <string name="text_label">Texto</string>
+    <string name="text_hint">Escreva aqui o texto da nota</string>
+    <string name="save">Salvar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="add_a_note_title">Adicionar uma nota</string>
+    <string name="click_to_add_a_note">Toque %1$s para adicionar uma nota.</string>
+    <string name="here">aqui</string>
+    <string name="edit_note">Editar nota</string>
+    <string name="all_clear_here">Tudo limpo por aqui</string>
+    <string name="clear_bin">Esvaziar Lixeira</string>
+    <string name="generic_error">Algo de errado aconteceu, %1$s.</string>
+    <string name="note_not_deleted">Algo de errado aconteceu, a nota não pôde ser removida.</string>
+    <string name="note_not_restored">Algo de errado aconteceu, a nota não pôde ser restaurada.</string>
+    <string name="some_notes_not_deleted">Algo de errado aconteceu, algumas notas não puderam ser removidas.</string>
+    <string name="uppercase_dismiss">DISPENSAR</string>
+    <string name="type_your_search_here">Digite os termos da pesquisa</string>
+    <string name="search">Pesquisar</string>
+    <string name="exit">Sair</string>
+    <string name="no_data_for_query">Nenhum dado retornado para a pesquisa informada.</string>
+    <string name="click_to_clear_search">Toque %1$s para limpar a pesquisa.</string>
+
+</resources>

@@ -4,7 +4,7 @@ import android.app.Application
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
-class JANACApplication :Application() {
+class JANACApplication : Application() {
 
 //    init {
 //        CoroutineScope(Dispatchers.IO).launch {

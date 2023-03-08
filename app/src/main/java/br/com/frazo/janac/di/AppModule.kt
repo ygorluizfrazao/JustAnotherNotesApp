@@ -12,6 +12,8 @@ import br.com.frazo.janac.data.repository.note.RoomNoteDataSource
 import br.com.frazo.janac.data.repository.note.cachestrategy.CacheStrategy
 import br.com.frazo.janac.data.repository.note.cachestrategy.InMemoryCacheStrategy
 import br.com.frazo.janac.domain.models.Note
+import br.com.frazo.janac.domain.usecases.DataTransformerUseCase
+import br.com.frazo.janac.domain.usecases.TrimmedUppercaseDataTransformerUseCase
 import br.com.frazo.janac.domain.usecases.notes.LengthNoteValidator
 import br.com.frazo.janac.domain.usecases.notes.NoteValidatorUseCase
 import br.com.frazo.janac.domain.usecases.notes.NoteValidatorUseCaseImpl
@@ -144,5 +146,11 @@ object AppModule {
     @Singleton
     fun provideBinNoteUseCase(noteRepository: NoteRepository): BinNoteUseCase<Int> {
         return BinNoteUseCaseImpl(noteRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDataTransformerUseCase(): DataTransformerUseCase<String> {
+        return TrimmedUppercaseDataTransformerUseCase()
     }
 }

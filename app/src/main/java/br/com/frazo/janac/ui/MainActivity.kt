@@ -3,13 +3,18 @@ package br.com.frazo.janac.ui
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination
@@ -21,8 +26,10 @@ import androidx.navigation.compose.rememberNavController
 import br.com.frazo.janac.R
 import br.com.frazo.janac.ui.navigation.Navigation
 import br.com.frazo.janac.ui.navigation.Screen
+import br.com.frazo.janac.ui.navigation.getJANAScreenForRoute
 import br.com.frazo.janac.ui.theme.NotesAppTheme
 import br.com.frazo.janac.ui.theme.spacing
+import br.com.frazo.janac.ui.util.composables.MyTextField
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -56,8 +63,13 @@ class MainActivity : ComponentActivity() {
 
         val notBinnedCount by viewModel.notBinnedNotesCount.collectAsState()
         val binnedNotesCount by viewModel.binnedNotesCount.collectAsState()
+
+        val toggleSearchBar by viewModel.toggleFilter.collectAsState()
+        val searchQuery by viewModel.filterQuery.collectAsState()
+
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination
+
         val snackbarHostState = remember { SnackbarHostState() }
         val scope = rememberCoroutineScope()
         val context = LocalContext.current
@@ -82,7 +94,7 @@ class MainActivity : ComponentActivity() {
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            navController.currentDestination?.route
+                            navController.currentDestination.getJANAScreenForRoute()?.localizedAlias?.asString()
                                 ?: navStarDestination.route.asString(),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -101,20 +113,26 @@ class MainActivity : ComponentActivity() {
                         }
                     },
                     actions = {
-                        IconButton(onClick = {
-                            viewModel.simulateError()
-                        }) {
-                            Icon(
-                                imageVector = Icons.Filled.Search,
-                                contentDescription = ""
-                            )
+
+                        AnimatedVisibility(visible = !toggleSearchBar) {
+                            IconButton(onClick = {
+                                viewModel.filter("")
+                                viewModel.toggleSearch()
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Search,
+                                    contentDescription = stringResource(R.string.search)
+                                )
+                            }
                         }
+
                         IconButton(onClick = { finish() }) {
                             Icon(
                                 imageVector = Icons.Filled.ExitToApp,
-                                contentDescription = ""
+                                contentDescription = stringResource(R.string.exit)
                             )
                         }
+
                     }
                 )
             },
@@ -130,8 +148,51 @@ class MainActivity : ComponentActivity() {
             }
         )
         { innerPadding ->
-            Navigation(modifier = Modifier.padding(innerPadding), navController = navController)
+
+            Column(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Top
+            ) {
+                AnimatedVisibility(visible = toggleSearchBar) {
+
+                    val focusRequester = remember { FocusRequester() }
+
+                    MyTextField(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .focusRequester(focusRequester),
+                        singleLine = true,
+                        value = searchQuery,
+                        label = stringResource(id = R.string.search),
+                        hint = stringResource(R.string.type_your_search_here),
+                        onValueChange = viewModel::filter,
+                        trailingIcon = {
+                            IconButton(onClick = {
+                                viewModel.resetSearchQuery()
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.ExpandLess,
+                                    contentDescription = stringResource(R.string.search)
+                                )
+                            }
+                        }
+                    )
+
+                    LaunchedEffect(key1 = Unit){
+                        focusRequester.requestFocus()
+                    }
+                }
+
+                Navigation(
+                    modifier = Modifier.padding(top = MaterialTheme.spacing.medium),
+                    navController = navController
+                )
+            }
         }
+
 
         LaunchedEffect(key1 = Unit) {
 
@@ -178,7 +239,7 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             },
-            label = { Text(Screen.NotesList.route.asString()) },
+            label = { Text(Screen.NotesList.localizedAlias.asString()) },
             selected =
             currentDestination?.hierarchy?.any {
                 it.route == Screen.NotesList.route.asString()
@@ -214,7 +275,7 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             },
-            label = { Text(Screen.Bin.route.asString()) },
+            label = { Text(Screen.Bin.localizedAlias.asString()) },
             selected =
             currentDestination?.hierarchy?.any {
                 it.route == Screen.Bin.route.asString()

@@ -114,7 +114,7 @@ fun Screen(
                 }
             }
         }
-        AnimatedVisibility(visible = screenState is BinScreenViewModel.ScreenState.NoData,
+        AnimatedVisibility(visible = screenState is BinScreenViewModel.ScreenState.NoData || screenState is BinScreenViewModel.ScreenState.Error,
             enter = slideInVertically {
                 it
             },
@@ -167,12 +167,12 @@ fun Screen(
                     icon = {
                         Icon(
                             imageVector = Icons.Default.DeleteForever,
-                            contentDescription = ""
+                            contentDescription = stringResource(id = R.string.clear_bin)
                         )
                     },
                     onClick = onClearBinClicked,
                     expanded = clearBinButtonState,
-                    modifier = Modifier.padding(MaterialTheme.spacing.small)
+                    modifier = Modifier.padding(vertical = MaterialTheme.spacing.small)
                 )
             }
         }

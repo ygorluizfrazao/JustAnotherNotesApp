@@ -5,6 +5,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Cancel
+import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -24,7 +25,7 @@ fun MyTextField(
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     leadingIcon: @Composable (() -> Unit)? = {
         IconButton(onClick = { onValueChange("") }) {
-            Icon(imageVector = Icons.Rounded.Cancel, contentDescription = "Clear Text")
+            Icon(imageVector = Icons.Rounded.Clear, contentDescription = "Clear Text")
         }
     },
     trailingIcon: @Composable (() -> Unit)? = null,

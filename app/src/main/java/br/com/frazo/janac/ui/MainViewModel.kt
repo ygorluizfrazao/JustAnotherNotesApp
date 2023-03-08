@@ -5,9 +5,9 @@ import androidx.lifecycle.viewModelScope
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.domain.usecases.notes.read.GetBinnedNotesUseCase
 import br.com.frazo.janac.domain.usecases.notes.read.GetNotBinnedNotesUseCase
+import br.com.frazo.janac.ui.mediator.CallBackUIParticipant
 import br.com.frazo.janac.ui.mediator.UIEvent
 import br.com.frazo.janac.ui.mediator.UIMediator
-import br.com.frazo.janac.ui.mediator.UIParticipant
 import br.com.frazo.janac.ui.util.TextResource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -16,10 +16,14 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    mediator: UIMediator,
+    private val mediator: UIMediator,
     private val getBinnedNotesUseCase: GetBinnedNotesUseCase<Flow<List<Note>>>,
     private val getNotBinnedNotesUseCase: GetNotBinnedNotesUseCase<Flow<List<Note>>>,
-) : ViewModel(), UIParticipant {
+) : ViewModel() {
+
+    private val uiParticipantRepresentative = CallBackUIParticipant { _, event ->
+        handleMediatorMessage(event)
+    }
 
     private val _notBinnedNotesCount = MutableStateFlow(0)
     val notBinnedNotesCount = _notBinnedNotesCount.asStateFlow()
@@ -30,41 +34,54 @@ class MainViewModel @Inject constructor(
     private val _errorMessage = MutableSharedFlow<TextResource>()
     val errorMessage = _errorMessage.asSharedFlow()
 
+    private val _toggleFilter = MutableStateFlow(false)
+    val toggleFilter = _toggleFilter.asStateFlow()
+
+    private val _filterQuery = MutableStateFlow("")
+    val filterQuery = _filterQuery.asStateFlow()
+
     init {
-        mediator.addParticipant(this)
+        mediator.addParticipant(uiParticipantRepresentative)
+
         viewModelScope.launch {
             combine(getNotBinnedNotesUseCase(), getBinnedNotesUseCase()) { notBinned, binned ->
                 _notBinnedNotesCount.value = notBinned.size
                 _binnedNotesCount.value = binned.size
-                notBinned.size + binned.size
             }.collectLatest {}
         }
     }
 
-    override fun receiveMessage(from: UIParticipant, event: UIEvent) {
-        if (event is UIEvent.Error) {
-            if (!_errorMessage.tryEmit(event.message)) {
-                viewModelScope.launch {
-                    _errorMessage.emit(event.message)
-                }
-            }
+    private fun handleMediatorMessage(event: UIEvent) {
+        when (event) {
+
+            is UIEvent.Error -> emitErrorMessage(event.message)
+            is UIEvent.FilterQuery -> _filterQuery.value = event.query
+            is UIEvent.FinishSearchQuery -> resetSearchQuery()
+
+            else -> Unit
         }
     }
 
-    fun simulateError(){
-        val randomString = TextResource.RuntimeString(getRandomString(20))
-        if (!_errorMessage.tryEmit(randomString)) {
+    private fun emitErrorMessage(message: TextResource) {
+        if (!_errorMessage.tryEmit(message)) {
             viewModelScope.launch {
-                _errorMessage.emit(randomString)
+                _errorMessage.emit(message)
             }
         }
     }
 
-    private fun getRandomString(length: Int) : String {
-        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
-        return (1..length)
-            .map { allowedChars.random() }
-            .joinToString("")
+    fun resetSearchQuery(){
+        _toggleFilter.value = false
+        filter("")
+    }
+
+    fun toggleSearch() {
+        _toggleFilter.value = !_toggleFilter.value
+    }
+
+    fun filter(query: String) {
+        _filterQuery.value = query
+        mediator.broadCast(uiParticipantRepresentative, UIEvent.FilterQuery(query))
     }
 
 }

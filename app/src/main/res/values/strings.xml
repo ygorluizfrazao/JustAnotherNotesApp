@@ -1,7 +1,14 @@
 <resources>
     <string name="app_name">JANA</string>
+
+<!--    Navigatio-->
+
+    <string name="nav_notes_list" translatable="false">nav_notes_list</string>
+    <string name="nav_notes_bin" translatable="false">nav_notes_bin</string>
+
     <string name="notes_list">Notes List</string>
     <string name="add_note">Add Note</string>
+
     <string name="bin">Bin</string>
     <string name="no_content">Nothing to show yet.</string>
     <string name="loading">Loading</string>
@@ -10,12 +17,12 @@
     <string name="title_label">Title</string>
     <string name="note_title_hint">The note title</string>
     <string name="text_label">Text</string>
-    <string name="text_hint">Write here your note</string>
+    <string name="text_hint">Type here your note</string>
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
     <string name="add_a_note_title">Add a note</string>
     <string name="click_to_add_a_note">Click %1$s to add a note.</string>
-    <string name="link_alias_to_add_a_note">here</string>
+    <string name="here">here</string>
     <string name="edit_note">Edit Note</string>
     <string name="all_clear_here">All clear here</string>
     <string name="clear_bin">Delete All</string>
@@ -24,4 +31,9 @@
     <string name="note_not_restored">Something wrong happened, the note could not be restored.</string>
     <string name="some_notes_not_deleted">Something wrong happened, some notes could not be deleted.</string>
     <string name="uppercase_dismiss">DISMISS</string>
+    <string name="type_your_search_here">Type your search here</string>
+    <string name="search">Search</string>
+    <string name="exit">Exit</string>
+    <string name="no_data_for_query">No data returned for the given search query.</string>
+    <string name="click_to_clear_search">Click %1$s to clear search query.</string>
 </resources>

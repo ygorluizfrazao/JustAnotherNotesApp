@@ -26,7 +26,7 @@ class EditNoteViewModel @Inject constructor(
     private val noteValidatorUseCase: NoteValidatorUseCase,
     private val mediator: UIMediator
 ) :
-    ViewModel(), UIParticipant {
+    ViewModel() {
 
     sealed class UIState {
         object Saved : UIState()
@@ -47,6 +47,8 @@ class EditNoteViewModel @Inject constructor(
         object CanSave : UIState()
     }
 
+    private val uiParticipantRepresentative = object : UIParticipant {}
+
     private var toEditNote = Note("", "")
 
     private var _inEditionNote = MutableStateFlow(toEditNote)
@@ -57,7 +59,7 @@ class EditNoteViewModel @Inject constructor(
 
 
     init {
-        mediator.addParticipant(this)
+        mediator.addParticipant(uiParticipantRepresentative)
     }
 
     fun setForEditing(note: Note) {
@@ -124,7 +126,7 @@ class EditNoteViewModel @Inject constructor(
             if (result > 0) {
                 _uiState.value = UIState.Saved
                 mediator.broadCast(
-                    this@EditNoteViewModel,
+                    uiParticipantRepresentative,
                     if (toEditNote.isNewNote()) UIEvent.NoteCreated(inEditionNote.value) else UIEvent.NoteEdited(
                         toEditNote,
                         inEditionNote.value

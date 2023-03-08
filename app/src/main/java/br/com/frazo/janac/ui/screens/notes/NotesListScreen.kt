@@ -4,11 +4,12 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -30,34 +31,20 @@ import br.com.frazo.janac.ui.theme.spacing
 import br.com.frazo.janac.ui.util.IconResource
 import br.com.frazo.janac.ui.util.TextResource
 import br.com.frazo.janac.ui.util.composables.IconTextRow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import java.time.format.DateTimeFormatter
 
 @Composable
 fun NotesListScreen(
     modifier: Modifier
 ) {
+
     val viewModel = hiltViewModel<NotesListViewModel>()
-    val screenState by viewModel.screenState.collectAsState()
-    val notesList by viewModel.notes.collectAsState(initial = emptyList())
-    val addButtonState by viewModel.addButtonExtended.collectAsState(initial = true)
-    val addEditNoteState by viewModel.addEditNoteState.collectAsState()
-    val editNoteViewModel = hiltViewModel<EditNoteViewModel>()
 
     Screen(
         modifier = modifier,
-        onListState = viewModel::onListState,
-        notesList = notesList,
-        screenState = screenState,
-        addButtonState = addButtonState,
-        onAddClicked = viewModel::editNewNote,
-        editNoteState = addEditNoteState,
-        onDialogDismiss = {
-            viewModel.editNoteClear()
-            editNoteViewModel.cancel()
-        },
-        editNoteViewModel = editNoteViewModel,
-        onBinNote = viewModel::binNote,
-        onEditNote = viewModel::editNote
+        viewModel = viewModel,
     )
 
 }
@@ -65,26 +52,24 @@ fun NotesListScreen(
 @Composable
 fun Screen(
     modifier: Modifier = Modifier,
-    notesList: List<Note>,
-    screenState: NotesListViewModel.ScreenState,
-    addButtonState: Boolean,
-    onAddClicked: () -> Unit = {},
-    onListState: (LazyListState) -> Unit,
-    editNoteState: NotesListViewModel.EditNoteState,
-    onDialogDismiss: () -> Unit,
-    editNoteViewModel: EditNoteViewModel,
-    onBinNote: (Note) -> Unit,
-    onEditNote: (Note) -> Unit
+    viewModel: NotesListViewModel
 ) {
+
+    val screenState by viewModel.screenState.collectAsState()
+    val notesList by viewModel.notes.collectAsState(initial = emptyList())
+    val addButtonState by viewModel.addButtonExtended.collectAsState(initial = true)
+    val editNoteState by viewModel.addEditNoteState.collectAsState()
+    val editNoteViewModel = hiltViewModel<EditNoteViewModel>()
+
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
 
     ConstraintLayout(
         modifier = modifier
     ) {
         val (contentRef, buttonsRef, countRef) = createRefs()
         AnimatedVisibility(visible = screenState is NotesListViewModel.ScreenState.Success,
-            enter = slideInVertically {
-                it
-            },
+            enter = slideInVertically { it },
             exit = slideOutVertically { -it }) {
 
             NotesList(
@@ -97,7 +82,8 @@ fun Screen(
                         bottom.linkTo(parent.bottom)
                     },
                 notesList = notesList,
-                onListState = onListState,
+                listState = listState,
+                onListState = viewModel::onListState,
                 titleEndContent = { note ->
                     note.createdAt?.let {
                         IconTextRow(
@@ -114,28 +100,29 @@ fun Screen(
                         )
                     }
                 }
-            ) {
+            ) { note ->
                 Row(
                     modifier = Modifier
                         .wrapContentHeight()
                         .fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    IconButton(onClick = { onEditNote(it) }) {
+                    IconButton(onClick = { viewModel.editNote(note) }) {
                         IconResource.fromImageVector(Icons.Filled.Edit, "").ComposeIcon()
                     }
                     Spacer(modifier = Modifier.width(MaterialTheme.spacing.small))
-                    IconButton(onClick = { onBinNote(it) }) {
+                    IconButton(onClick = { viewModel.binNote(note) }) {
                         IconResource.fromImageVector(Icons.Filled.Delete, "").ComposeIcon()
                     }
                 }
             }
+
         }
-        AnimatedVisibility(visible = screenState is NotesListViewModel.ScreenState.NoData,
-            enter = slideInVertically {
-                it
-            },
+
+        AnimatedVisibility(visible = screenState is NotesListViewModel.ScreenState.NoData || screenState is NotesListViewModel.ScreenState.Error,
+            enter = slideInVertically { it },
             exit = slideOutVertically { -it }) {
+
             NoItemsContent(
                 text = stringResource(R.string.no_content),
                 iconModifier = Modifier
@@ -153,21 +140,55 @@ fun Screen(
                     modifier = Modifier.padding(top = MaterialTheme.spacing.small),
                     text = TextResource.StringResource(
                         R.string.click_to_add_a_note, stringResource(
-                            id = R.string.link_alias_to_add_a_note
+                            id = R.string.here
                         )
                     ).asString(),
-                    clickableParts = mapOf(Pair(stringResource(id = R.string.link_alias_to_add_a_note)) {
-                        onAddClicked()
+                    clickableParts = mapOf(Pair(stringResource(id = R.string.here)) {
+                        viewModel.editNewNote()
                     })
                 )
             }
+
+        }
+
+        AnimatedVisibility(visible = screenState is NotesListViewModel.ScreenState.NoDataForFilter,
+            enter = slideInVertically { it },
+            exit = slideOutVertically { -it }) {
+
+            NoItemsContent(
+                text = stringResource(R.string.no_data_for_query),
+                iconModifier = Modifier
+                    .padding(bottom = MaterialTheme.spacing.medium)
+                    .size(MaterialTheme.dimensions.mediumIconSize),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .constrainAs(contentRef) {
+                        start.linkTo(parent.start)
+                        top.linkTo(countRef.bottom)
+                        end.linkTo(parent.end)
+                        bottom.linkTo(parent.bottom)
+                    },
+                icon = IconResource.fromImageVector(Icons.Default.SearchOff)
+            ) {
+                MyClickableText(
+                    modifier = Modifier.padding(top = MaterialTheme.spacing.small),
+                    text = TextResource.StringResource(
+                        R.string.click_to_clear_search, stringResource(
+                            id = R.string.here
+                        )
+                    ).asString(),
+                    clickableParts = mapOf(Pair(stringResource(id = R.string.here)) {
+                        viewModel.clearFilter()
+                    })
+                )
+            }
+
         }
 
         AnimatedVisibility(visible = screenState is NotesListViewModel.ScreenState.Loading,
-            enter = slideInVertically {
-                it
-            },
+            enter = slideInVertically { it },
             exit = slideOutVertically { -it }) {
+
             IndeterminateLoading(
                 loadingText = stringResource(R.string.loading),
                 modifier = Modifier
@@ -178,6 +199,7 @@ fun Screen(
                         end.linkTo(parent.end)
                         bottom.linkTo(parent.bottom)
                     })
+
         }
 
         Row(
@@ -190,21 +212,38 @@ fun Screen(
         ) {
             ExtendedFloatingActionButton(
                 text = { Text(text = stringResource(id = R.string.add_note)) },
-                icon = { Icon(imageVector = Icons.Rounded.Add, contentDescription = "") },
-                onClick = onAddClicked,
+                icon = {
+                    Icon(
+                        imageVector = Icons.Rounded.Add,
+                        contentDescription = stringResource(id = R.string.add_note)
+                    )
+                },
+                onClick = viewModel::editNewNote,
                 expanded = addButtonState,
-                modifier = Modifier.padding(MaterialTheme.spacing.small)
+                modifier = Modifier.padding(vertical = MaterialTheme.spacing.small)
             )
         }
 
         AnimatedVisibility(visible = editNoteState.requested,
-            enter = slideInVertically {
-                it
-            },
+            enter = slideInVertically { it },
             exit = slideOutVertically { -it }) {
-            EditDialogScreen(onDialogDismiss, editNoteViewModel, editNoteState.baseNote)
+            EditDialogScreen({
+                viewModel.editNoteClear()
+                editNoteViewModel.cancel()
+            }, editNoteViewModel, editNoteState.baseNote)
         }
     }
+
+    LaunchedEffect(key1 = Unit) {
+        viewModel.showFirstNote.collectLatest {showFirstNote->
+            if(showFirstNote){
+                coroutineScope.launch {
+                    listState.animateScrollToItem(0)
+                }
+            }
+        }
+    }
+
 }
 
 @Composable

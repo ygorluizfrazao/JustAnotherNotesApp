@@ -8,6 +8,7 @@ import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.domain.usecases.notes.delete.DeleteNoteUseCase
 import br.com.frazo.janac.domain.usecases.notes.read.GetBinnedNotesUseCase
 import br.com.frazo.janac.domain.usecases.notes.update.UpdateNoteUseCase
+import br.com.frazo.janac.ui.mediator.CallBackUIParticipant
 import br.com.frazo.janac.ui.mediator.UIEvent
 import br.com.frazo.janac.ui.mediator.UIMediator
 import br.com.frazo.janac.ui.mediator.UIParticipant
@@ -23,7 +24,7 @@ class BinScreenViewModel @Inject constructor(
     private val deleteNoteUseCase: DeleteNoteUseCase<Int>,
     private val updateNoteUseCase: UpdateNoteUseCase<Int>,
     private val mediator: UIMediator
-) : ViewModel(), UIParticipant {
+) : ViewModel() {
 
     sealed class ScreenState {
         object Loading : ScreenState()
@@ -31,6 +32,8 @@ class BinScreenViewModel @Inject constructor(
         object NoData : ScreenState()
         data class Error(val throwable: Throwable) : ScreenState()
     }
+
+    private val uiParticipantRepresentative = object : UIParticipant{}
 
     private val _screenState = MutableStateFlow<ScreenState>(ScreenState.Loading)
     val screenState = _screenState.asStateFlow()
@@ -42,18 +45,28 @@ class BinScreenViewModel @Inject constructor(
     val clearBinButtonExpandedState = _clearBinButtonExpandedState.asStateFlow()
 
     init {
-        mediator.addParticipant(this)
+        mediator.addParticipant(uiParticipantRepresentative)
         viewModelScope.launch {
             getBinnedNotesUseCase()
                 .catch {
                     _screenState.value = ScreenState.Error(it)
+                    mediator.broadCast(
+                        uiParticipantRepresentative,
+                        UIEvent.Error(
+                            TextResource.StringResource(
+                                R.string.generic_error,
+                                it.localizedMessage ?: it.message ?: ""
+                            ),
+                            it
+                        )
+                    )
                 }
                 .collectLatest {
                     _notes.value = it.sortedByDescending { note ->
                         note.binnedAt
                     }
                     mediator.broadCast(
-                        this@BinScreenViewModel,
+                        uiParticipantRepresentative,
                         UIEvent.BinnedNotesFetched(it)
                     )
                     if (it.isEmpty())
@@ -74,7 +87,7 @@ class BinScreenViewModel @Inject constructor(
 
             if (notesDeleted < notesToDelete.size)
                 mediator.broadCast(
-                    this@BinScreenViewModel,
+                    uiParticipantRepresentative,
                     event = UIEvent.Error(TextResource.StringResource(R.string.some_notes_not_deleted))
                 )
         }
@@ -85,7 +98,7 @@ class BinScreenViewModel @Inject constructor(
             val notesDeleted = deleteNoteUseCase(note)
             if (notesDeleted <= 0)
                 mediator.broadCast(
-                    this@BinScreenViewModel,
+                    uiParticipantRepresentative,
                     event = UIEvent.Error(TextResource.StringResource(R.string.note_not_deleted))
                 )
         }
@@ -96,7 +109,7 @@ class BinScreenViewModel @Inject constructor(
             val notesUpdated = updateNoteUseCase(note, note.copy(binnedAt = null))
             if (notesUpdated <= 0)
                 mediator.broadCast(
-                    this@BinScreenViewModel,
+                    uiParticipantRepresentative,
                     event = UIEvent.Error(TextResource.StringResource(R.string.note_not_restored))
                 )
         }

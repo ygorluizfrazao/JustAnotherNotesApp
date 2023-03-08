@@ -18,10 +18,10 @@ fun NotesList(
     modifier: Modifier,
     notesList: List<Note>,
     onListState: (LazyListState) -> Unit,
+    listState: LazyListState = rememberLazyListState(),
     titleEndContent: (@Composable (note: Note) -> Unit)? = null,
     cardFooterContent: (@Composable (note: Note) -> Unit)? = null
 ) {
-    val listState = rememberLazyListState()
     onListState(listState)
     LazyColumn(
         state = listState,
@@ -29,7 +29,7 @@ fun NotesList(
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
     ) {
         items(notesList, key = {
-            it.createdAt ?: it.hashCode()
+            it.createdAt?.toInstant()?.epochSecond?:it.hashCode()
         }) { note ->
             NoteCard(
                 modifier = Modifier.animateItemPlacement(),
