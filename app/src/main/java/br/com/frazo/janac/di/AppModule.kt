@@ -12,11 +12,8 @@ import br.com.frazo.janac.data.repository.note.RoomNoteDataSource
 import br.com.frazo.janac.data.repository.note.cachestrategy.CacheStrategy
 import br.com.frazo.janac.data.repository.note.cachestrategy.InMemoryCacheStrategy
 import br.com.frazo.janac.domain.models.Note
-import br.com.frazo.janac.domain.usecases.DataTransformerUseCase
-import br.com.frazo.janac.domain.usecases.TrimmedUppercaseDataTransformerUseCase
-import br.com.frazo.janac.domain.usecases.notes.LengthNoteValidator
-import br.com.frazo.janac.domain.usecases.notes.NoteValidatorUseCase
-import br.com.frazo.janac.domain.usecases.notes.NoteValidatorUseCaseImpl
+import br.com.frazo.janac.domain.usecases.*
+import br.com.frazo.janac.domain.usecases.notes.*
 import br.com.frazo.janac.domain.usecases.notes.create.AddNoteUseCase
 import br.com.frazo.janac.domain.usecases.notes.create.AddNoteUseCaseImpl
 import br.com.frazo.janac.domain.usecases.notes.delete.DeleteNoteUseCase
@@ -28,6 +25,7 @@ import br.com.frazo.janac.domain.usecases.notes.update.UpdateNoteUseCase
 import br.com.frazo.janac.domain.usecases.notes.update.UpdateNoteUseCaseImpl
 import br.com.frazo.janac.ui.mediator.UIMediator
 import br.com.frazo.janac.ui.mediator.UIMediatorImpl
+import br.com.frazo.janac.util.DateTimeFormatterFactory
 import br.com.frazo.janac.util.Dispatchers
 import dagger.Module
 import dagger.Provides
@@ -150,7 +148,20 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideDataTransformerUseCase(): DataTransformerUseCase<String> {
-        return TrimmedUppercaseDataTransformerUseCase()
+    fun provideDateTimeFormatterFactory(@ApplicationContext appContext: Context): DateTimeFormatterFactory {
+        return DateTimeFormatterFactory(appContext)
     }
+
+    @Provides
+    @Singleton
+    fun provideSearchTermInBinnedNoteUseCase(dateTimeFormatterFactory: DateTimeFormatterFactory): SearchTermInBinnedNoteUseCase {
+        return SearchTermInBinnedNoteUseCaseImpl(dateTimeFormatterFactory)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSearchTermInNotBinnedNoteUseCase(dateTimeFormatterFactory: DateTimeFormatterFactory): SearchTermInNotBinnedNoteUseCase {
+        return SearchTermInNotBinnedNoteUseCaseImpl(dateTimeFormatterFactory)
+    }
+
 }

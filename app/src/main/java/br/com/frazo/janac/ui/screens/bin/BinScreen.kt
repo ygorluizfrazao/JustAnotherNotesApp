@@ -6,12 +6,16 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Recycling
+import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -25,7 +29,7 @@ import br.com.frazo.janac.ui.util.TextResource
 import br.com.frazo.janac.ui.util.composables.IconTextRow
 import br.com.frazo.janac.ui.util.composables.IndeterminateLoading
 import br.com.frazo.janac.ui.util.composables.NoItemsContent
-import java.time.format.DateTimeFormatter
+import br.com.frazo.janac.util.DateTimeFormatterFactory
 
 @Composable
 fun BinScreen(modifier: Modifier = Modifier) {
@@ -60,6 +64,8 @@ fun Screen(
     onRestoreNote: (Note) -> Unit
 ) {
 
+    val context = LocalContext.current
+
     ConstraintLayout(
         modifier = modifier
     ) {
@@ -91,7 +97,7 @@ fun Screen(
                             iconResource = IconResource.fromImageVector(Icons.Default.Recycling),
                             textResource = TextResource.RuntimeString(
                                 note.binnedAt.format(
-                                    DateTimeFormatter.ISO_LOCAL_DATE
+                                    DateTimeFormatterFactory(context = context).datePattern()
                                 )
                             )
                         )

@@ -14,26 +14,27 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.frazo.janac.R
 import br.com.frazo.janac.domain.extensions.isNewNote
 import br.com.frazo.janac.domain.models.Note
-import br.com.frazo.janac.ui.screens.composables.NotesList
-import br.com.frazo.janac.ui.util.composables.IndeterminateLoading
-import br.com.frazo.janac.ui.util.composables.MyClickableText
-import br.com.frazo.janac.ui.util.composables.NoItemsContent
 import br.com.frazo.janac.ui.screens.composables.EditNoteDialog
+import br.com.frazo.janac.ui.screens.composables.NotesList
 import br.com.frazo.janac.ui.screens.notes.editnote.EditNoteViewModel
 import br.com.frazo.janac.ui.theme.dimensions
 import br.com.frazo.janac.ui.theme.spacing
 import br.com.frazo.janac.ui.util.IconResource
 import br.com.frazo.janac.ui.util.TextResource
 import br.com.frazo.janac.ui.util.composables.IconTextRow
+import br.com.frazo.janac.ui.util.composables.IndeterminateLoading
+import br.com.frazo.janac.ui.util.composables.MyClickableText
+import br.com.frazo.janac.ui.util.composables.NoItemsContent
+import br.com.frazo.janac.util.DateTimeFormatterFactory
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.time.format.DateTimeFormatter
 
 @Composable
 fun NotesListScreen(
@@ -62,6 +63,8 @@ fun Screen(
     val editNoteViewModel = hiltViewModel<EditNoteViewModel>()
 
     val listState = rememberLazyListState()
+
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
     ConstraintLayout(
@@ -94,7 +97,7 @@ fun Screen(
                             iconResource = IconResource.fromImageVector(Icons.Default.CalendarToday),
                             textResource = TextResource.RuntimeString(
                                 note.createdAt.format(
-                                    DateTimeFormatter.ISO_LOCAL_DATE
+                                    DateTimeFormatterFactory(context = context).datePattern()
                                 )
                             )
                         )
@@ -235,8 +238,8 @@ fun Screen(
     }
 
     LaunchedEffect(key1 = Unit) {
-        viewModel.showFirstNote.collectLatest {showFirstNote->
-            if(showFirstNote){
+        viewModel.showFirstNote.collectLatest { showFirstNote ->
+            if (showFirstNote) {
                 coroutineScope.launch {
                     listState.animateScrollToItem(0)
                 }

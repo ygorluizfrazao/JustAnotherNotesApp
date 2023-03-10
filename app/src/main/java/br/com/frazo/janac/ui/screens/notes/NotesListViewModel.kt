@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.frazo.janac.R
 import br.com.frazo.janac.domain.models.Note
-import br.com.frazo.janac.domain.usecases.DataTransformerUseCase
+import br.com.frazo.janac.domain.usecases.SearchTermInNotBinnedNoteUseCase
 import br.com.frazo.janac.domain.usecases.notes.read.GetNotBinnedNotesUseCase
 import br.com.frazo.janac.domain.usecases.notes.update.BinNoteUseCase
 import br.com.frazo.janac.ui.mediator.CallBackUIParticipant
@@ -23,7 +23,7 @@ class NotesListViewModel @Inject constructor(
     private val getNotBinnedNotesUseCase: GetNotBinnedNotesUseCase<Flow<List<Note>>>,
     private val binNoteUseCase: BinNoteUseCase<Int>,
     private val mediator: UIMediator,
-    private val filterDataTransformerUseCase: DataTransformerUseCase<String>
+    private val searchTermInNotBinnedNoteUseCase: SearchTermInNotBinnedNoteUseCase
 ) : ViewModel() {
 
     sealed class ScreenState {
@@ -160,11 +160,7 @@ class NotesListViewModel @Inject constructor(
     private fun filterNotes(query: String) {
         if (query.isNotBlank())
             _filteredNotes.value = _notes.value.filter {
-                filterDataTransformerUseCase(it.toString()).contains(
-                    filterDataTransformerUseCase(
-                        query
-                    )
-                )
+                searchTermInNotBinnedNoteUseCase(it, query)
             }
         else
             _filteredNotes.value = _notes.value
@@ -183,7 +179,7 @@ class NotesListViewModel @Inject constructor(
     }
 
     fun clearFilter() {
-        mediator.broadCast(uiParticipantRepresentative,UIEvent.FinishSearchQuery)
+        mediator.broadCast(uiParticipantRepresentative, UIEvent.FinishSearchQuery)
         filterNotes("")
     }
 

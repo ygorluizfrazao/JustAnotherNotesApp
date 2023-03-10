@@ -1,14 +1,15 @@
 <resources>
     <string name="app_name">JANA</string>
 
-<!--    Navigatio-->
+<!--    Navigation-->
 
     <string name="nav_notes_list" translatable="false">nav_notes_list</string>
     <string name="nav_notes_bin" translatable="false">nav_notes_bin</string>
 
+    <string name="date_format">default</string>
+
     <string name="notes_list">Notes List</string>
     <string name="add_note">Add Note</string>
-
     <string name="bin">Bin</string>
     <string name="no_content">Nothing to show yet.</string>
     <string name="loading">Loading</string>
