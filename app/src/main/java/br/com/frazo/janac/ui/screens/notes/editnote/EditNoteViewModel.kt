@@ -125,7 +125,7 @@ class EditNoteViewModel @Inject constructor(
             val result = if (toEditNote.isNewNote()) saveNewNote() else editNote()
             if (result > 0) {
                 _uiState.value = UIState.Saved
-                mediator.broadCast(
+                mediator.broadcast(
                     uiParticipantRepresentative,
                     if (toEditNote.isNewNote()) UIEvent.NoteCreated(inEditionNote.value) else UIEvent.NoteEdited(
                         toEditNote,

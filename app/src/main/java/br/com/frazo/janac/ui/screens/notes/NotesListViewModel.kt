@@ -1,6 +1,5 @@
 package br.com.frazo.janac.ui.screens.notes
 
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.frazo.janac.R
@@ -41,7 +40,6 @@ class NotesListViewModel @Inject constructor(
     }
 
     private val _notes = MutableStateFlow(emptyList<Note>())
-
     private val filter = MutableStateFlow("")
     private val _filteredNotes = MutableStateFlow(_notes.value)
     val notes = _filteredNotes.asStateFlow()
@@ -52,11 +50,8 @@ class NotesListViewModel @Inject constructor(
     private val _screenState: MutableStateFlow<ScreenState> = MutableStateFlow(ScreenState.Loading)
     val screenState = _screenState.asStateFlow()
 
-    private val _addButtonExtended = MutableStateFlow(true)
-    val addButtonExtended = _addButtonExtended.asStateFlow()
-
     private val _editNoteState = MutableStateFlow(EditNoteState(false))
-    val addEditNoteState = _editNoteState.asStateFlow()
+    val editNoteState = _editNoteState.asStateFlow()
 
 
     init {
@@ -64,19 +59,19 @@ class NotesListViewModel @Inject constructor(
 
         viewModelScope.launch {
 
-            startCollectingNotes(this)
-            startCollectingFilterChange(this)
-            startFilteringOnNotesChange(this)
+            startCollectingNotes()
+            startCollectingFilterChange()
+            startFilteringOnNotesChange()
 
         }
     }
 
-    private suspend fun startCollectingNotes(scope: CoroutineScope) {
-        scope.launch {
+    private fun CoroutineScope.startCollectingNotes() {
+        launch {
             getNotBinnedNotesUseCase()
                 .catch {
                     _screenState.value = ScreenState.Error(it)
-                    mediator.broadCast(
+                    mediator.broadcast(
                         uiParticipantRepresentative,
                         UIEvent.Error(
                             TextResource.StringResource(
@@ -92,7 +87,7 @@ class NotesListViewModel @Inject constructor(
                         it.sortedByDescending { note ->
                             note.createdAt
                         }
-                    mediator.broadCast(
+                    mediator.broadcast(
                         uiParticipantRepresentative,
                         UIEvent.NotBinnedNotesFetched(_notes.value)
                     )
@@ -100,16 +95,16 @@ class NotesListViewModel @Inject constructor(
         }
     }
 
-    private suspend fun startCollectingFilterChange(scope: CoroutineScope) {
-        scope.launch {
+    private fun CoroutineScope.startCollectingFilterChange() {
+        launch {
             filter.collectLatest { query ->
                 filterNotes(query)
             }
         }
     }
 
-    private suspend fun startFilteringOnNotesChange(scope: CoroutineScope) {
-        scope.launch {
+    private fun CoroutineScope.startFilteringOnNotesChange() {
+        launch {
             _notes.collectLatest {
                 filterNotes(filter.value)
             }
@@ -133,10 +128,6 @@ class NotesListViewModel @Inject constructor(
                 _showFirstNote.emit(true)
             }
         }
-    }
-
-    fun onListState(listState: LazyListState?) {
-        _addButtonExtended.value = listState == null || listState.firstVisibleItemIndex == 0
     }
 
     fun editNewNote() {
@@ -164,6 +155,10 @@ class NotesListViewModel @Inject constructor(
             }
         else
             _filteredNotes.value = _notes.value
+        mediator.broadcast(
+            uiParticipantRepresentative,
+            UIEvent.NotBinnedNotesFiltered(_filteredNotes.value)
+        )
         updateState()
     }
 
@@ -174,12 +169,12 @@ class NotesListViewModel @Inject constructor(
             else
                 _screenState.value = ScreenState.Success(_filteredNotes.value)
         } else {
-            ScreenState.NoData
+            if (_screenState.value != ScreenState.Loading) _screenState.value = ScreenState.NoData
         }
     }
 
     fun clearFilter() {
-        mediator.broadCast(uiParticipantRepresentative, UIEvent.FinishSearchQuery)
+        mediator.broadcast(uiParticipantRepresentative, UIEvent.FinishSearchQuery)
         filterNotes("")
     }
 

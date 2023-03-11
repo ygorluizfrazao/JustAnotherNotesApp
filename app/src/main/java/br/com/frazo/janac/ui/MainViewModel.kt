@@ -31,6 +31,12 @@ class MainViewModel @Inject constructor(
     private val _binnedNotesCount = MutableStateFlow(0)
     val binnedNotesCount = _binnedNotesCount.asStateFlow()
 
+    private val _filteredNotBinnedNotesCount = MutableStateFlow(Int.MIN_VALUE)
+    val filteredNotBinnedNotesCount = _filteredNotBinnedNotesCount.asStateFlow()
+
+    private val _filteredBinnedNotesCount = MutableStateFlow(Int.MIN_VALUE)
+    val filteredBinnedNotesCount = _filteredBinnedNotesCount.asStateFlow()
+
     private val _errorMessage = MutableSharedFlow<TextResource>()
     val errorMessage = _errorMessage.asSharedFlow()
 
@@ -57,6 +63,8 @@ class MainViewModel @Inject constructor(
             is UIEvent.Error -> emitErrorMessage(event.message)
             is UIEvent.FilterQuery -> _filterQuery.value = event.query
             is UIEvent.FinishSearchQuery -> resetSearchQuery()
+            is UIEvent.BinnedNotesFiltered -> _filteredBinnedNotesCount.value = event.filteredNotes.size
+            is UIEvent.NotBinnedNotesFiltered -> _filteredNotBinnedNotesCount.value = event.filteredNotes.size
 
             else -> Unit
         }
@@ -81,7 +89,7 @@ class MainViewModel @Inject constructor(
 
     fun filter(query: String) {
         _filterQuery.value = query
-        mediator.broadCast(uiParticipantRepresentative, UIEvent.FilterQuery(query))
+        mediator.broadcast(uiParticipantRepresentative, UIEvent.FilterQuery(query))
     }
 
 }

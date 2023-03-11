@@ -17,12 +17,10 @@ import br.com.frazo.janac.ui.theme.spacing
 fun NotesList(
     modifier: Modifier,
     notesList: List<Note>,
-    onListState: (LazyListState) -> Unit,
     listState: LazyListState = rememberLazyListState(),
     titleEndContent: (@Composable (note: Note) -> Unit)? = null,
     cardFooterContent: (@Composable (note: Note) -> Unit)? = null
 ) {
-    onListState(listState)
     LazyColumn(
         state = listState,
         modifier = modifier,

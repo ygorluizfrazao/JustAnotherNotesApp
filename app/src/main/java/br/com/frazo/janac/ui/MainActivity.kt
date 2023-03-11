@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -61,8 +60,11 @@ class MainActivity : ComponentActivity() {
         viewModel: MainViewModel
     ) {
 
-        val notBinnedCount by viewModel.notBinnedNotesCount.collectAsState()
+        val notBinnedNotesCount by viewModel.notBinnedNotesCount.collectAsState()
         val binnedNotesCount by viewModel.binnedNotesCount.collectAsState()
+
+        val filteredNotBinnedNotesCount by viewModel.filteredNotBinnedNotesCount.collectAsState()
+        val filteredBinnedNotesCount by viewModel.filteredBinnedNotesCount.collectAsState()
 
         val toggleSearchBar by viewModel.toggleFilter.collectAsState()
         val searchQuery by viewModel.filterQuery.collectAsState()
@@ -141,8 +143,10 @@ class MainActivity : ComponentActivity() {
                     BottomNavigationItems(
                         currentDestination = currentDestination,
                         navController = navController,
-                        notBinnedNotes = notBinnedCount,
-                        binnedNotes = binnedNotesCount
+                        notBinnedNotes = notBinnedNotesCount,
+                        filteredNotBinnedNotes = filteredNotBinnedNotesCount,
+                        binnedNotes = binnedNotesCount,
+                        filteredBinnedNotes = filteredBinnedNotesCount
                     )
                 }
             }
@@ -215,16 +219,26 @@ class MainActivity : ComponentActivity() {
         currentDestination: NavDestination?,
         navController: NavHostController,
         notBinnedNotes: Int,
-        binnedNotes: Int
+        filteredNotBinnedNotes: Int,
+        binnedNotes: Int,
+        filteredBinnedNotes: Int
     ) {
 
         val context = LocalContext.current
+
         NavigationBarItem(
             icon = {
                 if (notBinnedNotes > 0) {
                     BadgedBox(badge = {
+
+                        val badgeInfo =
+                            if (filteredNotBinnedNotes == Int.MIN_VALUE || filteredNotBinnedNotes == notBinnedNotes)
+                                notBinnedNotes.toString()
+                            else
+                                "$filteredNotBinnedNotes/$notBinnedNotes"
+
                         Badge {
-                            Text(text = notBinnedNotes.toString())
+                            Text(text = badgeInfo)
                         }
                     }) {
                         Icon(
@@ -259,8 +273,15 @@ class MainActivity : ComponentActivity() {
             icon = {
                 if (binnedNotes > 0) {
                     BadgedBox(badge = {
+
+                        val badgeInfo =
+                            if (filteredBinnedNotes == Int.MIN_VALUE || filteredBinnedNotes == binnedNotes)
+                                binnedNotes.toString()
+                            else
+                                "$filteredBinnedNotes/$binnedNotes"
+
                         Badge {
-                            Text(text = binnedNotes.toString())
+                            Text(text = badgeInfo)
                         }
                     }) {
                         Icon(

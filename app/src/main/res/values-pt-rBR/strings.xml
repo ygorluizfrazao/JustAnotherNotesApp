@@ -24,6 +24,7 @@
     <string name="edit_note">Editar nota</string>
     <string name="all_clear_here">Tudo limpo por aqui</string>
     <string name="clear_bin">Esvaziar Lixeira</string>
+    <string name="clear_filtered_bin">Deletar Filtradas</string>
     <string name="generic_error">Algo de errado aconteceu, %1$s.</string>
     <string name="note_not_deleted">Algo de errado aconteceu, a nota não pôde ser removida.</string>
     <string name="note_not_restored">Algo de errado aconteceu, a nota não pôde ser restaurada.</string>

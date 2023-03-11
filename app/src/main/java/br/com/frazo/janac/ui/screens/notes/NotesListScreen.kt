@@ -58,11 +58,13 @@ fun Screen(
 
     val screenState by viewModel.screenState.collectAsState()
     val notesList by viewModel.notes.collectAsState(initial = emptyList())
-    val addButtonState by viewModel.addButtonExtended.collectAsState(initial = true)
-    val editNoteState by viewModel.addEditNoteState.collectAsState()
+    val editNoteState by viewModel.editNoteState.collectAsState()
     val editNoteViewModel = hiltViewModel<EditNoteViewModel>()
 
     val listState = rememberLazyListState()
+    val addButtonExtendedState by remember {
+        derivedStateOf { listState.firstVisibleItemIndex == 0  }
+    }
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -86,7 +88,6 @@ fun Screen(
                     },
                 notesList = notesList,
                 listState = listState,
-                onListState = viewModel::onListState,
                 titleEndContent = { note ->
                     note.createdAt?.let {
                         IconTextRow(
@@ -222,7 +223,7 @@ fun Screen(
                     )
                 },
                 onClick = viewModel::editNewNote,
-                expanded = addButtonState,
+                expanded = addButtonExtendedState,
                 modifier = Modifier.padding(vertical = MaterialTheme.spacing.small)
             )
         }

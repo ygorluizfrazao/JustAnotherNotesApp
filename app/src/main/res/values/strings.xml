@@ -27,6 +27,7 @@
     <string name="edit_note">Edit Note</string>
     <string name="all_clear_here">All clear here</string>
     <string name="clear_bin">Delete All</string>
+    <string name="clear_filtered_bin">Delete Filtered</string>
     <string name="generic_error">Something wrong happened, %1$s.</string>
     <string name="note_not_deleted">Something wrong happened, the note could not be deleted.</string>
     <string name="note_not_restored">Something wrong happened, the note could not be restored.</string>

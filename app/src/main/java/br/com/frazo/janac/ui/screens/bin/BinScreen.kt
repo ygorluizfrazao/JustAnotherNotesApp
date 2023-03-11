@@ -5,15 +5,14 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.DeleteForever
-import androidx.compose.material.icons.filled.Recycling
-import androidx.compose.material.icons.filled.Restore
-import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -28,6 +27,7 @@ import br.com.frazo.janac.ui.util.IconResource
 import br.com.frazo.janac.ui.util.TextResource
 import br.com.frazo.janac.ui.util.composables.IconTextRow
 import br.com.frazo.janac.ui.util.composables.IndeterminateLoading
+import br.com.frazo.janac.ui.util.composables.MyClickableText
 import br.com.frazo.janac.ui.util.composables.NoItemsContent
 import br.com.frazo.janac.util.DateTimeFormatterFactory
 
@@ -35,19 +35,9 @@ import br.com.frazo.janac.util.DateTimeFormatterFactory
 fun BinScreen(modifier: Modifier = Modifier) {
 
     val viewModel = hiltViewModel<BinScreenViewModel>()
-    val screenState by viewModel.screenState.collectAsState()
-    val notesList by viewModel.notes.collectAsState()
-    val clearBinButtonState by viewModel.clearBinButtonExpandedState.collectAsState()
-
     Screen(
         modifier = modifier,
-        notesList = notesList,
-        screenState = screenState,
-        clearBinButtonState = clearBinButtonState,
-        onClearBinClicked = viewModel::clearBin,
-        onListState = viewModel::onListState,
-        onDeleteNote = viewModel::deleteNote,
-        onRestoreNote = viewModel::restoreNote
+        viewModel = viewModel,
     )
 
 }
@@ -55,16 +45,16 @@ fun BinScreen(modifier: Modifier = Modifier) {
 @Composable
 fun Screen(
     modifier: Modifier = Modifier,
-    notesList: List<Note>,
-    screenState: BinScreenViewModel.ScreenState,
-    clearBinButtonState: Boolean,
-    onClearBinClicked: () -> Unit,
-    onListState: (LazyListState) -> Unit,
-    onDeleteNote: (Note) -> Unit,
-    onRestoreNote: (Note) -> Unit
+    viewModel: BinScreenViewModel
 ) {
 
+    val screenState by viewModel.screenState.collectAsState()
+    val filteredNotesList = viewModel.filteredNotes.collectAsState()
+    val allNotes = viewModel.notes.collectAsState()
+    val listState = rememberLazyListState()
+
     val context = LocalContext.current
+
 
     ConstraintLayout(
         modifier = modifier
@@ -85,8 +75,8 @@ fun Screen(
                         end.linkTo(parent.end)
                         bottom.linkTo(parent.bottom)
                     },
-                notesList = notesList,
-                onListState = onListState,
+                notesList = filteredNotesList.value,
+                listState = listState,
                 titleEndContent = { note ->
                     note.binnedAt?.let {
                         IconTextRow(
@@ -110,11 +100,11 @@ fun Screen(
                         .fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    IconButton(onClick = { onRestoreNote(it) }) {
+                    IconButton(onClick = { viewModel.restoreNote(it) }) {
                         IconResource.fromImageVector(Icons.Filled.Restore, "").ComposeIcon()
                     }
                     Spacer(modifier = Modifier.width(MaterialTheme.spacing.small))
-                    IconButton(onClick = { onDeleteNote(it) }) {
+                    IconButton(onClick = { viewModel.deleteNote(it) }) {
                         IconResource.fromImageVector(Icons.Filled.DeleteForever, "").ComposeIcon()
                     }
                 }
@@ -142,6 +132,40 @@ fun Screen(
             )
         }
 
+        AnimatedVisibility(visible = screenState is BinScreenViewModel.ScreenState.NoDataForFilter,
+            enter = slideInVertically { it },
+            exit = slideOutVertically { -it }) {
+
+            NoItemsContent(
+                text = stringResource(R.string.no_data_for_query),
+                iconModifier = Modifier
+                    .padding(bottom = MaterialTheme.spacing.medium)
+                    .size(MaterialTheme.dimensions.mediumIconSize),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .constrainAs(contentRef) {
+                        start.linkTo(parent.start)
+                        top.linkTo(countRef.bottom)
+                        end.linkTo(parent.end)
+                        bottom.linkTo(parent.bottom)
+                    },
+                icon = IconResource.fromImageVector(Icons.Default.SearchOff)
+            ) {
+                MyClickableText(
+                    modifier = Modifier.padding(top = MaterialTheme.spacing.small),
+                    text = TextResource.StringResource(
+                        R.string.click_to_clear_search, stringResource(
+                            id = R.string.here
+                        )
+                    ).asString(),
+                    clickableParts = mapOf(Pair(stringResource(id = R.string.here)) {
+                        viewModel.clearFilter()
+                    })
+                )
+            }
+
+        }
+
         AnimatedVisibility(visible = screenState is BinScreenViewModel.ScreenState.Loading,
             enter = slideInVertically {
                 it
@@ -159,28 +183,68 @@ fun Screen(
                     })
         }
 
-        Row(
+        DeleteButton(
             modifier = Modifier
                 .wrapContentSize()
                 .constrainAs(buttonsRef) {
                     bottom.linkTo(parent.bottom)
                     end.linkTo(parent.end)
                 }
+                .padding(
+                    vertical = MaterialTheme.spacing.small
+                ),
+            listState = listState,
+            filteredNotesList = filteredNotesList,
+            allNotes = allNotes
         ) {
-            AnimatedVisibility(visible = notesList.isNotEmpty()) {
-                ExtendedFloatingActionButton(
-                    text = { Text(text = stringResource(id = R.string.clear_bin)) },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.DeleteForever,
-                            contentDescription = stringResource(id = R.string.clear_bin)
-                        )
-                    },
-                    onClick = onClearBinClicked,
-                    expanded = clearBinButtonState,
-                    modifier = Modifier.padding(vertical = MaterialTheme.spacing.small)
-                )
-            }
+            viewModel.clearBin()
         }
+    }
+}
+
+@Composable
+fun DeleteButton(
+    modifier: Modifier = Modifier,
+    listState: LazyListState,
+    filteredNotesList: State<List<Note>>,
+    allNotes: State<List<Note>>,
+    onClick: () -> Unit
+) {
+
+    val expandedState by remember {
+        derivedStateOf {
+            listState.firstVisibleItemIndex == 0
+        }
+    }
+
+    val filtered  = remember {
+        derivedStateOf {
+            filteredNotesList.value.size < allNotes.value.size && filteredNotesList.value.isNotEmpty()
+        }
+    }
+
+    val textResource by remember {
+        derivedStateOf{
+            if (filtered.value) {
+                TextResource.StringResource(R.string.clear_filtered_bin)
+            } else
+                TextResource.StringResource(R.string.clear_bin)
+        }
+    }
+
+    val iconResource: IconResource =
+        IconResource.fromImageVector(Icons.Default.DeleteForever, textResource.asString())
+
+    AnimatedVisibility(
+        modifier = modifier,
+        visible = filteredNotesList.value.isNotEmpty()
+    ) {
+        ExtendedFloatingActionButton(
+            modifier = modifier,
+            text = { Text(text = textResource.asString()) },
+            icon = { iconResource.ComposeIcon() },
+            onClick = onClick,
+            expanded = expandedState,
+        )
     }
 }

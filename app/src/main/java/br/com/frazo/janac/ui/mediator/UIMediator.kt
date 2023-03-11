@@ -1,10 +1,15 @@
 package br.com.frazo.janac.ui.mediator
 
+import kotlinx.coroutines.flow.Flow
+import kotlin.reflect.KClass
+
 interface UIMediator {
 
     fun inform(from: UIParticipant, event: UIEvent, to: List<UIParticipant>): MediationResult
 
-    fun broadCast(from: UIParticipant, event: UIEvent): MediationResult
+    fun broadcast(from: UIParticipant, event: UIEvent): MediationResult
+
+    fun <E: UIEvent>broadcastFlowOfEvent(eventClass: KClass<E>): Flow<Pair<UIParticipant,UIEvent>?>
 
     fun addParticipant(participant: UIParticipant)
 

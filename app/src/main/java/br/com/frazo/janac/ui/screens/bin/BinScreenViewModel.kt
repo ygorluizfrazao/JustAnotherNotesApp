@@ -1,19 +1,19 @@
 package br.com.frazo.janac.ui.screens.bin
 
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.frazo.janac.R
 import br.com.frazo.janac.domain.models.Note
+import br.com.frazo.janac.domain.usecases.SearchTermInBinnedNoteUseCase
 import br.com.frazo.janac.domain.usecases.notes.delete.DeleteNoteUseCase
 import br.com.frazo.janac.domain.usecases.notes.read.GetBinnedNotesUseCase
 import br.com.frazo.janac.domain.usecases.notes.update.UpdateNoteUseCase
-import br.com.frazo.janac.ui.mediator.CallBackUIParticipant
 import br.com.frazo.janac.ui.mediator.UIEvent
 import br.com.frazo.janac.ui.mediator.UIMediator
 import br.com.frazo.janac.ui.mediator.UIParticipant
 import br.com.frazo.janac.ui.util.TextResource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -23,34 +23,47 @@ class BinScreenViewModel @Inject constructor(
     private val getBinnedNotesUseCase: GetBinnedNotesUseCase<Flow<List<Note>>>,
     private val deleteNoteUseCase: DeleteNoteUseCase<Int>,
     private val updateNoteUseCase: UpdateNoteUseCase<Int>,
-    private val mediator: UIMediator
+    private val mediator: UIMediator,
+    private val searchTermInBinnedNoteUseCase: SearchTermInBinnedNoteUseCase
 ) : ViewModel() {
 
     sealed class ScreenState {
         object Loading : ScreenState()
         data class Success(val data: List<Note>) : ScreenState()
         object NoData : ScreenState()
+        object NoDataForFilter : ScreenState()
         data class Error(val throwable: Throwable) : ScreenState()
     }
 
-    private val uiParticipantRepresentative = object : UIParticipant{}
+    private val uiParticipantRepresentative = object : UIParticipant {}
 
     private val _screenState = MutableStateFlow<ScreenState>(ScreenState.Loading)
     val screenState = _screenState.asStateFlow()
 
     private val _notes = MutableStateFlow<List<Note>>(emptyList())
     val notes = _notes.asStateFlow()
-
-    private val _clearBinButtonExpandedState = MutableStateFlow(true)
-    val clearBinButtonExpandedState = _clearBinButtonExpandedState.asStateFlow()
+    private val filter = MutableStateFlow("")
+    private val _filteredNotes = MutableStateFlow(_notes.value)
+    val filteredNotes = _filteredNotes.asStateFlow()
 
     init {
         mediator.addParticipant(uiParticipantRepresentative)
         viewModelScope.launch {
+
+            startCollectingBinnedNotes()
+            startCollectingFilterChange()
+            startFilteringOnNotesChange()
+            startCollectingFilterMessages()
+
+        }
+    }
+
+    private fun CoroutineScope.startCollectingBinnedNotes() {
+        launch {
             getBinnedNotesUseCase()
                 .catch {
                     _screenState.value = ScreenState.Error(it)
-                    mediator.broadCast(
+                    mediator.broadcast(
                         uiParticipantRepresentative,
                         UIEvent.Error(
                             TextResource.StringResource(
@@ -62,31 +75,54 @@ class BinScreenViewModel @Inject constructor(
                     )
                 }
                 .collectLatest {
-                    _notes.value = it.sortedByDescending { note ->
-                        note.binnedAt
-                    }
-                    mediator.broadCast(
+                    _notes.value =
+                        it.sortedByDescending { note ->
+                            note.binnedAt
+                        }
+                    mediator.broadcast(
                         uiParticipantRepresentative,
-                        UIEvent.BinnedNotesFetched(it)
+                        UIEvent.BinnedNotesFetched(_notes.value)
                     )
-                    if (it.isEmpty())
-                        _screenState.value = ScreenState.NoData
-                    else
-                        _screenState.value = ScreenState.Success(it)
                 }
+        }
+    }
+
+    private fun CoroutineScope.startCollectingFilterChange() {
+        launch {
+            filter.collectLatest { query ->
+                filterNotes(query)
+            }
+        }
+    }
+
+    private fun CoroutineScope.startFilteringOnNotesChange() {
+        launch {
+            _notes.collectLatest {
+                filterNotes(filter.value)
+            }
+        }
+    }
+
+    private fun CoroutineScope.startCollectingFilterMessages() {
+        launch {
+            mediator.broadcastFlowOfEvent(UIEvent.FilterQuery::class).collectLatest { eventPair ->
+                eventPair?.let { (_, event) ->
+                    filter.value = (event as UIEvent.FilterQuery).query
+                }
+            }
         }
     }
 
     fun clearBin() {
         viewModelScope.launch {
-            val notesToDelete = _notes.value
+            val notesToDelete = filteredNotes.value
             var notesDeleted = 0
             notesToDelete.forEach { note ->
                 notesDeleted += deleteNoteUseCase(note)
             }
 
             if (notesDeleted < notesToDelete.size)
-                mediator.broadCast(
+                mediator.broadcast(
                     uiParticipantRepresentative,
                     event = UIEvent.Error(TextResource.StringResource(R.string.some_notes_not_deleted))
                 )
@@ -97,7 +133,7 @@ class BinScreenViewModel @Inject constructor(
         viewModelScope.launch {
             val notesDeleted = deleteNoteUseCase(note)
             if (notesDeleted <= 0)
-                mediator.broadCast(
+                mediator.broadcast(
                     uiParticipantRepresentative,
                     event = UIEvent.Error(TextResource.StringResource(R.string.note_not_deleted))
                 )
@@ -108,15 +144,38 @@ class BinScreenViewModel @Inject constructor(
         viewModelScope.launch {
             val notesUpdated = updateNoteUseCase(note, note.copy(binnedAt = null))
             if (notesUpdated <= 0)
-                mediator.broadCast(
+                mediator.broadcast(
                     uiParticipantRepresentative,
                     event = UIEvent.Error(TextResource.StringResource(R.string.note_not_restored))
                 )
         }
     }
 
-    fun onListState(listState: LazyListState?) {
-        _clearBinButtonExpandedState.value =
-            listState == null || listState.firstVisibleItemIndex == 0
+    private fun filterNotes(query: String) {
+        if (query.isNotBlank())
+            _filteredNotes.value = _notes.value.filter {
+                searchTermInBinnedNoteUseCase(it, query)
+            }
+        else
+            _filteredNotes.value = _notes.value
+        mediator.broadcast(uiParticipantRepresentative,UIEvent.BinnedNotesFiltered(_filteredNotes.value))
+        updateState()
     }
+
+    private fun updateState() {
+        if (_notes.value.isNotEmpty()) {
+            if (_filteredNotes.value.isEmpty())
+                _screenState.value = ScreenState.NoDataForFilter
+            else
+                _screenState.value = ScreenState.Success(_filteredNotes.value)
+        } else {
+            if (_screenState.value != ScreenState.Loading) _screenState.value = ScreenState.NoData
+        }
+    }
+
+    fun clearFilter() {
+        mediator.broadcast(uiParticipantRepresentative, UIEvent.FinishSearchQuery)
+        filterNotes("")
+    }
+
 }
