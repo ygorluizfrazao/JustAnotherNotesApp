@@ -1,10 +1,7 @@
 package br.com.frazo.janac.ui.screens.composables
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Card
-import androidx.compose.material3.Divider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,7 +16,7 @@ fun NoteCard(
     modifier: Modifier = Modifier,
     note: Note,
     titleEndContent: (@Composable (note: Note)->Unit)? = null,
-    footerContent: (@Composable (note: Note) -> Unit)? = null
+    footerContent: (@Composable ColumnScope.(note: Note) -> Unit)? = null
 ) {
     Card(
         modifier = modifier
@@ -76,11 +73,12 @@ fun NoteCard(
                     end.linkTo(parent.end)
                 }) {
                     Divider(
-                        modifier
+                        modifier = modifier
                             .fillMaxWidth()
-                            .padding(top = MaterialTheme.spacing.medium)
+                            .padding(top = MaterialTheme.spacing.medium),
+                        color = LocalContentColor.current
                     )
-                    it(note)
+                    this.it(note)
                 }
             }
         }

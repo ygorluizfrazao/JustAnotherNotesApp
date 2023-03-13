@@ -7,9 +7,7 @@ import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.domain.usecases.SearchTermInNotBinnedNoteUseCase
 import br.com.frazo.janac.domain.usecases.notes.read.GetNotBinnedNotesUseCase
 import br.com.frazo.janac.domain.usecases.notes.update.BinNoteUseCase
-import br.com.frazo.janac.ui.mediator.CallBackUIParticipant
-import br.com.frazo.janac.ui.mediator.UIEvent
-import br.com.frazo.janac.ui.mediator.UIMediator
+import br.com.frazo.janac.ui.mediator.*
 import br.com.frazo.janac.ui.util.TextResource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -53,6 +51,9 @@ class NotesListViewModel @Inject constructor(
     private val _editNoteState = MutableStateFlow(EditNoteState(false))
     val editNoteState = _editNoteState.asStateFlow()
 
+    private val _contentDisplayMode = MutableStateFlow(ContentDisplayMode.AS_LIST)
+    val contentDisplayMode = _contentDisplayMode.asStateFlow()
+
 
     init {
         mediator.addParticipant(uiParticipantRepresentative)
@@ -62,8 +63,15 @@ class NotesListViewModel @Inject constructor(
             startCollectingNotes()
             startCollectingFilterChange()
             startFilteringOnNotesChange()
+            startCollectingFilterMessagesUIEvent()
+            startCollectingContentDisplayModeEvents()
 
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        mediator.removeParticipant(uiParticipantRepresentative)
     }
 
     private fun CoroutineScope.startCollectingNotes() {
@@ -111,10 +119,32 @@ class NotesListViewModel @Inject constructor(
         }
     }
 
+    private fun CoroutineScope.startCollectingFilterMessagesUIEvent() {
+        launch {
+            mediator.broadcastFlowOfEvent(UIEvent.FilterQuery::class).collectLatest { eventPair ->
+                eventPair?.let { (_, event) ->
+                    filter.value = (event as UIEvent.FilterQuery).query
+                }
+            }
+        }
+    }
+
+    private fun CoroutineScope.startCollectingContentDisplayModeEvents() {
+        launch {
+            mediator.broadcastFlowOfEvent(UIEvent.ContentDisplayModeChanged::class)
+                .collectLatest { eventPair ->
+                    eventPair?.let { (_, event) ->
+                        _contentDisplayMode.value =
+                            (event as UIEvent.ContentDisplayModeChanged).newContentDisplayMode
+                    }
+                }
+        }
+    }
+
     private fun handleMediatorMessage(event: UIEvent) {
 
         when (event) {
-            is UIEvent.FilterQuery -> filter.value = event.query
+
             is UIEvent.NoteCreated -> emitShowFirstNote()
 
             else -> Unit

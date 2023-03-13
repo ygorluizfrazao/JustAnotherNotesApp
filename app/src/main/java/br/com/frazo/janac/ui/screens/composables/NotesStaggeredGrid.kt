@@ -1,42 +1,42 @@
 package br.com.frazo.janac.ui.screens.composables
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.staggeredgrid.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import br.com.frazo.janac.domain.models.Note
+import br.com.frazo.janac.ui.theme.dimensions
 import br.com.frazo.janac.ui.theme.spacing
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun NotesList(
+fun NotesStaggeredGrid(
     modifier: Modifier,
     notesList: List<Note>,
-    listState: LazyListState = rememberLazyListState(),
-    titleEndContent: (@Composable (note: Note) -> Unit)? = null,
+    gridState: LazyStaggeredGridState = rememberLazyStaggeredGridState(),
     cardFooterContent: (@Composable ColumnScope.(note: Note) -> Unit)? = null
 ) {
-
-    LazyColumn(
-        state = listState,
+    LazyVerticalStaggeredGrid(
         modifier = modifier,
+        columns = StaggeredGridCells.Adaptive(MaterialTheme.dimensions.minNoteCardSize),
+        state = gridState,
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
+        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
         contentPadding = PaddingValues(bottom = MaterialTheme.spacing.extraLarge)
     ) {
         items(notesList, key = {
             it.createdAt?.toInstant()?.epochSecond?:it.hashCode()
         }) { note ->
-            NoteCard(
-                modifier = Modifier.animateItemPlacement(),
+            NoteCardWithBottomExtraData(
+                modifier = Modifier,
                 note = note,
-                titleEndContent = titleEndContent,
                 footerContent = cardFooterContent
             )
         }
     }
+
 }

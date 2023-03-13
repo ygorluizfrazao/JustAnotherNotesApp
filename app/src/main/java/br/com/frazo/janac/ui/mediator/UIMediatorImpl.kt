@@ -8,6 +8,7 @@ class UIMediatorImpl(private var participants: List<UIParticipant> = emptyList()
     private val eventBroadcastMap =
         mutableMapOf<KClass<out UIEvent>, MutableStateFlow<Pair<UIParticipant, UIEvent>?>>()
 
+
     override fun inform(
         from: UIParticipant,
         event: UIEvent,

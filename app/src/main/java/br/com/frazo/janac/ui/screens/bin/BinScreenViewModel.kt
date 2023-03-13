@@ -8,6 +8,7 @@ import br.com.frazo.janac.domain.usecases.SearchTermInBinnedNoteUseCase
 import br.com.frazo.janac.domain.usecases.notes.delete.DeleteNoteUseCase
 import br.com.frazo.janac.domain.usecases.notes.read.GetBinnedNotesUseCase
 import br.com.frazo.janac.domain.usecases.notes.update.UpdateNoteUseCase
+import br.com.frazo.janac.ui.mediator.ContentDisplayMode
 import br.com.frazo.janac.ui.mediator.UIEvent
 import br.com.frazo.janac.ui.mediator.UIMediator
 import br.com.frazo.janac.ui.mediator.UIParticipant
@@ -46,6 +47,9 @@ class BinScreenViewModel @Inject constructor(
     private val _filteredNotes = MutableStateFlow(_notes.value)
     val filteredNotes = _filteredNotes.asStateFlow()
 
+    private val _contentDisplayMode = MutableStateFlow(ContentDisplayMode.AS_LIST)
+    val contentDisplayMode = _contentDisplayMode.asStateFlow()
+
     init {
         mediator.addParticipant(uiParticipantRepresentative)
         viewModelScope.launch {
@@ -53,9 +57,15 @@ class BinScreenViewModel @Inject constructor(
             startCollectingBinnedNotes()
             startCollectingFilterChange()
             startFilteringOnNotesChange()
-            startCollectingFilterMessages()
+            startCollectingFilterMessagesUIEvent()
+            startCollectingContentDisplayModeEvents()
 
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        mediator.removeParticipant(uiParticipantRepresentative)
     }
 
     private fun CoroutineScope.startCollectingBinnedNotes() {
@@ -103,13 +113,25 @@ class BinScreenViewModel @Inject constructor(
         }
     }
 
-    private fun CoroutineScope.startCollectingFilterMessages() {
+    private fun CoroutineScope.startCollectingFilterMessagesUIEvent() {
         launch {
             mediator.broadcastFlowOfEvent(UIEvent.FilterQuery::class).collectLatest { eventPair ->
                 eventPair?.let { (_, event) ->
                     filter.value = (event as UIEvent.FilterQuery).query
                 }
             }
+        }
+    }
+
+    private fun CoroutineScope.startCollectingContentDisplayModeEvents() {
+        launch {
+            mediator.broadcastFlowOfEvent(UIEvent.ContentDisplayModeChanged::class)
+                .collectLatest { eventPair ->
+                    eventPair?.let { (_, event) ->
+                        _contentDisplayMode.value =
+                            (event as UIEvent.ContentDisplayModeChanged).newContentDisplayMode
+                    }
+                }
         }
     }
 

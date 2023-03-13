@@ -35,5 +35,9 @@
     <string name="exit">Sair</string>
     <string name="no_data_for_query">Nenhum dado retornado para a pesquisa informada.</string>
     <string name="click_to_clear_search">Toque %1$s para limpar a pesquisa.</string>
+    <string name="created_at">Criado em</string>
+    <string name="binned_at">Na lixeira desde</string>
+    <string name="view_content_as_list">Exibir como lista</string>
+    <string name="view_content_as_grid">Exibir como grade</string>
 
 </resources>

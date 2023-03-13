@@ -23,11 +23,13 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import br.com.frazo.janac.R
+import br.com.frazo.janac.ui.mediator.ContentDisplayMode
 import br.com.frazo.janac.ui.navigation.Navigation
 import br.com.frazo.janac.ui.navigation.Screen
 import br.com.frazo.janac.ui.navigation.getJANAScreenForRoute
 import br.com.frazo.janac.ui.theme.NotesAppTheme
 import br.com.frazo.janac.ui.theme.spacing
+import br.com.frazo.janac.ui.util.IconResource
 import br.com.frazo.janac.ui.util.composables.MyTextField
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -60,21 +62,42 @@ class MainActivity : ComponentActivity() {
         viewModel: MainViewModel
     ) {
 
+        val context = LocalContext.current
+
         val notBinnedNotesCount by viewModel.notBinnedNotesCount.collectAsState()
         val binnedNotesCount by viewModel.binnedNotesCount.collectAsState()
 
         val filteredNotBinnedNotesCount by viewModel.filteredNotBinnedNotesCount.collectAsState()
         val filteredBinnedNotesCount by viewModel.filteredBinnedNotesCount.collectAsState()
 
-        val toggleSearchBar by viewModel.toggleFilter.collectAsState()
         val searchQuery by viewModel.filterQuery.collectAsState()
+        val contentDisplayMode = viewModel.contentDisplayMode.collectAsState()
+
+        val contentDisplayModeIconResource by remember {
+            derivedStateOf {
+                when (contentDisplayMode.value) {
+                    ContentDisplayMode.AS_LIST -> IconResource.fromImageVector(
+                        Icons.Default.ViewList,
+                        context.getString(R.string.view_content_as_list)
+                    )
+                    ContentDisplayMode.AS_STAGGERED_GRID -> IconResource.fromImageVector(
+                        Icons.Default.TableChart,
+                        context.getString(R.string.view_content_as_grid)
+                    )
+                }
+            }
+        }
 
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination
 
         val snackbarHostState = remember { SnackbarHostState() }
         val scope = rememberCoroutineScope()
-        val context = LocalContext.current
+
+
+        var toggleSearchBar by remember {
+            mutableStateOf(false)
+        }
 
         Scaffold(
             snackbarHost = {
@@ -119,20 +142,28 @@ class MainActivity : ComponentActivity() {
                         AnimatedVisibility(visible = !toggleSearchBar) {
                             IconButton(onClick = {
                                 viewModel.filter("")
-                                viewModel.toggleSearch()
+                                toggleSearchBar = !toggleSearchBar
                             }) {
-                                Icon(
-                                    imageVector = Icons.Filled.Search,
-                                    contentDescription = stringResource(R.string.search)
-                                )
+
+                                IconResource.fromImageVector(
+                                    Icons.Default.Search,
+                                    stringResource(R.string.search)
+                                ).ComposeIcon()
+
                             }
                         }
 
+                        IconButton(onClick = {
+                            viewModel.changeContentDisplayMode()
+                        }) {
+                            contentDisplayModeIconResource.ComposeIcon()
+                        }
+
                         IconButton(onClick = { finish() }) {
-                            Icon(
-                                imageVector = Icons.Filled.ExitToApp,
-                                contentDescription = stringResource(R.string.exit)
-                            )
+                            IconResource.fromImageVector(
+                                Icons.Default.ExitToApp,
+                                stringResource(R.string.exit)
+                            ).ComposeIcon()
                         }
 
                     }
@@ -176,6 +207,7 @@ class MainActivity : ComponentActivity() {
                         trailingIcon = {
                             IconButton(onClick = {
                                 viewModel.resetSearchQuery()
+                                toggleSearchBar = !toggleSearchBar
                             }) {
                                 Icon(
                                     imageVector = Icons.Default.ExpandLess,
@@ -185,7 +217,7 @@ class MainActivity : ComponentActivity() {
                         }
                     )
 
-                    LaunchedEffect(key1 = Unit){
+                    LaunchedEffect(key1 = Unit) {
                         focusRequester.requestFocus()
                     }
                 }

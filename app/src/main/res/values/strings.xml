@@ -3,8 +3,8 @@
 
 <!--    Navigation-->
 
-    <string name="nav_notes_list" translatable="false">nav_notes_list</string>
-    <string name="nav_notes_bin" translatable="false">nav_notes_bin</string>
+    <string name="nav_notes_list" translatable="false">Notes List</string>
+    <string name="nav_notes_bin" translatable="false">Bin</string>
 
     <string name="date_format">default</string>
 
@@ -38,4 +38,8 @@
     <string name="exit">Exit</string>
     <string name="no_data_for_query">No data returned for the given search query.</string>
     <string name="click_to_clear_search">Click %1$s to clear search query.</string>
+    <string name="created_at">Created At</string>
+    <string name="binned_at">Binned At</string>
+    <string name="view_content_as_list">View as list</string>
+    <string name="view_content_as_grid">View as grid</string>
 </resources>

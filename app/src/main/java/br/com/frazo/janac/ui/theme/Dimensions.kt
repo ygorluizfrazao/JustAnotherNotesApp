@@ -21,7 +21,8 @@ data class Dimensions(
     val mediumIconSize: Dp = 48.dp,
     val largeIconSize: Dp = 96.dp,
     val floatingActionButtonElevation: Dp = 8.dp,
-    val dialogContentMinHeight: Dp = 60.dp
+    val dialogContentMinHeight: Dp = 60.dp,
+    val minNoteCardSize: Dp = 150.dp
 )
 
 val LocalDimensions = compositionLocalOf { Dimensions() }

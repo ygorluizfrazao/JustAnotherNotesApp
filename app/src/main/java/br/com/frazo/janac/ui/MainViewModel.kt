@@ -6,6 +6,7 @@ import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.domain.usecases.notes.read.GetBinnedNotesUseCase
 import br.com.frazo.janac.domain.usecases.notes.read.GetNotBinnedNotesUseCase
 import br.com.frazo.janac.ui.mediator.CallBackUIParticipant
+import br.com.frazo.janac.ui.mediator.ContentDisplayMode
 import br.com.frazo.janac.ui.mediator.UIEvent
 import br.com.frazo.janac.ui.mediator.UIMediator
 import br.com.frazo.janac.ui.util.TextResource
@@ -40,11 +41,11 @@ class MainViewModel @Inject constructor(
     private val _errorMessage = MutableSharedFlow<TextResource>()
     val errorMessage = _errorMessage.asSharedFlow()
 
-    private val _toggleFilter = MutableStateFlow(false)
-    val toggleFilter = _toggleFilter.asStateFlow()
-
     private val _filterQuery = MutableStateFlow("")
     val filterQuery = _filterQuery.asStateFlow()
+
+    private val _contentDisplayMode = MutableStateFlow(ContentDisplayMode.AS_LIST)
+    val contentDisplayMode = _contentDisplayMode.asStateFlow()
 
     init {
         mediator.addParticipant(uiParticipantRepresentative)
@@ -57,14 +58,21 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    override fun onCleared() {
+        super.onCleared()
+        mediator.removeParticipant(uiParticipantRepresentative)
+    }
+
     private fun handleMediatorMessage(event: UIEvent) {
         when (event) {
 
             is UIEvent.Error -> emitErrorMessage(event.message)
             is UIEvent.FilterQuery -> _filterQuery.value = event.query
             is UIEvent.FinishSearchQuery -> resetSearchQuery()
-            is UIEvent.BinnedNotesFiltered -> _filteredBinnedNotesCount.value = event.filteredNotes.size
-            is UIEvent.NotBinnedNotesFiltered -> _filteredNotBinnedNotesCount.value = event.filteredNotes.size
+            is UIEvent.BinnedNotesFiltered -> _filteredBinnedNotesCount.value =
+                event.filteredNotes.size
+            is UIEvent.NotBinnedNotesFiltered -> _filteredNotBinnedNotesCount.value =
+                event.filteredNotes.size
 
             else -> Unit
         }
@@ -78,18 +86,32 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun resetSearchQuery(){
-        _toggleFilter.value = false
+    fun resetSearchQuery() {
         filter("")
-    }
-
-    fun toggleSearch() {
-        _toggleFilter.value = !_toggleFilter.value
     }
 
     fun filter(query: String) {
         _filterQuery.value = query
         mediator.broadcast(uiParticipantRepresentative, UIEvent.FilterQuery(query))
     }
+
+    fun changeContentDisplayMode(displayMode: ContentDisplayMode? = null) {
+        displayMode?.let {
+
+            _contentDisplayMode.value = displayMode
+            mediator.broadcast(
+                uiParticipantRepresentative,
+                UIEvent.ContentDisplayModeChanged(displayMode)
+            )
+            return
+        }
+
+        if((contentDisplayMode.value.ordinal+1)>=ContentDisplayMode.values().size){
+            changeContentDisplayMode(ContentDisplayMode.values()[0])
+        }else{
+            changeContentDisplayMode(ContentDisplayMode.values()[contentDisplayMode.value.ordinal+1])
+        }
+    }
+
 
 }

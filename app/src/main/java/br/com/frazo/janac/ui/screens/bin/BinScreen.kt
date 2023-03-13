@@ -1,11 +1,15 @@
 package br.com.frazo.janac.ui.screens.bin
 
+import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -20,7 +24,9 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.frazo.janac.R
 import br.com.frazo.janac.domain.models.Note
+import br.com.frazo.janac.ui.mediator.ContentDisplayMode
 import br.com.frazo.janac.ui.screens.composables.NotesList
+import br.com.frazo.janac.ui.screens.composables.NotesStaggeredGrid
 import br.com.frazo.janac.ui.theme.dimensions
 import br.com.frazo.janac.ui.theme.spacing
 import br.com.frazo.janac.ui.util.IconResource
@@ -42,6 +48,7 @@ fun BinScreen(modifier: Modifier = Modifier) {
 
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun Screen(
     modifier: Modifier = Modifier,
@@ -51,65 +58,69 @@ fun Screen(
     val screenState by viewModel.screenState.collectAsState()
     val filteredNotesList = viewModel.filteredNotes.collectAsState()
     val allNotes = viewModel.notes.collectAsState()
-    val listState = rememberLazyListState()
+    val deleteButtonExtendedState = remember {
+        mutableStateOf(true)
+    }
+    val contentDisplayMode by viewModel.contentDisplayMode.collectAsState()
 
-    val context = LocalContext.current
 
 
     ConstraintLayout(
         modifier = modifier
     ) {
         val (contentRef, buttonsRef, countRef) = createRefs()
-        AnimatedVisibility(visible = screenState is BinScreenViewModel.ScreenState.Success,
+        AnimatedVisibility(
+            modifier = Modifier
+                .fillMaxSize()
+                .constrainAs(contentRef) {
+                    start.linkTo(parent.start)
+                    top.linkTo(countRef.bottom)
+                    end.linkTo(parent.end)
+                    bottom.linkTo(parent.bottom)
+                },
+            visible = screenState is BinScreenViewModel.ScreenState.Success,
             enter = slideInVertically {
                 it
             },
             exit = slideOutVertically { -it }) {
 
-            NotesList(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .constrainAs(contentRef) {
-                        start.linkTo(parent.start)
-                        top.linkTo(countRef.bottom)
-                        end.linkTo(parent.end)
-                        bottom.linkTo(parent.bottom)
-                    },
-                notesList = filteredNotesList.value,
-                listState = listState,
-                titleEndContent = { note ->
-                    note.binnedAt?.let {
-                        IconTextRow(
-                            modifier = Modifier
-                                .wrapContentHeight()
-                                .wrapContentWidth()
-                                .padding(horizontal = MaterialTheme.spacing.small),
-                            iconResource = IconResource.fromImageVector(Icons.Default.Recycling),
-                            textResource = TextResource.RuntimeString(
-                                note.binnedAt.format(
-                                    DateTimeFormatterFactory(context = context).datePattern()
-                                )
-                            )
-                        )
-                    }
+            AnimatedVisibility(visible = contentDisplayMode == ContentDisplayMode.AS_LIST) {
+
+                val listState = rememberLazyListState()
+                val firstVisibleIndex =
+                    remember { derivedStateOf { listState.firstVisibleItemIndex } }
+
+                DisplayContentAsList(
+                    filteredNotesList = filteredNotesList,
+                    viewModel = viewModel,
+                    listState = listState
+                )
+
+                LaunchedEffect(key1 = firstVisibleIndex.value) {
+                    deleteButtonExtendedState.value = firstVisibleIndex.value == 0
                 }
-            ) {
-                Row(
-                    modifier = Modifier
-                        .wrapContentHeight()
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    IconButton(onClick = { viewModel.restoreNote(it) }) {
-                        IconResource.fromImageVector(Icons.Filled.Restore, "").ComposeIcon()
-                    }
-                    Spacer(modifier = Modifier.width(MaterialTheme.spacing.small))
-                    IconButton(onClick = { viewModel.deleteNote(it) }) {
-                        IconResource.fromImageVector(Icons.Filled.DeleteForever, "").ComposeIcon()
-                    }
+
+            }
+
+            AnimatedVisibility(visible = contentDisplayMode == ContentDisplayMode.AS_STAGGERED_GRID) {
+
+                val gridState = rememberLazyStaggeredGridState()
+                val firstVisibleIndex =
+                    remember { derivedStateOf { gridState.firstVisibleItemIndex } }
+
+                DisplayContentAsGrid(
+                    gridState = gridState,
+                    filteredNotesList = filteredNotesList,
+                    viewModel = viewModel
+                )
+
+                LaunchedEffect(key1 = firstVisibleIndex.value) {
+                    deleteButtonExtendedState.value = firstVisibleIndex.value == 0
                 }
             }
+
         }
+
         AnimatedVisibility(visible = screenState is BinScreenViewModel.ScreenState.NoData || screenState is BinScreenViewModel.ScreenState.Error,
             enter = slideInVertically {
                 it
@@ -193,7 +204,7 @@ fun Screen(
                 .padding(
                     vertical = MaterialTheme.spacing.small
                 ),
-            listState = listState,
+            expanded = deleteButtonExtendedState,
             filteredNotesList = filteredNotesList,
             allNotes = allNotes
         ) {
@@ -203,28 +214,99 @@ fun Screen(
 }
 
 @Composable
-fun DeleteButton(
+fun DisplayContentAsList(
     modifier: Modifier = Modifier,
-    listState: LazyListState,
     filteredNotesList: State<List<Note>>,
-    allNotes: State<List<Note>>,
-    onClick: () -> Unit
+    listState: LazyListState = rememberLazyListState(),
+    context: Context = LocalContext.current,
+    viewModel: BinScreenViewModel
 ) {
+    NotesList(
+        modifier = modifier,
+        notesList = filteredNotesList.value,
+        listState = listState,
+        titleEndContent = { note ->
+            note.binnedAt?.let {
+                IconTextRow(
+                    modifier = Modifier
+                        .wrapContentHeight()
+                        .wrapContentWidth()
+                        .padding(horizontal = MaterialTheme.spacing.small),
+                    iconResource = IconResource.fromImageVector(Icons.Default.Recycling),
+                    textResource = TextResource.RuntimeString(
+                        note.binnedAt.format(
+                            DateTimeFormatterFactory(context = context).datePattern()
+                        )
+                    )
+                )
+            }
+        }
+    ) {
+        Row(
+            modifier = Modifier
+                .wrapContentHeight()
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            IconButton(onClick = { viewModel.restoreNote(it) }) {
+                IconResource.fromImageVector(Icons.Filled.Restore, "").ComposeIcon()
+            }
+            Spacer(modifier = Modifier.width(MaterialTheme.spacing.small))
+            IconButton(onClick = { viewModel.deleteNote(it) }) {
+                IconResource.fromImageVector(Icons.Filled.DeleteForever, "").ComposeIcon()
+            }
+        }
+    }
+}
 
-    val expandedState by remember {
-        derivedStateOf {
-            listState.firstVisibleItemIndex == 0
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun DisplayContentAsGrid(
+    modifier: Modifier = Modifier,
+    filteredNotesList: State<List<Note>>,
+    gridState: LazyStaggeredGridState = rememberLazyStaggeredGridState(),
+    viewModel: BinScreenViewModel
+) {
+    NotesStaggeredGrid(
+        modifier = modifier,
+        notesList = filteredNotesList.value,
+        gridState = gridState
+    ) {
+        Row(
+            modifier = Modifier
+                .wrapContentHeight()
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            IconButton(onClick = { viewModel.restoreNote(it) }) {
+                IconResource.fromImageVector(Icons.Filled.Restore, "").ComposeIcon()
+            }
+            Spacer(modifier = Modifier.width(MaterialTheme.spacing.small))
+            IconButton(onClick = { viewModel.deleteNote(it) }) {
+                IconResource.fromImageVector(Icons.Filled.DeleteForever, "").ComposeIcon()
+            }
         }
     }
 
-    val filtered  = remember {
+}
+
+@Composable
+fun DeleteButton(
+    modifier: Modifier = Modifier,
+    filteredNotesList: State<List<Note>>,
+    allNotes: State<List<Note>>,
+    expanded: State<Boolean>,
+    onClick: () -> Unit
+) {
+
+    val filtered = remember {
         derivedStateOf {
             filteredNotesList.value.size < allNotes.value.size && filteredNotesList.value.isNotEmpty()
         }
     }
 
     val textResource by remember {
-        derivedStateOf{
+        derivedStateOf {
             if (filtered.value) {
                 TextResource.StringResource(R.string.clear_filtered_bin)
             } else
@@ -240,11 +322,10 @@ fun DeleteButton(
         visible = filteredNotesList.value.isNotEmpty()
     ) {
         ExtendedFloatingActionButton(
-            modifier = modifier,
             text = { Text(text = textResource.asString()) },
             icon = { iconResource.ComposeIcon() },
             onClick = onClick,
-            expanded = expandedState,
+            expanded = expanded.value,
         )
     }
 }
