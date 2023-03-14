@@ -17,6 +17,7 @@ fun IconTextRow(
     modifier: Modifier,
     iconResource: IconResource,
     textResource: TextResource,
+    highlightSentences: List<String> = emptyList(),
     textStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.labelMedium
 ) {
     Row(
@@ -27,10 +28,17 @@ fun IconTextRow(
             painter = iconResource.asPainterResource(),
             contentDescription = iconResource.contentDescription
         )
-        Text(
-            modifier = Modifier.padding(MaterialTheme.spacing.small),
-            style = textStyle,
-            text = textResource.asString()
-        )
+        HighlightedText(
+            text = textResource.asString(),
+            highlightedSentences = highlightSentences,
+            normalTextSpanStyle = textStyle.toSpanStyle()) {
+
+            Text(
+                modifier = Modifier.padding(MaterialTheme.spacing.small),
+                style = textStyle,
+                text = it
+            )
+
+        }
     }
 }

@@ -18,6 +18,7 @@ fun NotesStaggeredGrid(
     modifier: Modifier,
     notesList: List<Note>,
     gridState: LazyStaggeredGridState = rememberLazyStaggeredGridState(),
+    highlightSentences: List<String> = emptyList(),
     cardFooterContent: (@Composable ColumnScope.(note: Note) -> Unit)? = null
 ) {
     LazyVerticalStaggeredGrid(
@@ -34,7 +35,8 @@ fun NotesStaggeredGrid(
             NoteCardWithBottomExtraData(
                 modifier = Modifier,
                 note = note,
-                footerContent = cardFooterContent
+                highlightSentences = highlightSentences,
+                footerContent = cardFooterContent,
             )
         }
     }

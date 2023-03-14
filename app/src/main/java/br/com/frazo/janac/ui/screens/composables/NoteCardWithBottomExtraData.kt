@@ -25,6 +25,7 @@ import br.com.frazo.janac.util.DateTimeFormatterFactory
 fun NoteCardWithBottomExtraData(
     modifier: Modifier = Modifier,
     note: Note,
+    highlightSentences: List<String> = emptyList(),
     createdAtIconResource: IconResource = IconResource.fromImageVector(Icons.Default.CalendarToday),
     binnedAtIconResource: IconResource = IconResource.fromImageVector(Icons.Default.Recycling),
     footerContent: (@Composable ColumnScope.(note: Note) -> Unit)? = null
@@ -34,6 +35,7 @@ fun NoteCardWithBottomExtraData(
 
     NoteCard(
         modifier = modifier,
+        highlightSentences = highlightSentences,
         note = note
     ) {
         if (note.createdAt != null || note.binnedAt != null) {
@@ -59,6 +61,7 @@ fun NoteCardWithBottomExtraData(
                                     DateTimeFormatterFactory(context = context).datePattern()
                                 )
                             ),
+                            highlightSentences = highlightSentences,
                             textStyle = MaterialTheme.typography.labelSmall
                         )
                     }
@@ -80,6 +83,7 @@ fun NoteCardWithBottomExtraData(
                                     DateTimeFormatterFactory(context = context).datePattern()
                                 )
                             ),
+                            highlightSentences = highlightSentences,
                             textStyle = MaterialTheme.typography.labelSmall
                         )
                     }

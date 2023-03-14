@@ -38,7 +38,10 @@ class NotesListViewModel @Inject constructor(
     }
 
     private val _notes = MutableStateFlow(emptyList<Note>())
-    private val filter = MutableStateFlow("")
+
+    private val _filter = MutableStateFlow("")
+    val filter = _filter.asStateFlow()
+
     private val _filteredNotes = MutableStateFlow(_notes.value)
     val notes = _filteredNotes.asStateFlow()
 
@@ -105,7 +108,7 @@ class NotesListViewModel @Inject constructor(
 
     private fun CoroutineScope.startCollectingFilterChange() {
         launch {
-            filter.collectLatest { query ->
+            _filter.collectLatest { query ->
                 filterNotes(query)
             }
         }
@@ -114,7 +117,7 @@ class NotesListViewModel @Inject constructor(
     private fun CoroutineScope.startFilteringOnNotesChange() {
         launch {
             _notes.collectLatest {
-                filterNotes(filter.value)
+                filterNotes(_filter.value)
             }
         }
     }
@@ -123,7 +126,7 @@ class NotesListViewModel @Inject constructor(
         launch {
             mediator.broadcastFlowOfEvent(UIEvent.FilterQuery::class).collectLatest { eventPair ->
                 eventPair?.let { (_, event) ->
-                    filter.value = (event as UIEvent.FilterQuery).query
+                    _filter.value = (event as UIEvent.FilterQuery).query
                 }
             }
         }
@@ -199,7 +202,7 @@ class NotesListViewModel @Inject constructor(
             else
                 _screenState.value = ScreenState.Success(_filteredNotes.value)
         } else {
-            if (_screenState.value != ScreenState.Loading) _screenState.value = ScreenState.NoData
+            _screenState.value = ScreenState.NoData
         }
     }
 

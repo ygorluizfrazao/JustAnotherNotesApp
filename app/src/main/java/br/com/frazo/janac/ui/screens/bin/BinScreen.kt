@@ -267,10 +267,14 @@ fun DisplayContentAsGrid(
     gridState: LazyStaggeredGridState = rememberLazyStaggeredGridState(),
     viewModel: BinScreenViewModel
 ) {
+
+    val filter by viewModel.filter.collectAsState()
+
     NotesStaggeredGrid(
         modifier = modifier,
         notesList = filteredNotesList.value,
-        gridState = gridState
+        gridState = gridState,
+        highlightSentences = listOf(filter)
     ) {
         Row(
             modifier = Modifier

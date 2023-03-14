@@ -18,6 +18,7 @@ fun NotesList(
     modifier: Modifier,
     notesList: List<Note>,
     listState: LazyListState = rememberLazyListState(),
+    highlightSentences: List<String> = emptyList(),
     titleEndContent: (@Composable (note: Note) -> Unit)? = null,
     cardFooterContent: (@Composable ColumnScope.(note: Note) -> Unit)? = null
 ) {
@@ -33,6 +34,7 @@ fun NotesList(
         }) { note ->
             NoteCard(
                 modifier = Modifier.animateItemPlacement(),
+                highlightSentences = highlightSentences,
                 note = note,
                 titleEndContent = titleEndContent,
                 footerContent = cardFooterContent

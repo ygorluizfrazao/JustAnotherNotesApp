@@ -262,10 +262,13 @@ fun DisplayContentAsList(
     viewModel: NotesListViewModel,
     coroutineScope: CoroutineScope = rememberCoroutineScope()
 ) {
+    val filter= viewModel.filter.collectAsState()
+
     NotesList(
         modifier = modifier,
         notesList = notesList,
         listState = listState,
+        highlightSentences = listOf(filter.value),
         titleEndContent = { note ->
             note.createdAt?.let {
                 IconTextRow(
@@ -278,7 +281,8 @@ fun DisplayContentAsList(
                         note.createdAt.format(
                             DateTimeFormatterFactory(context = context).datePattern()
                         )
-                    )
+                    ),
+                    highlightSentences = listOf(filter.value)
                 )
             }
         }
@@ -319,10 +323,14 @@ fun DisplayContentAsGrid(
     viewModel: NotesListViewModel,
     coroutineScope: CoroutineScope = rememberCoroutineScope()
 ) {
+
+    val filter= viewModel.filter.collectAsState()
+
     NotesStaggeredGrid(
         modifier = modifier,
         notesList = notesList,
-        gridState = gridState
+        gridState = gridState,
+        highlightSentences = listOf(filter.value)
     ) { note ->
         Row(
             modifier = Modifier

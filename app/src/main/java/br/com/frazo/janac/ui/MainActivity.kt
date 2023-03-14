@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -94,8 +95,7 @@ class MainActivity : ComponentActivity() {
         val snackbarHostState = remember { SnackbarHostState() }
         val scope = rememberCoroutineScope()
 
-
-        var toggleSearchBar by remember {
+        var toggleSearchBar by rememberSaveable {
             mutableStateOf(false)
         }
 
@@ -116,58 +116,60 @@ class MainActivity : ComponentActivity() {
                 }
             },
             topBar = {
-                CenterAlignedTopAppBar(
-                    title = {
-                        Text(
-                            navController.currentDestination.getJANAScreenForRoute()?.localizedAlias?.asString()
-                                ?: navStarDestination.route.asString(),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    },
-                    navigationIcon = {
-                        if (currentDestination?.route != navStarDestination.route.asString()) {
-                            IconButton(onClick = {
-                                navController.popBackStack()
-                            }) {
-                                Icon(
-                                    imageVector = Icons.Filled.ArrowBack,
-                                    contentDescription = ""
+                navController.currentDestination?.route?.let {
+                        CenterAlignedTopAppBar(
+                            title = {
+                                Text(
+                                    navController.currentDestination.getJANAScreenForRoute()?.localizedAlias?.asString()
+                                        ?: navStarDestination.route.asString(),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
+                            },
+                            navigationIcon = {
+                                if (currentDestination?.route != navStarDestination.route.asString()) {
+                                    IconButton(onClick = {
+                                        navController.popBackStack()
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Filled.ArrowBack,
+                                            contentDescription = ""
+                                        )
+                                    }
+                                }
+                            },
+                            actions = {
+
+                                AnimatedVisibility(visible = !toggleSearchBar) {
+                                    IconButton(onClick = {
+                                        viewModel.filter("")
+                                        toggleSearchBar = !toggleSearchBar
+                                    }) {
+
+                                        IconResource.fromImageVector(
+                                            Icons.Default.Search,
+                                            stringResource(R.string.search)
+                                        ).ComposeIcon()
+
+                                    }
+                                }
+
+                                IconButton(onClick = {
+                                    viewModel.changeContentDisplayMode()
+                                }) {
+                                    contentDisplayModeIconResource.ComposeIcon()
+                                }
+
+                                IconButton(onClick = { finish() }) {
+                                    IconResource.fromImageVector(
+                                        Icons.Default.ExitToApp,
+                                        stringResource(R.string.exit)
+                                    ).ComposeIcon()
+                                }
+
                             }
-                        }
-                    },
-                    actions = {
-
-                        AnimatedVisibility(visible = !toggleSearchBar) {
-                            IconButton(onClick = {
-                                viewModel.filter("")
-                                toggleSearchBar = !toggleSearchBar
-                            }) {
-
-                                IconResource.fromImageVector(
-                                    Icons.Default.Search,
-                                    stringResource(R.string.search)
-                                ).ComposeIcon()
-
-                            }
-                        }
-
-                        IconButton(onClick = {
-                            viewModel.changeContentDisplayMode()
-                        }) {
-                            contentDisplayModeIconResource.ComposeIcon()
-                        }
-
-                        IconButton(onClick = { finish() }) {
-                            IconResource.fromImageVector(
-                                Icons.Default.ExitToApp,
-                                stringResource(R.string.exit)
-                            ).ComposeIcon()
-                        }
-
-                    }
-                )
+                        )
+                }
             },
             bottomBar = {
                 NavigationBar {

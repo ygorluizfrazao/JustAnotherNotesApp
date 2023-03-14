@@ -10,12 +10,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.constraintlayout.compose.ConstraintLayout
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.ui.theme.spacing
+import br.com.frazo.janac.ui.util.composables.HighlightedText
 
 @Composable
 fun NoteCard(
     modifier: Modifier = Modifier,
     note: Note,
-    titleEndContent: (@Composable (note: Note)->Unit)? = null,
+    highlightSentences: List<String> = emptyList(),
+    titleEndContent: (@Composable (note: Note) -> Unit)? = null,
     footerContent: (@Composable ColumnScope.(note: Note) -> Unit)? = null
 ) {
     Card(
@@ -43,28 +45,45 @@ fun NoteCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                Text(
-                    modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Start,
+
+                HighlightedText(
                     text = note.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                    highlightedSentences = highlightSentences,
+                    normalTextSpanStyle = MaterialTheme.typography.titleMedium.toSpanStyle()
+                        .copy(fontWeight = FontWeight.Bold)
+                ) {
+                    Text(
+                        modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.Start,
+                        text = it,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
                 Spacer(modifier = Modifier.width(MaterialTheme.spacing.medium))
                 titleEndContent?.invoke(note)
             }
 
-            Text(
-                modifier = Modifier
-                    .constrainAs(textRef) {
-                        top.linkTo(titleRowRef.bottom)
-                        start.linkTo(parent.start)
-                    }
-                    .padding(top = MaterialTheme.spacing.small),
-                textAlign = TextAlign.Justify,
+            HighlightedText(
                 text = note.text,
-                style = MaterialTheme.typography.bodyMedium
-            )
+                highlightedSentences = highlightSentences,
+                normalTextSpanStyle = MaterialTheme.typography.bodyMedium.toSpanStyle()
+            ) {
+
+                Text(
+                    modifier = Modifier
+                        .constrainAs(textRef) {
+                            top.linkTo(titleRowRef.bottom)
+                            start.linkTo(parent.start)
+                        }
+                        .padding(top = MaterialTheme.spacing.small),
+                    textAlign = TextAlign.Justify,
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+            }
 
             footerContent?.let {
                 Column(modifier = Modifier.constrainAs(contentRef) {
