@@ -253,6 +253,7 @@ fun Screen(
 }
 
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DisplayContentAsList(
     modifier: Modifier = Modifier,
@@ -262,7 +263,7 @@ fun DisplayContentAsList(
     viewModel: NotesListViewModel,
     coroutineScope: CoroutineScope = rememberCoroutineScope()
 ) {
-    val filter= viewModel.filter.collectAsState()
+    val filter = viewModel.filter.collectAsState()
 
     NotesList(
         modifier = modifier,
@@ -287,18 +288,23 @@ fun DisplayContentAsList(
             }
         }
     ) { note ->
-        Row(
+        FlowRow(
             modifier = Modifier
                 .wrapContentHeight()
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.End
         ) {
             IconButton(onClick = { viewModel.editNote(note) }) {
-                IconResource.fromImageVector(Icons.Filled.Edit, "").ComposeIcon()
+                IconResource.fromImageVector(Icons.Default.Edit, "").ComposeIcon()
             }
-            Spacer(modifier = Modifier.width(MaterialTheme.spacing.small))
+            IconButton(onClick = {
+                val intent = viewModel.shareNote(note)
+                context.startActivity(intent)
+            }) {
+                IconResource.fromImageVector(Icons.Default.Share, "").ComposeIcon()
+            }
             IconButton(onClick = { viewModel.binNote(note) }) {
-                IconResource.fromImageVector(Icons.Filled.Delete, "").ComposeIcon()
+                IconResource.fromImageVector(Icons.Default.Delete, "").ComposeIcon()
             }
         }
     }
@@ -314,7 +320,7 @@ fun DisplayContentAsList(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun DisplayContentAsGrid(
     modifier: Modifier = Modifier,
@@ -324,7 +330,8 @@ fun DisplayContentAsGrid(
     coroutineScope: CoroutineScope = rememberCoroutineScope()
 ) {
 
-    val filter= viewModel.filter.collectAsState()
+    val filter = viewModel.filter.collectAsState()
+    val context = LocalContext.current
 
     NotesStaggeredGrid(
         modifier = modifier,
@@ -332,18 +339,23 @@ fun DisplayContentAsGrid(
         gridState = gridState,
         highlightSentences = listOf(filter.value)
     ) { note ->
-        Row(
+        FlowRow(
             modifier = Modifier
                 .wrapContentHeight()
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.End
         ) {
             IconButton(onClick = { viewModel.editNote(note) }) {
-                IconResource.fromImageVector(Icons.Filled.Edit, "").ComposeIcon()
+                IconResource.fromImageVector(Icons.Default.Edit, "").ComposeIcon()
             }
-            Spacer(modifier = Modifier.width(MaterialTheme.spacing.small))
+            IconButton(onClick = {
+                val intent = viewModel.shareNote(note)
+                context.startActivity(intent)
+            }) {
+                IconResource.fromImageVector(Icons.Default.Share, "").ComposeIcon()
+            }
             IconButton(onClick = { viewModel.binNote(note) }) {
-                IconResource.fromImageVector(Icons.Filled.Delete, "").ComposeIcon()
+                IconResource.fromImageVector(Icons.Default.Delete, "").ComposeIcon()
             }
         }
     }

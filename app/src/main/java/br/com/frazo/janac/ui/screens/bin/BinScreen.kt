@@ -295,7 +295,7 @@ fun DisplayContentAsGrid(
 }
 
 @Composable
-fun DeleteButton(
+private fun DeleteButton(
     modifier: Modifier = Modifier,
     filteredNotesList: State<List<Note>>,
     allNotes: State<List<Note>>,

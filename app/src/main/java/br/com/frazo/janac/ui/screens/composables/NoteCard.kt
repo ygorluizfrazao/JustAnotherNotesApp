@@ -7,7 +7,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.constraintlayout.compose.ConstraintLayout
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.ui.theme.spacing
 import br.com.frazo.janac.ui.util.composables.HighlightedText
@@ -23,7 +22,7 @@ fun NoteCard(
     Card(
         modifier = modifier
     ) {
-        ConstraintLayout(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
@@ -32,16 +31,11 @@ fun NoteCard(
                 )
         ) {
 
-            val (titleRowRef, textRef, contentRef) = createRefs()
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .constrainAs(titleRowRef) {
-                        start.linkTo(parent.start)
-                        top.linkTo(parent.top)
-                        end.linkTo(parent.end)
-                    },
+                    .wrapContentHeight(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
@@ -73,10 +67,6 @@ fun NoteCard(
 
                 Text(
                     modifier = Modifier
-                        .constrainAs(textRef) {
-                            top.linkTo(titleRowRef.bottom)
-                            start.linkTo(parent.start)
-                        }
                         .padding(top = MaterialTheme.spacing.small),
                     textAlign = TextAlign.Justify,
                     text = it,
@@ -85,12 +75,22 @@ fun NoteCard(
 
             }
 
+//            Button(
+//                modifier = Modifier.size(40.dp),
+//                colors = ButtonDefaults.buttonColors(containerColor = Color.Blue),
+//                shape = CircleShape,
+//                onClick = {
+//
+//                }) {
+//
+//            }
+
             footerContent?.let {
-                Column(modifier = Modifier.constrainAs(contentRef) {
-                    top.linkTo(textRef.bottom)
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                }) {
+                Column(
+                    modifier = Modifier
+                        .wrapContentHeight()
+                        .fillMaxWidth()
+                ) {
                     Divider(
                         modifier = modifier
                             .fillMaxWidth()

@@ -24,40 +24,81 @@ fun HighlightedText(
     content: (@Composable (AnnotatedString) -> Unit)
 ) {
 
-    var lastAnnotationSize = 0
-    val highlightedSentencesFiltered = highlightedSentences.filter { it.trim().isNotBlank() }
-    val annotatedString = buildAnnotatedString {
+    val highlightedSentencesFiltered =
+        highlightedSentences.filter { it.trim().isNotBlank() }.distinct()
 
-        if (highlightedSentencesFiltered.isNotEmpty()) {
-            highlightedSentencesFiltered.forEach { highlightString ->
-                text.windowed(highlightString.length, step = 1, partialWindows = true) {
-
-                    if (lastAnnotationSize > 0) {
-                        lastAnnotationSize--
-                        return@windowed
-                    }
-
-                    if ((ignoreCase && it.toString().uppercase() == highlightString.uppercase())
-                        || (!ignoreCase && it.toString() == highlightString)
-                    ) {
-                        withStyle(style = highlightedSentencesTextSpanStyle) {
-                            pushStringAnnotation(tag = it.toString(), annotation = it.toString())
-                            append(it.toString())
-                            lastAnnotationSize += it.length-1
-                        }
-                        return@windowed
-                    }
-
-                    withStyle(style = normalTextSpanStyle) {
-                        append(it.first())
-                    }
-                }
-            }
-        } else
-            withStyle(style = normalTextSpanStyle) {
-                append(text)
-            }
+    var annotatedString = buildAnnotatedString {
+        withStyle(style = normalTextSpanStyle) {
+            append(text)
+        }
     }
 
+    highlightedSentencesFiltered.forEach { highlightString ->
+
+        annotatedString = buildAnnotatedString {
+
+            var currentRange = (0..0)
+            var lastAnnotationSizeAdded = 0
+
+            annotatedString.windowed(
+                highlightString.length,
+                step = 1,
+                partialWindows = true
+            ) { windowChars ->
+
+                currentRange = (currentRange.last..currentRange.last + 1)
+
+                if (lastAnnotationSizeAdded > 0) {
+                    lastAnnotationSizeAdded--
+                    return@windowed
+                }
+
+                if (windowChars.first().toString().isBlank()) {
+                    withStyle(style = normalTextSpanStyle) {
+                        append(windowChars.first())
+                    }
+                    return@windowed
+                }
+
+                val existingAnnotationsInRange =
+                    annotatedString.getStringAnnotations(currentRange.first, currentRange.last)
+                if (existingAnnotationsInRange.isNotEmpty()) {
+                    existingAnnotationsInRange.forEach { existingAnnotation ->
+                        withStyle(style = highlightedSentencesTextSpanStyle) {
+                            pushStringAnnotation(
+                                tag = existingAnnotation.tag,
+                                annotation = existingAnnotation.item
+                            )
+                            append(existingAnnotation.item)
+                            lastAnnotationSizeAdded += existingAnnotation.item.length
+                        }
+                    }
+                    lastAnnotationSizeAdded -= 1
+                    return@windowed
+                }
+
+                if ((ignoreCase && windowChars.toString()
+                        .uppercase() == highlightString.uppercase())
+                    || (!ignoreCase && windowChars.toString() == highlightString)
+                ) {
+                    withStyle(style = highlightedSentencesTextSpanStyle) {
+                        pushStringAnnotation(
+                            tag = windowChars.toString(),
+                            annotation = windowChars.toString()
+                        )
+                        append(windowChars.toString())
+                        lastAnnotationSizeAdded += windowChars.length - 1
+                    }
+                    return@windowed
+                }
+
+                withStyle(style = normalTextSpanStyle) {
+                    append(windowChars.first())
+                }
+
+            }
+        }
+
+    }
     content(annotatedString)
 }

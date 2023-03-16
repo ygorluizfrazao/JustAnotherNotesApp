@@ -4,6 +4,10 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
+import br.com.frazo.janac.audio.player.AndroidAudioPlayer
+import br.com.frazo.janac.audio.player.AudioPlayer
+import br.com.frazo.janac.audio.recorder.AndroidAudioRecorder
+import br.com.frazo.janac.audio.recorder.AudioRecorder
 import br.com.frazo.janac.data.db.room.RoomAppDatabase
 import br.com.frazo.janac.data.repository.note.CachedNoteRepository
 import br.com.frazo.janac.data.repository.note.NoteDataSource
@@ -162,6 +166,20 @@ object AppModule {
     @Singleton
     fun provideSearchTermInNotBinnedNoteUseCase(dateTimeFormatterFactory: DateTimeFormatterFactory): SearchTermInNotBinnedNoteUseCase {
         return SearchTermInNotBinnedNoteUseCaseImpl(dateTimeFormatterFactory)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAudioRecorder(
+        @ApplicationContext appContext: Context
+    ): AudioRecorder {
+        return AndroidAudioRecorder(appContext)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAudioPlayer(@ApplicationContext appContext: Context): AudioPlayer {
+        return AndroidAudioPlayer(appContext)
     }
 
 }
