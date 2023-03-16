@@ -1,6 +1,7 @@
 package br.com.frazo.janac.ui.screens.notes.editnote
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import br.com.frazo.janac.R
 import br.com.frazo.janac.domain.extensions.isNewNote
@@ -13,20 +14,37 @@ import br.com.frazo.janac.ui.mediator.UIEvent
 import br.com.frazo.janac.ui.mediator.UIMediator
 import br.com.frazo.janac.ui.mediator.UIParticipant
 import br.com.frazo.janac.ui.util.TextResource
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class EditNoteViewModel @Inject constructor(
+class EditNoteViewModel @AssistedInject constructor(
     private val addNoteUseCase: AddNoteUseCase<Int>,
     private val updateNoteUseCase: UpdateNoteUseCase<Int>,
     private val noteValidatorUseCase: NoteValidatorUseCase,
-    private val mediator: UIMediator
+    private val mediator: UIMediator,
+    @Assisted noteToEdit: Note,
 ) :
     ViewModel() {
+
+    @AssistedFactory
+    interface Factory {
+        fun create(note: Note): EditNoteViewModel
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    companion object {
+        fun provideEditNoteViewModelFactory(factory: Factory, note: Note): ViewModelProvider.Factory {
+            return object : ViewModelProvider.Factory {
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return factory.create(note) as T
+                }
+            }
+        }
+    }
 
     sealed class UIState {
         object Saved : UIState()
@@ -59,6 +77,7 @@ class EditNoteViewModel @Inject constructor(
 
 
     init {
+        setForEditing(noteToEdit)
         mediator.addParticipant(uiParticipantRepresentative)
     }
 

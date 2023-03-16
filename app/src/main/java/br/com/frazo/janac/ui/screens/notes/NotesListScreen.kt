@@ -20,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.frazo.janac.R
+import br.com.frazo.janac.di.assisted.assistedViewModel
 import br.com.frazo.janac.domain.extensions.isNewNote
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.ui.mediator.ContentDisplayMode
@@ -65,7 +66,6 @@ fun Screen(
     val notesList by viewModel.notes.collectAsState(initial = emptyList())
     val contentDisplayMode by viewModel.contentDisplayMode.collectAsState()
     val editNoteState by viewModel.editNoteState.collectAsState()
-    val editNoteViewModel = hiltViewModel<EditNoteViewModel>()
 
     val addButtonExtendedState = remember {
         mutableStateOf(false)
@@ -243,10 +243,12 @@ fun Screen(
         AnimatedVisibility(visible = editNoteState.requested,
             enter = slideInVertically { it },
             exit = slideOutVertically { -it }) {
-            EditDialogScreen({
-                viewModel.editNoteClear()
-                editNoteViewModel.cancel()
-            }, editNoteViewModel, editNoteState.baseNote)
+            EditDialogScreen(
+                onDismissRequestExecute = {
+                    viewModel.editNoteClear()
+                },
+                noteToEdit = editNoteState.baseNote
+            )
         }
     }
 
@@ -373,10 +375,15 @@ fun DisplayContentAsGrid(
 
 @Composable
 fun EditDialogScreen(
-    onDismissRequest: () -> Unit,
-    editNoteViewModel: EditNoteViewModel,
+    onDismissRequestExecute: () -> Unit,
     noteToEdit: Note
 ) {
+
+    val editNoteViewModel: EditNoteViewModel = assistedViewModel(data = noteToEdit)
+    val onDismissRequest = {
+        editNoteViewModel.cancel()
+        onDismissRequestExecute()
+    }
 
     val inEditionNote by editNoteViewModel.inEditionNote.collectAsState()
     val addNoteUIState by editNoteViewModel.uiState.collectAsState()
