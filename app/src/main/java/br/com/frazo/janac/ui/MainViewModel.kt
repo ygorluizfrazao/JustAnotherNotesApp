@@ -106,12 +106,23 @@ class MainViewModel @Inject constructor(
             return
         }
 
-        if((contentDisplayMode.value.ordinal+1)>=ContentDisplayMode.values().size){
+        if ((contentDisplayMode.value.ordinal + 1) >= ContentDisplayMode.values().size) {
             changeContentDisplayMode(ContentDisplayMode.values()[0])
-        }else{
-            changeContentDisplayMode(ContentDisplayMode.values()[contentDisplayMode.value.ordinal+1])
+        } else {
+            changeContentDisplayMode(ContentDisplayMode.values()[contentDisplayMode.value.ordinal + 1])
         }
     }
 
+//    fun permissionAdapterState(permission: String): StateFlow<StateBasedPermissionAdapter.PermissionAdapterState> {
+//        return permissionAdapters.first { it.getTargetPermission() == permission }.permissionAdapterState
+//    }
+//
+//    fun permissionAdapter(permission: String): StateBasedPermissionAdapter {
+//        return permissionAdapters.first { it.getTargetPermission() == permission }
+//    }
+//
+//    fun onRequestPermission(permission: String) {
+//        permissionAdapters.first { it.getTargetPermission() == permission }.onRequestPermission()
+//    }
 
 }

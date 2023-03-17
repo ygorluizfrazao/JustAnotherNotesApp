@@ -63,7 +63,7 @@ fun Screen(
 ) {
 
     val screenState by viewModel.screenState.collectAsState()
-    val notesList by viewModel.notes.collectAsState(initial = emptyList())
+    val notesList by viewModel.filteredNotes.collectAsState()
     val contentDisplayMode by viewModel.contentDisplayMode.collectAsState()
     val editNoteState by viewModel.editNoteState.collectAsState()
 
@@ -299,10 +299,7 @@ fun DisplayContentAsList(
             IconButton(onClick = { viewModel.editNote(note) }) {
                 IconResource.fromImageVector(Icons.Default.Edit, "").ComposeIcon()
             }
-            IconButton(onClick = {
-                val intent = viewModel.shareNote(note)
-                context.startActivity(intent)
-            }) {
+            IconButton(onClick = { viewModel.shareNote(note).also { context.startActivity(it) } }) {
                 IconResource.fromImageVector(Icons.Default.Share, "").ComposeIcon()
             }
             IconButton(onClick = { viewModel.binNote(note) }) {

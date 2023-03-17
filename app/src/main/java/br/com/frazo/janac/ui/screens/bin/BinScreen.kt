@@ -221,10 +221,14 @@ fun DisplayContentAsList(
     context: Context = LocalContext.current,
     viewModel: BinScreenViewModel
 ) {
+
+    val filter by viewModel.filter.collectAsState()
+
     NotesList(
         modifier = modifier,
         notesList = filteredNotesList.value,
         listState = listState,
+        highlightSentences = listOf(filter),
         titleEndContent = { note ->
             note.binnedAt?.let {
                 IconTextRow(

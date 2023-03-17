@@ -53,6 +53,9 @@ class BinScreenViewModel @Inject constructor(
     private val _contentDisplayMode = MutableStateFlow(ContentDisplayMode.AS_LIST)
     val contentDisplayMode = _contentDisplayMode.asStateFlow()
 
+    private val startTime = System.currentTimeMillis()
+    private var fetchDataFromRepository = false
+
     init {
         mediator.addParticipant(uiParticipantRepresentative)
         viewModelScope.launch {
@@ -96,6 +99,8 @@ class BinScreenViewModel @Inject constructor(
                         uiParticipantRepresentative,
                         UIEvent.BinnedNotesFetched(_notes.value)
                     )
+                    fetchDataFromRepository = true
+                    updateScreenState()
                 }
         }
     }
@@ -187,17 +192,18 @@ class BinScreenViewModel @Inject constructor(
             uiParticipantRepresentative,
             UIEvent.BinnedNotesFiltered(_filteredNotes.value)
         )
-        updateState()
+        updateScreenState()
     }
 
-    private fun updateState() {
+    private fun updateScreenState() {
         if (_notes.value.isNotEmpty()) {
             if (_filteredNotes.value.isEmpty())
                 _screenState.value = ScreenState.NoDataForFilter
             else
                 _screenState.value = ScreenState.Success(_filteredNotes.value)
         } else {
-            _screenState.value = ScreenState.NoData
+            if( System.currentTimeMillis() - startTime >= 3000 || fetchDataFromRepository)
+                _screenState.value = ScreenState.NoData
         }
     }
 

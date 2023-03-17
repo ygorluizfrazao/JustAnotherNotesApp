@@ -31,7 +31,8 @@ fun IconTextRow(
         HighlightedText(
             text = textResource.asString(),
             highlightedSentences = highlightSentences,
-            normalTextSpanStyle = textStyle.toSpanStyle()) {
+            normalTextSpanStyle = textStyle.toSpanStyle()
+        ) {
 
             Text(
                 modifier = Modifier.padding(MaterialTheme.spacing.small),

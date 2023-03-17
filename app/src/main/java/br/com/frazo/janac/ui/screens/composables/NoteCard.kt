@@ -18,8 +18,7 @@ fun NoteCard(
     highlightSentences: List<String> = emptyList(),
     titleEndContent: (@Composable (note: Note) -> Unit)? = null,
     footerContent: (@Composable ColumnScope.(note: Note) -> Unit)? = null
-) {
-    Card(
+) { Card(
         modifier = modifier
     ) {
         Column(
@@ -30,8 +29,6 @@ fun NoteCard(
                     MaterialTheme.spacing.medium
                 )
         ) {
-
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -74,16 +71,6 @@ fun NoteCard(
                 )
 
             }
-
-//            Button(
-//                modifier = Modifier.size(40.dp),
-//                colors = ButtonDefaults.buttonColors(containerColor = Color.Blue),
-//                shape = CircleShape,
-//                onClick = {
-//
-//                }) {
-//
-//            }
 
             footerContent?.let {
                 Column(

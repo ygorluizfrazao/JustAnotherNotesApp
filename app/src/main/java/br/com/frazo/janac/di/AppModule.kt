@@ -29,6 +29,8 @@ import br.com.frazo.janac.domain.usecases.notes.update.UpdateNoteUseCase
 import br.com.frazo.janac.domain.usecases.notes.update.UpdateNoteUseCaseImpl
 import br.com.frazo.janac.ui.mediator.UIMediator
 import br.com.frazo.janac.ui.mediator.UIMediatorImpl
+import br.com.frazo.janac.ui.util.permissions.providers.PermissionProvider
+import br.com.frazo.janac.ui.util.permissions.providers.AndroidRecordAudioPermissionProvider
 import br.com.frazo.janac.util.DateTimeFormatterFactory
 import br.com.frazo.janac.util.Dispatchers
 import dagger.Module
@@ -37,6 +39,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -180,6 +183,13 @@ object AppModule {
     @Singleton
     fun provideAudioPlayer(@ApplicationContext appContext: Context): AudioPlayer {
         return AndroidAudioPlayer(appContext)
+    }
+
+    @Provides
+    @Singleton
+    @Named("RecordAudioPermissionProvider")
+    fun provideRecordAudioPermissionProvider(): PermissionProvider<String> {
+        return AndroidRecordAudioPermissionProvider()
     }
 
 }

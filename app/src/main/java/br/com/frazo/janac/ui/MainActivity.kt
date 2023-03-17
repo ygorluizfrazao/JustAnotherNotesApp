@@ -62,7 +62,6 @@ class MainActivity : ComponentActivity() {
         navStarDestination: Screen,
         viewModel: MainViewModel
     ) {
-
         val context = LocalContext.current
 
         val notBinnedNotesCount by viewModel.notBinnedNotesCount.collectAsState()
@@ -117,58 +116,65 @@ class MainActivity : ComponentActivity() {
             },
             topBar = {
                 navController.currentDestination?.route?.let {
-                        CenterAlignedTopAppBar(
-                            title = {
-                                Text(
-                                    navController.currentDestination.getJANAScreenForRoute()?.localizedAlias?.asString()
-                                        ?: navStarDestination.route.asString(),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            },
-                            navigationIcon = {
-                                if (currentDestination?.route != navStarDestination.route.asString()) {
-                                    IconButton(onClick = {
-                                        navController.popBackStack()
-                                    }) {
-                                        Icon(
-                                            imageVector = Icons.Filled.ArrowBack,
-                                            contentDescription = ""
-                                        )
-                                    }
-                                }
-                            },
-                            actions = {
-
-                                AnimatedVisibility(visible = !toggleSearchBar) {
-                                    IconButton(onClick = {
-                                        viewModel.filter("")
-                                        toggleSearchBar = !toggleSearchBar
-                                    }) {
-
-                                        IconResource.fromImageVector(
-                                            Icons.Default.Search,
-                                            stringResource(R.string.search)
-                                        ).ComposeIcon()
-
-                                    }
-                                }
-
+                    CenterAlignedTopAppBar(
+                        title = {
+                            Text(
+                                navController.currentDestination.getJANAScreenForRoute()?.localizedAlias?.asString()
+                                    ?: navStarDestination.route.asString(),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        },
+                        navigationIcon = {
+                            if (currentDestination?.route != navStarDestination.route.asString()) {
                                 IconButton(onClick = {
-                                    viewModel.changeContentDisplayMode()
+                                    navController.popBackStack()
                                 }) {
-                                    contentDisplayModeIconResource.ComposeIcon()
+                                    Icon(
+                                        imageVector = Icons.Filled.ArrowBack,
+                                        contentDescription = ""
+                                    )
                                 }
-
-                                IconButton(onClick = { finish() }) {
-                                    IconResource.fromImageVector(
-                                        Icons.Default.ExitToApp,
-                                        stringResource(R.string.exit)
-                                    ).ComposeIcon()
-                                }
-
                             }
-                        )
+                        },
+                        actions = {
+
+//                            IconButton(onClick = { viewModel.onRequestPermission(Manifest.permission.RECORD_AUDIO) }) {
+//                                IconResource.fromImageVector(
+//                                    Icons.Default.CallToAction,
+//                                    ""
+//                                ).ComposeIcon()
+//                            }
+
+                            AnimatedVisibility(visible = !toggleSearchBar) {
+                                IconButton(onClick = {
+                                    viewModel.filter("")
+                                    toggleSearchBar = !toggleSearchBar
+                                }) {
+
+                                    IconResource.fromImageVector(
+                                        Icons.Default.Search,
+                                        stringResource(R.string.search)
+                                    ).ComposeIcon()
+
+                                }
+                            }
+
+                            IconButton(onClick = {
+                                viewModel.changeContentDisplayMode()
+                            }) {
+                                contentDisplayModeIconResource.ComposeIcon()
+                            }
+
+                            IconButton(onClick = { finish() }) {
+                                IconResource.fromImageVector(
+                                    Icons.Default.ExitToApp,
+                                    stringResource(R.string.exit)
+                                ).ComposeIcon()
+                            }
+
+                        }
+                    )
                 }
             },
             bottomBar = {
@@ -224,10 +230,15 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+//                val showPermissionManager
+//                        by viewModel.permissionAdapterState(Manifest.permission.RECORD_AUDIO)
+//                            .collectAsState()
+
                 Navigation(
                     modifier = Modifier.padding(top = MaterialTheme.spacing.medium),
                     navController = navController
                 )
+
             }
         }
 

@@ -39,12 +39,14 @@ class NotesListViewModel @Inject constructor(
     }
 
     private val _notes = MutableStateFlow(emptyList<Note>())
+    val notes = _notes.asStateFlow()
 
     private val _filter = MutableStateFlow("")
     val filter = _filter.asStateFlow()
 
     private val _filteredNotes = MutableStateFlow(_notes.value)
-    val notes = _filteredNotes.asStateFlow()
+    val filteredNotes = _filteredNotes.asStateFlow()
+
 
     private var _showFirstNote = MutableSharedFlow<Boolean>()
     val showFirstNote = _showFirstNote.asSharedFlow()
@@ -58,6 +60,8 @@ class NotesListViewModel @Inject constructor(
     private val _contentDisplayMode = MutableStateFlow(ContentDisplayMode.AS_LIST)
     val contentDisplayMode = _contentDisplayMode.asStateFlow()
 
+    private val startTime = System.currentTimeMillis()
+    private var fetchDataFromRepository = false
 
     init {
         mediator.addParticipant(uiParticipantRepresentative)
@@ -95,6 +99,7 @@ class NotesListViewModel @Inject constructor(
                     )
                 }
                 .collectLatest {
+                    fetchDataFromRepository = true
                     _notes.value =
                         it.sortedByDescending { note ->
                             note.createdAt
@@ -103,13 +108,14 @@ class NotesListViewModel @Inject constructor(
                         uiParticipantRepresentative,
                         UIEvent.NotBinnedNotesFetched(_notes.value)
                     )
+                    updateScreenState()
                 }
         }
     }
 
     private fun CoroutineScope.startCollectingFilterChange() {
         launch {
-            _filter.collectLatest { query ->
+            filter.collectLatest { query ->
                 filterNotes(query)
             }
         }
@@ -117,8 +123,8 @@ class NotesListViewModel @Inject constructor(
 
     private fun CoroutineScope.startFilteringOnNotesChange() {
         launch {
-            _notes.collectLatest {
-                filterNotes(_filter.value)
+            notes.collectLatest {
+                filterNotes(filter.value)
             }
         }
     }
@@ -127,7 +133,9 @@ class NotesListViewModel @Inject constructor(
         launch {
             mediator.broadcastFlowOfEvent(UIEvent.FilterQuery::class).collectLatest { eventPair ->
                 eventPair?.let { (_, event) ->
-                    _filter.value = (event as UIEvent.FilterQuery).query
+                    val query = (event as UIEvent.FilterQuery).query
+                    if(_filter.value != query)
+                        _filter.value = query
                 }
             }
         }
@@ -202,17 +210,18 @@ class NotesListViewModel @Inject constructor(
             uiParticipantRepresentative,
             UIEvent.NotBinnedNotesFiltered(_filteredNotes.value)
         )
-        updateState()
+        updateScreenState()
     }
 
-    private fun updateState() {
+    private fun updateScreenState() {
         if (_notes.value.isNotEmpty()) {
-            if (_filteredNotes.value.isEmpty())
+            if (filteredNotes.value.isEmpty())
                 _screenState.value = ScreenState.NoDataForFilter
             else
-                _screenState.value = ScreenState.Success(_filteredNotes.value)
+                _screenState.value = ScreenState.Success(filteredNotes.value)
         } else {
-            _screenState.value = ScreenState.NoData
+            if( System.currentTimeMillis() - startTime >= 3000  || fetchDataFromRepository)
+                _screenState.value = ScreenState.NoData
         }
     }
 

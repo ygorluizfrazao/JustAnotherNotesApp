@@ -1,13 +1,18 @@
 package br.com.frazo.janac.ui.util.composables
 
+import android.util.Log
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlin.system.measureTimeMillis
 
 @Composable
 fun HighlightedText(
@@ -27,78 +32,168 @@ fun HighlightedText(
     val highlightedSentencesFiltered =
         highlightedSentences.filter { it.trim().isNotBlank() }.distinct()
 
-    var annotatedString = buildAnnotatedString {
+    var annotatedString by remember {
+        mutableStateOf(AnnotatedString(text = text))
+    }
+
+    if (highlightedSentencesFiltered.isNotEmpty()) {
+        LaunchedEffect(key1 = highlightedSentencesFiltered) {
+
+            CoroutineScope(Dispatchers.Default).launch {
+                val newAnnotation = highlightSequences(
+                    sentences = highlightedSentencesFiltered,
+                    text = text,
+                    normalTextSpanStyle = normalTextSpanStyle,
+                    highlightedSentencesTextSpanStyle = highlightedSentencesTextSpanStyle,
+                    ignoreCase = ignoreCase
+                )
+
+//                val newAnnotation = buildAnnotatedString {
+//                    withStyle(highlightedSentencesTextSpanStyle){
+//                        pushStringAnnotation(
+//                            tag = text,
+//                            annotation = text
+//                        )
+//                        append(text)
+//                    }
+//                }
+
+                annotatedString = newAnnotation
+            }
+        }
+    } else {
+        annotatedString = buildAnnotatedString {
+            withStyle(style = normalTextSpanStyle) {
+                append(text)
+            }
+        }
+    }
+
+    content(annotatedString)
+}
+
+private fun highlightSequences(
+    sentences: List<String>,
+    text: String,
+    normalTextSpanStyle: SpanStyle,
+    highlightedSentencesTextSpanStyle: SpanStyle,
+    ignoreCase: Boolean
+): AnnotatedString {
+
+    var auxString = buildAnnotatedString {
         withStyle(style = normalTextSpanStyle) {
             append(text)
         }
     }
+    val millis = measureTimeMillis {
 
-    highlightedSentencesFiltered.forEach { highlightString ->
+        sentences.forEach { highlightString ->
 
-        annotatedString = buildAnnotatedString {
+            val normalStyleBuffer: StringBuilder = StringBuilder()
+            val highLightStyleBuffer: StringBuilder = StringBuilder()
 
-            var currentRange = (0..0)
-            var lastAnnotationSizeAdded = 0
+            auxString = buildAnnotatedString {
 
-            annotatedString.windowed(
-                highlightString.length,
-                step = 1,
-                partialWindows = true
-            ) { windowChars ->
+                var currentRange = (0..0)
+                var lastAnnotationSizeAdded = 0
+                var isInNormalStyle = true
 
-                currentRange = (currentRange.last..currentRange.last + 1)
+                auxString.windowed(
+                    highlightString.length,
+                    step = 1,
+                    partialWindows = true
+                ) { windowChars ->
 
-                if (lastAnnotationSizeAdded > 0) {
-                    lastAnnotationSizeAdded--
-                    return@windowed
-                }
+                    currentRange = (currentRange.last..currentRange.last + 1)
 
-                if (windowChars.first().toString().isBlank()) {
-                    withStyle(style = normalTextSpanStyle) {
-                        append(windowChars.first())
+                    if (lastAnnotationSizeAdded > 0) {
+                        lastAnnotationSizeAdded--
+                        return@windowed
                     }
-                    return@windowed
-                }
 
-                val existingAnnotationsInRange =
-                    annotatedString.getStringAnnotations(currentRange.first, currentRange.last)
-                if (existingAnnotationsInRange.isNotEmpty()) {
-                    existingAnnotationsInRange.forEach { existingAnnotation ->
-                        withStyle(style = highlightedSentencesTextSpanStyle) {
-                            pushStringAnnotation(
-                                tag = existingAnnotation.tag,
-                                annotation = existingAnnotation.item
-                            )
-                            append(existingAnnotation.item)
+                    if (windowChars.first().toString().isBlank()) {
+                        if (!isInNormalStyle) {
+                            withStyle(style = highlightedSentencesTextSpanStyle) {
+                                pushStringAnnotation(
+                                    tag = highLightStyleBuffer.toString(),
+                                    annotation = highLightStyleBuffer.toString()
+                                )
+                                append(highLightStyleBuffer.toString())
+                            }
+                            isInNormalStyle = true
+                            highLightStyleBuffer.clear()
+                        }
+                        normalStyleBuffer.append(windowChars.first())
+                        return@windowed
+                    }
+
+                    val existingAnnotationsInRange =
+                        auxString.getStringAnnotations(
+                            currentRange.first,
+                            currentRange.last
+                        )
+
+                    if (existingAnnotationsInRange.isNotEmpty()) {
+                        existingAnnotationsInRange.forEach { existingAnnotation ->
+                            if (isInNormalStyle) {
+                                withStyle(style = normalTextSpanStyle) {
+                                    append(normalStyleBuffer.toString())
+                                }
+                                isInNormalStyle = false
+                                normalStyleBuffer.clear()
+                            }
+                            highLightStyleBuffer.append(existingAnnotation.item)
                             lastAnnotationSizeAdded += existingAnnotation.item.length
                         }
+                        lastAnnotationSizeAdded -= 1
+                        return@windowed
                     }
-                    lastAnnotationSizeAdded -= 1
-                    return@windowed
-                }
 
-                if ((ignoreCase && windowChars.toString()
-                        .uppercase() == highlightString.uppercase())
-                    || (!ignoreCase && windowChars.toString() == highlightString)
-                ) {
-                    withStyle(style = highlightedSentencesTextSpanStyle) {
-                        pushStringAnnotation(
-                            tag = windowChars.toString(),
-                            annotation = windowChars.toString()
-                        )
-                        append(windowChars.toString())
+                    if ((ignoreCase && windowChars.toString()
+                            .uppercase() == highlightString.uppercase())
+                        || (!ignoreCase && windowChars.toString() == highlightString)
+                    ) {
+
+                        if (isInNormalStyle) {
+                            withStyle(style = normalTextSpanStyle) {
+                                append(normalStyleBuffer.toString())
+                            }
+                            isInNormalStyle = false
+                            normalStyleBuffer.clear()
+                        }
+
+                        highLightStyleBuffer.append(windowChars.toString())
                         lastAnnotationSizeAdded += windowChars.length - 1
+                        return@windowed
                     }
-                    return@windowed
-                }
 
+                    if (!isInNormalStyle) {
+                        withStyle(style = highlightedSentencesTextSpanStyle) {
+                            pushStringAnnotation(
+                                tag = highLightStyleBuffer.toString(),
+                                annotation = highLightStyleBuffer.toString()
+                            )
+                            append(highLightStyleBuffer.toString())
+                        }
+                        isInNormalStyle = true
+                        highLightStyleBuffer.clear()
+                    }
+                    normalStyleBuffer.append(windowChars.first())
+                }
+                withStyle(style = highlightedSentencesTextSpanStyle) {
+                    pushStringAnnotation(
+                        tag = highLightStyleBuffer.toString(),
+                        annotation = highLightStyleBuffer.toString()
+                    )
+                    append(highLightStyleBuffer.toString())
+                }
                 withStyle(style = normalTextSpanStyle) {
-                    append(windowChars.first())
+                    append(normalStyleBuffer.toString())
                 }
-
             }
         }
-
     }
-    content(annotatedString)
+
+    Log.d("highlightSequences", "$millis ms")
+    return auxString
 }
