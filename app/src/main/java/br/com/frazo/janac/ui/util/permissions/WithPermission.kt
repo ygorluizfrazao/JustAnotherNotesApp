@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -18,7 +19,7 @@ import br.com.frazo.janac.ui.util.permissions.providers.AndroidPermissionProvide
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Context.WithPermission(
+private fun Context.WithPermission(
     permissionProvider: AndroidPermissionProvider,
     modifier: Modifier = Modifier,
     rationaleRequestPermissionDialogParams: RequestPermissionDialogParams = RequestPermissionDialogParams(
@@ -31,7 +32,7 @@ fun Context.WithPermission(
         grantPermissionButtonText = "Grant",
         denyPermissionButtonText = "Deny",
     ),
-    ContentWhenGranted: @Composable (AndroidPermissionProvider) -> Unit,
+    contentWhenGranted: @Composable (AndroidPermissionProvider) -> Unit,
     onPermissionDeniedByUser: (AndroidPermissionProvider) -> Unit
 ) {
     if (ContextCompat.checkSelfPermission(
@@ -39,7 +40,7 @@ fun Context.WithPermission(
             permissionProvider.provide()
         ) == PackageManager.PERMISSION_GRANTED
     ) {
-        ContentWhenGranted(permissionProvider)
+        contentWhenGranted(permissionProvider)
     } else {
 
         var requestsMade by rememberSaveable {
@@ -112,22 +113,73 @@ fun Context.WithPermission(
 
 
 @Composable
-fun Context.WithPermission(
+fun (@Composable () -> Unit).withPermission(
     permissionProvider: AndroidPermissionProvider,
-    ContentWhenGranted: @Composable (AndroidPermissionProvider) -> Unit,
-    ContentWhenDeniedBySystem: @Composable (AndroidPermissionProvider) -> Unit
+    canStartAsking: () -> Boolean,
+    permissionAskingStrategy: PermissionAskingStrategy = PermissionAskingStrategy.STOP_ASKING_ON_USER_DENIAL,
+    rationalePrompt: @Composable (permissionProvider: AndroidPermissionProvider, callMeWhen: RationaleCallback) -> Unit,
+    terminalState: @Composable (permissionProvider: AndroidPermissionProvider, isGranted: Boolean) -> Unit
 ) {
-    if (ContextCompat.checkSelfPermission(
-            this,
-            permissionProvider.provide()
-        ) == PackageManager.PERMISSION_GRANTED
-    ) {
-        ContentWhenGranted(permissionProvider)
+
+    var flowState =
+        PermissionFlowState(PermissionFlowStateEnum.NOT_STARTED, this)
+
+    val context = LocalContext.current
+    val permissionGranted = ContextCompat.checkSelfPermission(
+        context,
+        permissionProvider.provide()
+    ) == PackageManager.PERMISSION_GRANTED
+
+    var userManuallyDenied by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    var requestsMade by rememberSaveable {
+        mutableStateOf(0)
+    }
+
+    //User manually block the permission after granting
+    if (flowState.state == PermissionFlowStateEnum.TERMINAL_GRANTED && !permissionGranted) {
+        flowState = PermissionFlowState(PermissionFlowStateEnum.NOT_STARTED, this)
+        requestsMade = 0
+    }
+
+    if (permissionGranted) {
+        flowState = PermissionFlowState(
+            PermissionFlowStateEnum.TERMINAL_GRANTED
+        ) { terminalState(permissionProvider, true) }
     } else {
 
-        var requestsMade by rememberSaveable {
-            mutableStateOf(0)
+        when (permissionAskingStrategy) {
+
+            PermissionAskingStrategy.STOP_ASKING_ON_USER_DENIAL -> {
+                if (userManuallyDenied) {
+                    flowState = PermissionFlowState(
+                        PermissionFlowStateEnum.TERMINAL_DENIED
+                    ) { terminalState(permissionProvider, false) }
+                }
+            }
+
+            PermissionAskingStrategy.ONLY_ASK_SYSTEM -> {
+                if (requestsMade > 0) {
+                    flowState = PermissionFlowState(
+                        PermissionFlowStateEnum.TERMINAL_DENIED
+                    ) { terminalState(permissionProvider, false) }
+                }
+            }
+
+            else -> Unit
         }
+
+    }
+
+    if (flowState.state == PermissionFlowStateEnum.NOT_STARTED && canStartAsking()) {
+        flowState = PermissionFlowState(PermissionFlowStateEnum.STARTED, this)
+    }
+
+    flowState.visibleComposable()
+
+    if (flowState.state == PermissionFlowStateEnum.STARTED) {
 
         var waitingResponse by rememberSaveable {
             mutableStateOf(false)
@@ -146,8 +198,57 @@ fun Context.WithPermission(
             }
         }
 
-        if (requestsMade > 0) {
-            ContentWhenDeniedBySystem(permissionProvider)
+        if (requestsMade > 0 && permissionAskingStrategy != PermissionAskingStrategy.ONLY_ASK_SYSTEM) {
+            rationalePrompt(permissionProvider, RationaleCallback(
+                requestedUserManualGrant = {
+                    requestsMade++
+                },
+                manuallyDeniedByUser = {
+                    if (permissionAskingStrategy == PermissionAskingStrategy.STOP_ASKING_ON_USER_DENIAL)
+                        userManuallyDenied = true
+                    if (permissionAskingStrategy == PermissionAskingStrategy.KEEP_ASKING) {
+                        flowState = PermissionFlowState(PermissionFlowStateEnum.NOT_STARTED, this)
+                        requestsMade = 0
+                    }
+                }
+            ))
         }
     }
 }
+
+@JvmName("withPermissionExplicitArgument")
+@Composable
+fun withPermission(
+    beforeTerminalState: @Composable () -> Unit,
+    permissionProvider: AndroidPermissionProvider,
+    canStartAsking: () -> Boolean,
+    permissionAskingStrategy: PermissionAskingStrategy = PermissionAskingStrategy.STOP_ASKING_ON_USER_DENIAL,
+    rationalePrompt: @Composable (permissionProvider: AndroidPermissionProvider, callMeWhen: RationaleCallback) -> Unit,
+    terminalState: @Composable (permissionProvider: AndroidPermissionProvider, isGranted: Boolean) -> Unit
+) {
+    beforeTerminalState.withPermission(
+        permissionProvider = permissionProvider,
+        canStartAsking = canStartAsking,
+        permissionAskingStrategy = permissionAskingStrategy,
+        rationalePrompt = rationalePrompt,
+        terminalState = terminalState
+    )
+}
+
+data class RationaleCallback(
+    val requestedUserManualGrant: () -> Unit,
+    val manuallyDeniedByUser: () -> Unit,
+)
+
+enum class PermissionAskingStrategy {
+    KEEP_ASKING, ONLY_ASK_SYSTEM, STOP_ASKING_ON_USER_DENIAL
+}
+
+private enum class PermissionFlowStateEnum {
+    NOT_STARTED, STARTED, TERMINAL_GRANTED, TERMINAL_DENIED
+}
+
+private data class PermissionFlowState(
+    val state: PermissionFlowStateEnum,
+    val visibleComposable: @Composable () -> Unit
+)

@@ -78,7 +78,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun emitErrorMessage(message: TextResource) {
+    fun emitErrorMessage(message: TextResource) {
         if (!_errorMessage.tryEmit(message)) {
             viewModelScope.launch {
                 _errorMessage.emit(message)
