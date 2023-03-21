@@ -38,10 +38,9 @@ import br.com.frazo.janac.ui.util.IconResource
 import br.com.frazo.janac.ui.util.TextResource
 import br.com.frazo.janac.ui.util.composables.MyTextField
 import br.com.frazo.janac.ui.util.goToAppSettings
-import br.com.frazo.janac.ui.util.permissions.PermissionAskingStrategy
-import br.com.frazo.janac.ui.util.permissions.RationaleCallback
-import br.com.frazo.janac.ui.util.permissions.providers.AndroidPermissionProvider
-import br.com.frazo.janac.ui.util.permissions.providers.AndroidRecordAudioPermissionProvider
+import br.com.frazo.janac.ui.util.permissions.providers.android.AndroidRecordAudioPermissionProvider
+import br.com.frazo.janac.ui.util.permissions.strategy.AskingStrategy
+import br.com.frazo.janac.ui.util.permissions.strategy.RationaleCallback
 import br.com.frazo.janac.ui.util.permissions.withPermission
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -154,8 +153,9 @@ class MainActivity : ComponentActivity() {
                                 mutableStateOf(false)
                             }
 
+                            val recordAudioPermissionProvider = AndroidRecordAudioPermissionProvider()
                             withPermission(
-                                beforeTerminalState = {
+                                initialStateContent = {
                                     IconButton(onClick = { clicked = true }) {
                                         IconResource.fromImageVector(
                                             Icons.Default.RecordVoiceOver,
@@ -163,10 +163,10 @@ class MainActivity : ComponentActivity() {
                                         ).ComposeIcon()
                                     }
                                 },
-                                permissionProvider = AndroidRecordAudioPermissionProvider(),
-                                permissionAskingStrategy = PermissionAskingStrategy.ONLY_ASK_SYSTEM,
-                                canStartAsking = { clicked },
-                                rationalePrompt = { permissionProvider: AndroidPermissionProvider, callMeWhen: RationaleCallback ->
+                                permissionProvider = recordAudioPermissionProvider,
+                                askingStrategy = AskingStrategy.STOP_ASKING_ON_USER_DENIAL,
+                                canStart = { clicked },
+                                rationalePrompt = { _,_, callMeWhen: RationaleCallback ->
 
                                     AlertDialog(
                                         onDismissRequest = { callMeWhen.manuallyDeniedByUser() },
@@ -189,7 +189,7 @@ class MainActivity : ComponentActivity() {
                                                 )
                                                 Divider()
                                                 Text(
-                                                    text = "Por favor, conceda a seguinte permissão:\n" + permissionProvider.name
+                                                    text = "Por favor, conceda a seguinte permissão:\n" + recordAudioPermissionProvider.name
                                                 )
                                                 Divider()
                                                 Row(
@@ -201,12 +201,12 @@ class MainActivity : ComponentActivity() {
                                                     FilledTonalButton(onClick = {
                                                         context.goToAppSettings()
                                                         callMeWhen.requestedUserManualGrant()
+                                                        clicked = false
                                                     }) {
                                                         Text(text = "Grant")
                                                     }
                                                     OutlinedButton(onClick = {
                                                         callMeWhen.manuallyDeniedByUser()
-                                                        clicked = false
                                                     }) {
                                                         Text(text = "Deny")
                                                     }
@@ -215,15 +215,37 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                 },
-                                terminalState = { permissionProvider: AndroidPermissionProvider, isGranted: Boolean ->
+                                terminalStateContent = { state,permissionMap ->
 
-                                    LaunchedEffect(key1 = isGranted) {
+                                    val permissionsMapState = remember{
+                                        mutableStateOf(permissionMap)
+                                    }
+
+                                    val grantedPermissions= remember {
+                                        derivedStateOf {
+                                            permissionsMapState.value.filter{(_,granted)-> granted}
+                                        }
+                                    }
+
+                                    val deniedPermissions = remember {
+                                        derivedStateOf {
+                                            permissionsMapState.value.filter{(_,granted)-> !granted}
+                                        }
+                                    }
+
+                                    val allGranted = remember {
+                                        derivedStateOf {
+                                            deniedPermissions.value.isEmpty()
+                                        }
+                                    }
+
+                                    LaunchedEffect(key1 = state) {
                                         viewModel.emitErrorMessage(
-                                            TextResource.RuntimeString("Permission Status: $isGranted")
+                                            TextResource.RuntimeString("Granted Permissions: ${grantedPermissions.value.keys}")
                                         )
                                     }
                                     val coroutineScope = rememberCoroutineScope()
-                                    if(isGranted)
+                                    if(allGranted.value)
                                         IconButton(onClick = {
                                             coroutineScope.launch {
                                                 Toast.makeText(context, "Fancy menu", Toast.LENGTH_SHORT)
