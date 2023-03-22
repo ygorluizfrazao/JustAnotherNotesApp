@@ -1,7 +1,8 @@
-package br.com.frazo.janac.ui.util.permissions.requesters.android
+package br.com.frazo.janac.ui.util.permissions.base.requesters.android
 
 import android.content.Context
 import android.content.pm.PackageManager
+import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultCaller
 import androidx.activity.result.ActivityResultLauncher
@@ -10,8 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
-import br.com.frazo.janac.ui.util.permissions.providers.android.AndroidPermissionProvider
-import br.com.frazo.janac.ui.util.permissions.requesters.PermissionRequester
+import br.com.frazo.janac.ui.util.permissions.base.providers.android.AndroidPermissionProvider
+import br.com.frazo.janac.ui.util.permissions.base.requesters.PermissionRequester
 
 class AndroidPermissionRequester private constructor(
     private val activityResultCaller: ActivityResultCaller,
@@ -73,12 +74,15 @@ class AndroidPermissionRequester private constructor(
         @Composable
         fun ActivityResultCaller.rememberAndroidPermissionRequester(
             context: Context = LocalContext.current,
-            permissionProvider: AndroidPermissionProvider): AndroidPermissionRequester {
-            val caller = rememberUpdatedState(newValue = this)
-            val provider = rememberUpdatedState(newValue = permissionProvider)
+            permissionProvider: AndroidPermissionProvider
+        ): AndroidPermissionRequester {
+
+            val permissionState = rememberUpdatedState(newValue = permissionProvider)
+            val contextState = rememberUpdatedState(newValue = context)
+            val activityResultCallerState = rememberUpdatedState(newValue = this)
 
             val androidPermissionRequester = remember {
-                AndroidPermissionRequester(caller.value, context, provider.value)
+                AndroidPermissionRequester(activityResultCallerState.value, contextState.value, permissionState.value)
             }
 
             androidPermissionRequester.activityResultLauncher =
@@ -89,7 +93,7 @@ class AndroidPermissionRequester private constructor(
                             androidPermissionRequester.onPermissionResult(
                                 mapOf(
                                     Pair(
-                                        provider.value.provide().first(), it
+                                        permissionProvider.provide().first(), it
                                     )
                                 )
                             )

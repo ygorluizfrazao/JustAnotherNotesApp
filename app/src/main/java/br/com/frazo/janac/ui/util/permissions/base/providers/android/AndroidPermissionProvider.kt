@@ -1,6 +1,6 @@
-package br.com.frazo.janac.ui.util.permissions.providers.android
+package br.com.frazo.janac.ui.util.permissions.base.providers.android
 
-import br.com.frazo.janac.ui.util.permissions.providers.PermissionProvider
+import br.com.frazo.janac.ui.util.permissions.base.providers.PermissionProvider
 import br.com.frazo.janac.util.capitalizeWords
 
 interface AndroidPermissionProvider : PermissionProvider<List<String>> {

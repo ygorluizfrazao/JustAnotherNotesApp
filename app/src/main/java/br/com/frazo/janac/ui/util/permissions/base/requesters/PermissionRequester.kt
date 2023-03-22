@@ -1,6 +1,6 @@
-package br.com.frazo.janac.ui.util.permissions.requesters
+package br.com.frazo.janac.ui.util.permissions.base.requesters
 
-import br.com.frazo.janac.ui.util.permissions.providers.PermissionProvider
+import br.com.frazo.janac.ui.util.permissions.base.providers.PermissionProvider
 
 interface PermissionRequester<D,R> {
 

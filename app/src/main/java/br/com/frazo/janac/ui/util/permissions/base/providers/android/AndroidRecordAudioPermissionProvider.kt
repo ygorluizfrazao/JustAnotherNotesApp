@@ -1,4 +1,4 @@
-package br.com.frazo.janac.ui.util.permissions.providers.android
+package br.com.frazo.janac.ui.util.permissions.base.providers.android
 
 import android.Manifest
 

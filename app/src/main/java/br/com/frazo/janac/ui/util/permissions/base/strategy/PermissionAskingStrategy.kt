@@ -1,7 +1,8 @@
-package br.com.frazo.janac.ui.util.permissions.strategy
+package br.com.frazo.janac.ui.util.permissions.base.strategy
 
+import android.util.Log
 import androidx.compose.runtime.Composable
-import br.com.frazo.janac.ui.util.permissions.requesters.android.AndroidPermissionRequester
+import br.com.frazo.janac.ui.util.permissions.base.requesters.android.AndroidPermissionRequester
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +29,7 @@ data class RationaleCallback(
 enum class AskingStrategy {
     KEEP_ASKING, ONLY_ASK_SYSTEM, STOP_ASKING_ON_USER_DENIAL
 }
+
 
 fun androidPermissionAskingStrategyFactory(
     type: AskingStrategy,
@@ -93,11 +95,10 @@ class StopOnUserDenial(
 
         lastPermissionMap = androidPermissionRequester.permissionsStatus()
 
-        if (lastPermissionMap.filter { (_,isGranted) ->
+        if (lastPermissionMap.filter { (_, isGranted) ->
                 !isGranted
-            }.isEmpty())
-        {
-            _flowState.value =
+            }.isEmpty() && _flowState.value.state != PermissionFlowStateEnum.TERMINAL_GRANTED) {
+            assignNewState(
                 PermissionFlowState(
                     PermissionFlowStateEnum.TERMINAL_GRANTED,
                     prepareTerminalComposable(
@@ -105,17 +106,19 @@ class StopOnUserDenial(
                         lastPermissionMap
                     )
                 )
+            )
         } else {
             when (flowState.value.state) {
                 PermissionFlowStateEnum.NOT_STARTED -> {
                     if (canStart()) {
                         requestsMade = 0
                         userManuallyDenied = false
-                        _flowState.value =
+                        assignNewState(
                             PermissionFlowState(
                                 PermissionFlowStateEnum.STARTED,
                                 initialStateContent
                             )
+                        )
                     }
                 }
 
@@ -131,7 +134,7 @@ class StopOnUserDenial(
                                     !isGranted
                                 }
                                 if (notGranted.isEmpty()) {
-                                    _flowState.value =
+                                    assignNewState(
                                         PermissionFlowState(
                                             PermissionFlowStateEnum.TERMINAL_GRANTED,
                                             prepareTerminalComposable(
@@ -139,16 +142,16 @@ class StopOnUserDenial(
                                                 permissionsMap
                                             )
                                         )
-                                } else {
-                                    _flowState.value =
-                                        flowState.value.copy(state = PermissionFlowStateEnum.DENIED_BY_SYSTEM)
+                                    )
                                 }
                             }
                         }
+                    } else {
+                        assignNewState(flowState.value.copy(state = PermissionFlowStateEnum.DENIED_BY_SYSTEM))
                     }
                 }
 
-                PermissionFlowStateEnum.DENIED_BY_SYSTEM -> {
+                PermissionFlowStateEnum.DENIED_BY_SYSTEM, PermissionFlowStateEnum.SHOW_RATIONALE -> {
                     if (!userManuallyDenied && !waitingUserResponse && !waitingSystemResponse) {
                         waitingUserResponse = true
                         val rationaleComposable: @Composable () -> Unit = {
@@ -159,15 +162,17 @@ class StopOnUserDenial(
                                 RationaleCallback(
                                     requestedUserManualGrant = {
                                         waitingUserResponse = false
-                                        _flowState.value = PermissionFlowState(
-                                            PermissionFlowStateEnum.NOT_STARTED,
-                                            initialStateContent
+                                        assignNewState(
+                                            PermissionFlowState(
+                                                PermissionFlowStateEnum.NOT_STARTED,
+                                                initialStateContent
+                                            )
                                         )
                                     },
                                     manuallyDeniedByUser = {
                                         waitingUserResponse = false
                                         userManuallyDenied = true
-                                        _flowState.value =
+                                        assignNewState(
                                             PermissionFlowState(
                                                 PermissionFlowStateEnum.TERMINAL_DENIED,
                                                 prepareTerminalComposable(
@@ -175,54 +180,33 @@ class StopOnUserDenial(
                                                     lastPermissionMap
                                                 )
                                             )
+                                        )
                                     })
                             )
                         }
-                        _flowState.value =
+                        assignNewState(
                             PermissionFlowState(
-                                PermissionFlowStateEnum.DENIED_BY_SYSTEM,
+                                PermissionFlowStateEnum.SHOW_RATIONALE,
                                 rationaleComposable
                             )
+                        )
                     }
                 }
 
                 PermissionFlowStateEnum.TERMINAL_GRANTED -> {
-                    waitingSystemResponse = true
-                    androidPermissionRequester.ask {
-                        lastPermissionMap = it
-                        waitingSystemResponse = false
-                        val notGranted = it.filter { (_, isGranted) ->
+                    if (lastPermissionMap.filter { (_, isGranted) ->
                             !isGranted
-                        }
-                        if (notGranted.isNotEmpty()) {
-                            _flowState.value =
-                                PermissionFlowState(
-                                    PermissionFlowStateEnum.NOT_STARTED,
-                                    initialStateContent
-                                )
-                        }
+                        }.isNotEmpty()) {
+                        assignNewState(
+                            PermissionFlowState(
+                                PermissionFlowStateEnum.NOT_STARTED,
+                                initialStateContent
+                            )
+                        )
                     }
                 }
 
                 PermissionFlowStateEnum.TERMINAL_DENIED -> {
-                    waitingSystemResponse = true
-                    androidPermissionRequester.ask {
-                        waitingSystemResponse = false
-                        requestsMade++
-                        val notGranted = it.filter { (_, isGranted) ->
-                            !isGranted
-                        }
-                        if (notGranted.isEmpty()) {
-                            _flowState.value =
-                                PermissionFlowState(
-                                    PermissionFlowStateEnum.TERMINAL_GRANTED,
-                                    prepareTerminalComposable(
-                                        PermissionFlowStateEnum.TERMINAL_GRANTED,
-                                        it
-                                    )
-                                )
-                        }
-                    }
                 }
             }
         }
@@ -241,6 +225,10 @@ class StopOnUserDenial(
             )
         }
         return composable
+    }
 
+    private fun assignNewState(state: PermissionFlowState<@Composable () -> Unit>) {
+        _flowState.value = state
+        Log.d("New Flow State: ", state.toString())
     }
 }

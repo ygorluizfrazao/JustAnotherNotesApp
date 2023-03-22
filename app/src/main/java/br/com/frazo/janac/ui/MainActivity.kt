@@ -1,7 +1,6 @@
 package br.com.frazo.janac.ui
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
@@ -16,10 +15,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -35,13 +31,7 @@ import br.com.frazo.janac.ui.navigation.getJANAScreenForRoute
 import br.com.frazo.janac.ui.theme.NotesAppTheme
 import br.com.frazo.janac.ui.theme.spacing
 import br.com.frazo.janac.ui.util.IconResource
-import br.com.frazo.janac.ui.util.TextResource
 import br.com.frazo.janac.ui.util.composables.MyTextField
-import br.com.frazo.janac.ui.util.goToAppSettings
-import br.com.frazo.janac.ui.util.permissions.providers.android.AndroidRecordAudioPermissionProvider
-import br.com.frazo.janac.ui.util.permissions.strategy.AskingStrategy
-import br.com.frazo.janac.ui.util.permissions.strategy.RationaleCallback
-import br.com.frazo.janac.ui.util.permissions.withPermission
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -149,116 +139,116 @@ class MainActivity : ComponentActivity() {
                         },
                         actions = {
 
-                            var clicked by remember {
-                                mutableStateOf(false)
-                            }
-
-                            val recordAudioPermissionProvider = AndroidRecordAudioPermissionProvider()
-                            withPermission(
-                                initialStateContent = {
-                                    IconButton(onClick = { clicked = true }) {
-                                        IconResource.fromImageVector(
-                                            Icons.Default.RecordVoiceOver,
-                                            ""
-                                        ).ComposeIcon()
-                                    }
-                                },
-                                permissionProvider = recordAudioPermissionProvider,
-                                askingStrategy = AskingStrategy.STOP_ASKING_ON_USER_DENIAL,
-                                canStart = { clicked },
-                                rationalePrompt = { _,_, callMeWhen: RationaleCallback ->
-
-                                    AlertDialog(
-                                        onDismissRequest = { callMeWhen.manuallyDeniedByUser() },
-                                        properties = DialogProperties(
-                                            dismissOnClickOutside = false,
-                                            dismissOnBackPress = false
-                                        )
-                                    ) {
-                                        Surface(
-                                            shape = MaterialTheme.shapes.extraLarge
-                                        ) {
-                                            Column(
-                                                modifier = Modifier.padding(MaterialTheme.spacing.medium),
-                                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                                            ) {
-                                                Text(
-                                                    text = "Permissão Necessária",
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                                Divider()
-                                                Text(
-                                                    text = "Por favor, conceda a seguinte permissão:\n" + recordAudioPermissionProvider.name
-                                                )
-                                                Divider()
-                                                Row(
-                                                    modifier = Modifier
-                                                        .wrapContentHeight()
-                                                        .fillMaxWidth(),
-                                                    horizontalArrangement = Arrangement.SpaceEvenly
-                                                ) {
-                                                    FilledTonalButton(onClick = {
-                                                        context.goToAppSettings()
-                                                        callMeWhen.requestedUserManualGrant()
-                                                        clicked = false
-                                                    }) {
-                                                        Text(text = "Grant")
-                                                    }
-                                                    OutlinedButton(onClick = {
-                                                        callMeWhen.manuallyDeniedByUser()
-                                                    }) {
-                                                        Text(text = "Deny")
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                terminalStateContent = { state,permissionMap ->
-
-                                    val permissionsMapState = remember{
-                                        mutableStateOf(permissionMap)
-                                    }
-
-                                    val grantedPermissions= remember {
-                                        derivedStateOf {
-                                            permissionsMapState.value.filter{(_,granted)-> granted}
-                                        }
-                                    }
-
-                                    val deniedPermissions = remember {
-                                        derivedStateOf {
-                                            permissionsMapState.value.filter{(_,granted)-> !granted}
-                                        }
-                                    }
-
-                                    val allGranted = remember {
-                                        derivedStateOf {
-                                            deniedPermissions.value.isEmpty()
-                                        }
-                                    }
-
-                                    LaunchedEffect(key1 = state) {
-                                        viewModel.emitErrorMessage(
-                                            TextResource.RuntimeString("Granted Permissions: ${grantedPermissions.value.keys}")
-                                        )
-                                    }
-                                    val coroutineScope = rememberCoroutineScope()
-                                    if(allGranted.value)
-                                        IconButton(onClick = {
-                                            coroutineScope.launch {
-                                                Toast.makeText(context, "Fancy menu", Toast.LENGTH_SHORT)
-                                                    .show()
-                                            }
-                                        }) {
-                                            IconResource.fromImageVector(
-                                                Icons.Default.CallToAction,
-                                                ""
-                                            ).ComposeIcon()
-                                        }
-                                }
-                            )
+//                            var clicked by remember {
+//                                mutableStateOf(false)
+//                            }
+//
+//                            val recordAudioPermissionProvider = AndroidRecordAudioPermissionProvider()
+//                            withPermission(
+//                                initialStateContent = {
+//                                    IconButton(onClick = { clicked = true }) {
+//                                        IconResource.fromImageVector(
+//                                            Icons.Default.RecordVoiceOver,
+//                                            ""
+//                                        ).ComposeIcon()
+//                                    }
+//                                },
+//                                permissionProvider = recordAudioPermissionProvider,
+//                                askingStrategy = AskingStrategy.STOP_ASKING_ON_USER_DENIAL,
+//                                canStart = { clicked },
+//                                rationalePrompt = { _,_, callMeWhen: RationaleCallback ->
+//
+//                                    AlertDialog(
+//                                        onDismissRequest = { callMeWhen.manuallyDeniedByUser() },
+//                                        properties = DialogProperties(
+//                                            dismissOnClickOutside = false,
+//                                            dismissOnBackPress = false
+//                                        )
+//                                    ) {
+//                                        Surface(
+//                                            shape = MaterialTheme.shapes.extraLarge
+//                                        ) {
+//                                            Column(
+//                                                modifier = Modifier.padding(MaterialTheme.spacing.medium),
+//                                                verticalArrangement = Arrangement.spacedBy(8.dp)
+//                                            ) {
+//                                                Text(
+//                                                    text = "Permissão Necessária",
+//                                                    style = MaterialTheme.typography.titleMedium,
+//                                                    fontWeight = FontWeight.Bold
+//                                                )
+//                                                Divider()
+//                                                Text(
+//                                                    text = "Por favor, conceda a seguinte permissão:\n" + recordAudioPermissionProvider.name
+//                                                )
+//                                                Divider()
+//                                                Row(
+//                                                    modifier = Modifier
+//                                                        .wrapContentHeight()
+//                                                        .fillMaxWidth(),
+//                                                    horizontalArrangement = Arrangement.SpaceEvenly
+//                                                ) {
+//                                                    FilledTonalButton(onClick = {
+//                                                        context.goToAppSettings()
+//                                                        callMeWhen.requestedUserManualGrant()
+//                                                        clicked = false
+//                                                    }) {
+//                                                        Text(text = "Grant")
+//                                                    }
+//                                                    OutlinedButton(onClick = {
+//                                                        callMeWhen.manuallyDeniedByUser()
+//                                                    }) {
+//                                                        Text(text = "Deny")
+//                                                    }
+//                                                }
+//                                            }
+//                                        }
+//                                    }
+//                                },
+//                                terminalStateContent = { state,permissionMap ->
+//
+//                                    val permissionsMapState = remember{
+//                                        mutableStateOf(permissionMap)
+//                                    }
+//
+//                                    val grantedPermissions= remember {
+//                                        derivedStateOf {
+//                                            permissionsMapState.value.filter{(_,granted)-> granted}
+//                                        }
+//                                    }
+//
+//                                    val deniedPermissions = remember {
+//                                        derivedStateOf {
+//                                            permissionsMapState.value.filter{(_,granted)-> !granted}
+//                                        }
+//                                    }
+//
+//                                    val allGranted = remember {
+//                                        derivedStateOf {
+//                                            deniedPermissions.value.isEmpty()
+//                                        }
+//                                    }
+//
+//                                    LaunchedEffect(key1 = state) {
+//                                        viewModel.emitErrorMessage(
+//                                            TextResource.RuntimeString("Granted Permissions: ${grantedPermissions.value.keys}")
+//                                        )
+//                                    }
+//                                    val coroutineScope = rememberCoroutineScope()
+//                                    if(allGranted.value)
+//                                        IconButton(onClick = {
+//                                            coroutineScope.launch {
+//                                                Toast.makeText(context, "Fancy menu", Toast.LENGTH_SHORT)
+//                                                    .show()
+//                                            }
+//                                        }) {
+//                                            IconResource.fromImageVector(
+//                                                Icons.Default.CallToAction,
+//                                                ""
+//                                            ).ComposeIcon()
+//                                        }
+//                                }
+//                            )
 
 
                             AnimatedVisibility(visible = !toggleSearchBar) {
