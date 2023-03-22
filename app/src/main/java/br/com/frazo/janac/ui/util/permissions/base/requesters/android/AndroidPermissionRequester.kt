@@ -2,7 +2,6 @@ package br.com.frazo.janac.ui.util.permissions.base.requesters.android
 
 import android.content.Context
 import android.content.pm.PackageManager
-import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultCaller
 import androidx.activity.result.ActivityResultLauncher
@@ -11,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
+import br.com.frazo.janac.ui.util.permissions.base.findActivityResultCaller
 import br.com.frazo.janac.ui.util.permissions.base.providers.android.AndroidPermissionProvider
 import br.com.frazo.janac.ui.util.permissions.base.requesters.PermissionRequester
 
@@ -68,7 +68,11 @@ class AndroidPermissionRequester private constructor(
             permissionProvider: AndroidPermissionProvider,
             context: Context
         ): AndroidPermissionRequester {
-            return AndroidPermissionRequester(this, context,permissionProvider).apply { registerLauncher() }
+            return AndroidPermissionRequester(
+                this,
+                context,
+                permissionProvider
+            ).apply { registerLauncher() }
         }
 
         @Composable
@@ -82,7 +86,11 @@ class AndroidPermissionRequester private constructor(
             val activityResultCallerState = rememberUpdatedState(newValue = this)
 
             val androidPermissionRequester = remember {
-                AndroidPermissionRequester(activityResultCallerState.value, contextState.value, permissionState.value)
+                AndroidPermissionRequester(
+                    activityResultCallerState.value,
+                    contextState.value,
+                    permissionState.value
+                )
             }
 
             androidPermissionRequester.activityResultLauncher =
@@ -107,6 +115,17 @@ class AndroidPermissionRequester private constructor(
                 }
 
             return androidPermissionRequester
+        }
+
+        @Composable
+        fun Context.rememberAndroidPermissionRequester(
+            permissionProvider: AndroidPermissionProvider
+        ): AndroidPermissionRequester {
+
+            return this.findActivityResultCaller().rememberAndroidPermissionRequester(
+                permissionProvider = permissionProvider,
+                context = this
+            )
         }
     }
 }
