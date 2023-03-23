@@ -33,7 +33,7 @@ fun WithPermission(
                         userDrivenAskingStrategy.onRequestedUserManualGrant()
                     },
                     manuallyDeniedByUser = {
-                        userDrivenAskingStrategy.onUserDenied()
+                        userDrivenAskingStrategy.onUserManuallyDenied()
                     })
             )
         }
@@ -80,7 +80,7 @@ fun ActivityResultCaller.WithPermission(
 
     val userDrivenAskingStrategy =
         askingStrategy.rememberUserDrivenAskingStrategy(
-            androidPermissionRequester = permissionRequester,
+            permissionRequester = permissionRequester,
             canStart = canStart
         )
 

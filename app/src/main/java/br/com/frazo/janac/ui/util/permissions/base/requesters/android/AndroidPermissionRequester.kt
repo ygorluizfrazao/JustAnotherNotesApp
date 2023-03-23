@@ -118,13 +118,33 @@ class AndroidPermissionRequester private constructor(
         }
 
         @Composable
-        fun Context.rememberAndroidPermissionRequester(
+        fun rememberAndroidPermissionRequester(
+            context: Context = LocalContext.current,
             permissionProvider: AndroidPermissionProvider
         ): AndroidPermissionRequester {
 
-            return this.findActivityResultCaller().rememberAndroidPermissionRequester(
+            return context.findActivityResultCaller().rememberAndroidPermissionRequester(
                 permissionProvider = permissionProvider,
-                context = this
+                context = context
+            )
+        }
+
+        @Composable
+        fun rememberAndroidPermissionRequester(
+            context: Context = LocalContext.current,
+            vararg permissions: String
+        ): AndroidPermissionRequester {
+            return rememberAndroidPermissionRequester(context, permissions = permissions.toList())
+        }
+
+        @Composable
+        fun rememberAndroidPermissionRequester(
+            context: Context = LocalContext.current,
+            permissions: List<String>
+        ): AndroidPermissionRequester {
+            return context.findActivityResultCaller().rememberAndroidPermissionRequester(
+                permissionProvider = AndroidPermissionProvider.of(permissions.toList()),
+                context = context
             )
         }
     }

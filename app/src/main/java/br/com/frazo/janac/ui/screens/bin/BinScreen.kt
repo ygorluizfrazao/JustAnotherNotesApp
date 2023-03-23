@@ -1,5 +1,6 @@
 package br.com.frazo.janac.ui.screens.bin
 
+import android.Manifest
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -37,7 +39,7 @@ import br.com.frazo.janac.ui.util.composables.NoItemsContent
 import br.com.frazo.janac.ui.util.goToAppSettings
 import br.com.frazo.janac.ui.util.permissions.base.AppPermissionRequestCallbackHolder
 import br.com.frazo.janac.ui.util.permissions.base.WithPermission
-import br.com.frazo.janac.ui.util.permissions.base.providers.android.AndroidRecordAudioPermissionProvider
+import br.com.frazo.janac.ui.util.permissions.base.providers.android.AndroidPermissionProvider.Companion.toHumanLanguage
 import br.com.frazo.janac.ui.util.permissions.base.requesters.android.AndroidPermissionRequester.Companion.rememberAndroidPermissionRequester
 import br.com.frazo.janac.ui.util.permissions.base.strategy.AskingStrategy
 import br.com.frazo.janac.ui.util.permissions.base.strategy.rememberUserDrivenAskingStrategy
@@ -232,16 +234,16 @@ fun DisplayContentAsList(
 
     val filter by viewModel.filter.collectAsState()
 
-    var clicked by remember {
+    var clicked by rememberSaveable {
         mutableStateOf(false)
     }
 
-    val recordAudioPermissionProvider = AndroidRecordAudioPermissionProvider()
-
     val userDrivenAskingStrategy =
-        AskingStrategy.STOP_ASKING_ON_USER_DENIAL.rememberUserDrivenAskingStrategy(
-            androidPermissionRequester = LocalContext.current.rememberAndroidPermissionRequester(
-                permissionProvider = recordAudioPermissionProvider
+        rememberUserDrivenAskingStrategy(
+            permissions = listOf(
+                Manifest.permission.RECORD_AUDIO,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION
             )
         ) {
             clicked
@@ -286,7 +288,17 @@ fun DisplayContentAsList(
                         ).ComposeIcon()
                     }
                 },
-                rationalePrompt = { _, _, callMeWhen: AppPermissionRequestCallbackHolder ->
+                rationalePrompt = { _, permissionsMap, callMeWhen: AppPermissionRequestCallbackHolder ->
+
+                    val notGranted by remember {
+                        derivedStateOf {
+                            permissionsMap.filter { (_, granted) -> !granted }
+                                .map { (permission, _) -> permission.toHumanLanguage() + "\n" }
+                                .reduce { acc, s ->
+                                    acc + s
+                                }
+                        }
+                    }
 
                     AlertDialog(
                         onDismissRequest = { callMeWhen.manuallyDeniedByUser() },
@@ -308,7 +320,7 @@ fun DisplayContentAsList(
                                 )
                                 Divider()
                                 Text(
-                                    text = "Por favor, conceda a seguinte permissão:\n" + recordAudioPermissionProvider.name
+                                    text = "Por favor, conceda a(s) seguinte(s) permissão:\n" + notGranted
                                 )
                                 Divider()
                                 Row(
@@ -326,6 +338,7 @@ fun DisplayContentAsList(
                                     }
                                     OutlinedButton(onClick = {
                                         callMeWhen.manuallyDeniedByUser()
+                                        clicked = false
                                     }) {
                                         Text(text = "Deny")
                                     }

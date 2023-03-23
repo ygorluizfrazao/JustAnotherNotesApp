@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class StopOnUserDenialAskingStrategy(
+class KeepAskingStrategy(
     private val permissionRequester: PermissionRequester<List<String>, String>,
     private val canStart: () -> Boolean = { true },
 ) :
@@ -23,12 +23,10 @@ class StopOnUserDenialAskingStrategy(
     ) : this(permissionRequester, canStart) {
         _flowState.value =
             PermissionFlowState(savedData.state, permissionRequester.permissionsStatus())
-        userManuallyDenied = savedData.userManuallyDenied
     }
 
     private data class DataHolder(
         val state: PermissionFlowStateEnum,
-        val userManuallyDenied: Boolean
     )
 
     private val _flowState =
@@ -41,7 +39,6 @@ class StopOnUserDenialAskingStrategy(
 
     private val flowState = _flowState.asStateFlow()
 
-    private var userManuallyDenied = false
     private var requestsMade = 0
     private var waitingSystemResponse = false
     private var waitingUserResponse = false
@@ -49,10 +46,9 @@ class StopOnUserDenialAskingStrategy(
 
     override fun onUserManuallyDenied() {
         waitingUserResponse = false
-        userManuallyDenied = true
         assignNewState(
             PermissionFlowState(
-                PermissionFlowStateEnum.TERMINAL_DENIED,
+                PermissionFlowStateEnum.NOT_STARTED,
                 lastPermissionMap
             )
         )
@@ -85,7 +81,6 @@ class StopOnUserDenialAskingStrategy(
                 PermissionFlowStateEnum.NOT_STARTED -> {
                     if (canStart()) {
                         requestsMade = 0
-                        userManuallyDenied = false
                         assignNewState(
                             PermissionFlowState(
                                 PermissionFlowStateEnum.STARTED,
@@ -121,7 +116,7 @@ class StopOnUserDenialAskingStrategy(
                 }
 
                 PermissionFlowStateEnum.DENIED_BY_SYSTEM, PermissionFlowStateEnum.APP_PROMPT -> {
-                    if (!userManuallyDenied && !waitingUserResponse && !waitingSystemResponse) {
+                    if (!waitingUserResponse && !waitingSystemResponse) {
                         waitingUserResponse = true
                         assignNewState(
                             PermissionFlowState(
@@ -171,7 +166,7 @@ class StopOnUserDenialAskingStrategy(
                 canStart,
                 saver = saver(permissionRequester, canStart)
             ) {
-                StopOnUserDenialAskingStrategy(
+                KeepAskingStrategy(
                     permissionRequester,
                     canStart
                 )
@@ -181,23 +176,20 @@ class StopOnUserDenialAskingStrategy(
         fun saver(
             permissionRequester: PermissionRequester<List<String>, String>,
             canStart: () -> Boolean
-        ): Saver<StopOnUserDenialAskingStrategy, Any> {
+        ): Saver<KeepAskingStrategy, Any> {
             val flowStateKey = "flowStateKey"
-            val userManuallyDeniedKey = "userManuallyDeniedKey"
 
             return mapSaver(
                 save = {
                     mapOf(
                         flowStateKey to it.flowState.value.state,
-                        userManuallyDeniedKey to it.userManuallyDenied
                     )
                 },
                 restore = {
                     val data = DataHolder(
-                        it[flowStateKey] as PermissionFlowStateEnum,
-                        it[userManuallyDeniedKey] as Boolean
+                        it[flowStateKey] as PermissionFlowStateEnum
                     )
-                    StopOnUserDenialAskingStrategy(permissionRequester, canStart, data)
+                    KeepAskingStrategy(permissionRequester, canStart, data)
                 }
             )
         }

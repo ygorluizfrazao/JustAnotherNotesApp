@@ -7,12 +7,30 @@ interface AndroidPermissionProvider : PermissionProvider<List<String>> {
 
     val name: String
         get() {
-            return provide().map { it.inHumanLanguage() + "\n" }.reduce { acc, s ->
+            return provide().map { it.toHumanLanguage() + "\n" }.reduce { acc, s ->
                 acc + s
             }
         }
 
-    private fun String.inHumanLanguage(): String {
-        return this.split(".").last().replace("_", " ").capitalizeWords()
+
+    companion object {
+
+        fun String.toHumanLanguage(): String {
+            return this.split(".").last().replace("_", " ").capitalizeWords()
+        }
+
+        fun of(vararg permissions: String): AndroidPermissionProvider {
+            return of(permissions.toList())
+        }
+
+        fun of(permissions: List<String>): AndroidPermissionProvider {
+            return object : AndroidPermissionProvider {
+                val permissionsList = permissions.distinct()
+                override fun provide(): List<String> {
+                    return permissionsList
+                }
+
+            }
+        }
     }
 }
