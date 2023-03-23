@@ -240,6 +240,7 @@ fun DisplayContentAsList(
 
     val userDrivenAskingStrategy =
         rememberUserDrivenAskingStrategy(
+            type = AskingStrategy.ONLY_ASK_SYSTEM,
             permissions = listOf(
                 Manifest.permission.RECORD_AUDIO,
                 Manifest.permission.ACCESS_COARSE_LOCATION,
