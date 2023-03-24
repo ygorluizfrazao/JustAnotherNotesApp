@@ -20,7 +20,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.window.DialogProperties
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.frazo.janac.R
@@ -37,12 +36,10 @@ import br.com.frazo.janac.ui.util.composables.IndeterminateLoading
 import br.com.frazo.janac.ui.util.composables.MyClickableText
 import br.com.frazo.janac.ui.util.composables.NoItemsContent
 import br.com.frazo.janac.ui.util.goToAppSettings
-import br.com.frazo.janac.ui.util.permissions.base.AppPermissionRequestCallbackHolder
-import br.com.frazo.janac.ui.util.permissions.base.WithPermission
-import br.com.frazo.janac.ui.util.permissions.base.providers.android.AndroidPermissionProvider.Companion.toHumanLanguage
-import br.com.frazo.janac.ui.util.permissions.base.requesters.android.AndroidPermissionRequester.Companion.rememberAndroidPermissionRequester
 import br.com.frazo.janac.ui.util.permissions.base.strategy.AskingStrategy
 import br.com.frazo.janac.ui.util.permissions.base.strategy.rememberUserDrivenAskingStrategy
+import br.com.frazo.janac.ui.util.permissions.materialv3.WithPermission
+import br.com.frazo.janac.ui.util.permissions.materialv3.createPermissionDialogProperties
 import br.com.frazo.janac.util.DateTimeFormatterFactory
 import kotlinx.coroutines.launch
 
@@ -240,15 +237,14 @@ fun DisplayContentAsList(
 
     val userDrivenAskingStrategy =
         rememberUserDrivenAskingStrategy(
-            type = AskingStrategy.ONLY_ASK_SYSTEM,
+            type = AskingStrategy.STOP_ASKING_ON_USER_DENIAL,
             permissions = listOf(
                 Manifest.permission.RECORD_AUDIO,
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_FINE_LOCATION
-            )
-        ) {
-            clicked
-        }
+            ),
+            canStart = { clicked }
+        )
 
     NotesList(
         modifier = modifier,
@@ -281,71 +277,18 @@ fun DisplayContentAsList(
 
             WithPermission(
                 userDrivenAskingStrategy = userDrivenAskingStrategy,
+                permissionDialogProperties = createPermissionDialogProperties(
+                    onGrantButtonClicked = { _, _ ->
+                        context.goToAppSettings()
+                        clicked = false
+                    },
+                ),
                 initialStateContent = {
                     IconButton(onClick = { clicked = true }) {
                         IconResource.fromImageVector(
-                            Icons.Default.RecordVoiceOver,
+                            Icons.Default.Warning,
                             ""
                         ).ComposeIcon()
-                    }
-                },
-                rationalePrompt = { _, permissionsMap, callMeWhen: AppPermissionRequestCallbackHolder ->
-
-                    val notGranted by remember {
-                        derivedStateOf {
-                            permissionsMap.filter { (_, granted) -> !granted }
-                                .map { (permission, _) -> permission.toHumanLanguage() + "\n" }
-                                .reduce { acc, s ->
-                                    acc + s
-                                }
-                        }
-                    }
-
-                    AlertDialog(
-                        onDismissRequest = { callMeWhen.manuallyDeniedByUser() },
-                        properties = DialogProperties(
-                            dismissOnClickOutside = false,
-                            dismissOnBackPress = false
-                        )
-                    ) {
-                        Surface(
-                            shape = MaterialTheme.shapes.extraLarge
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(MaterialTheme.spacing.medium),
-                                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium)
-                            ) {
-                                Text(
-                                    text = "Permissão Necessária",
-                                    style = MaterialTheme.typography.titleMedium,
-                                )
-                                Divider()
-                                Text(
-                                    text = "Por favor, conceda a(s) seguinte(s) permissão:\n" + notGranted
-                                )
-                                Divider()
-                                Row(
-                                    modifier = Modifier
-                                        .wrapContentHeight()
-                                        .fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceEvenly
-                                ) {
-                                    FilledTonalButton(onClick = {
-                                        context.goToAppSettings()
-                                        callMeWhen.requestedUserManualGrant()
-                                        clicked = false
-                                    }) {
-                                        Text(text = "Grant")
-                                    }
-                                    OutlinedButton(onClick = {
-                                        callMeWhen.manuallyDeniedByUser()
-                                        clicked = false
-                                    }) {
-                                        Text(text = "Deny")
-                                    }
-                                }
-                            }
-                        }
                     }
                 }) { _, permissionMap ->
 
@@ -365,14 +308,8 @@ fun DisplayContentAsList(
                     }
                 }
 
-                val allGranted = remember {
-                    derivedStateOf {
-                        deniedPermissions.value.isEmpty()
-                    }
-                }
-
                 val coroutineScope = rememberCoroutineScope()
-                if (allGranted.value)
+                if (deniedPermissions.value.isEmpty()) {
                     IconButton(onClick = {
                         coroutineScope.launch {
                             Toast.makeText(
@@ -384,10 +321,27 @@ fun DisplayContentAsList(
                         }
                     }) {
                         IconResource.fromImageVector(
-                            Icons.Default.CallToAction,
+                            Icons.Default.CheckCircle,
                             ""
                         ).ComposeIcon()
                     }
+                } else {
+                    IconButton(onClick = {
+                        coroutineScope.launch {
+                            Toast.makeText(
+                                context,
+                                "Granted: ${grantedPermissions.value}\nDenied: ${deniedPermissions.value}",
+                                Toast.LENGTH_SHORT
+                            )
+                                .show()
+                        }
+                    }) {
+                        IconResource.fromImageVector(
+                            Icons.Default.Cancel,
+                            ""
+                        ).ComposeIcon()
+                    }
+                }
             }
 
 

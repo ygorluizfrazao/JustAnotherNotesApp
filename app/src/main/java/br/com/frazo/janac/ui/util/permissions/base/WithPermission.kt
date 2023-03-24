@@ -3,24 +3,32 @@ package br.com.frazo.janac.ui.util.permissions.base
 import android.content.Context
 import android.content.ContextWrapper
 import androidx.activity.result.ActivityResultCaller
-import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import br.com.frazo.janac.ui.util.permissions.base.providers.android.AndroidPermissionProvider
-import br.com.frazo.janac.ui.util.permissions.base.requesters.android.AndroidPermissionRequester.Companion.rememberAndroidPermissionRequester
-import br.com.frazo.janac.ui.util.permissions.base.strategy.*
+import br.com.frazo.janac.ui.util.permissions.base.strategy.PermissionFlowState
+import br.com.frazo.janac.ui.util.permissions.base.strategy.PermissionFlowStateEnum
+import br.com.frazo.janac.ui.util.permissions.base.strategy.UserDrivenAskingStrategy
 
 @Composable
 fun WithPermission(
     userDrivenAskingStrategy: UserDrivenAskingStrategy<Map<String, Boolean>>,
     initialStateContent: @Composable () -> Unit,
-    rationalePrompt: @Composable (state: PermissionFlowStateEnum, permissionsStatus: Map<String, Boolean>, callMeWhen: AppPermissionRequestCallbackHolder) -> Unit,
+    rationalePrompt: @Composable (state: PermissionFlowStateEnum, permissionsStatus: Map<String, Boolean>, callMeWhen: PermissionsAskingStrategyInteraction) -> Unit,
     terminalStateContent: @Composable (state: PermissionFlowStateEnum, permissionsStatus: Map<String, Boolean>) -> Unit
 ) {
 
-    val flowState = userDrivenAskingStrategy.flowState().collectAsState()
+    val flowState = userDrivenAskingStrategy.flowState().collectAsState(
+        initial =
+        PermissionFlowState(
+            PermissionFlowStateEnum.NOT_STARTED,
+            emptyMap()
+        )
+    )
 
     val rationaleComposable: @Composable () -> Unit = remember {
         {
@@ -28,7 +36,7 @@ fun WithPermission(
             rationalePrompt(
                 PermissionFlowStateEnum.DENIED_BY_SYSTEM,
                 flowState.value.data,
-                AppPermissionRequestCallbackHolder(
+                PermissionsAskingStrategyInteraction(
                     requestedUserManualGrant = {
                         userDrivenAskingStrategy.onRequestedUserManualGrant()
                     },
@@ -64,78 +72,7 @@ fun WithPermission(
     })
 }
 
-@Composable
-fun ActivityResultCaller.WithPermission(
-    askingStrategy: AskingStrategy = AskingStrategy.STOP_ASKING_ON_USER_DENIAL,
-    permissionProvider: AndroidPermissionProvider,
-    canStart: ()->Boolean = {true},
-    initialStateContent: @Composable () -> Unit,
-    rationalePrompt: @Composable (state: PermissionFlowStateEnum, permissionsStatus: Map<String, Boolean>, callMeWhen: AppPermissionRequestCallbackHolder) -> Unit,
-    terminalStateContent: @Composable (state: PermissionFlowStateEnum, permissionsStatus: Map<String, Boolean>) -> Unit
-) {
-    val permissionRequester =
-        rememberAndroidPermissionRequester(
-            permissionProvider = permissionProvider
-        )
-
-    val userDrivenAskingStrategy =
-        askingStrategy.rememberUserDrivenAskingStrategy(
-            permissionRequester = permissionRequester,
-            canStart = canStart
-        )
-
-   WithPermission(
-        userDrivenAskingStrategy = userDrivenAskingStrategy,
-        initialStateContent = initialStateContent,
-        rationalePrompt = rationalePrompt,
-        terminalStateContent = terminalStateContent
-    )
-}
-
-@Composable
-fun Context.WithPermission(
-    askingStrategy: AskingStrategy = AskingStrategy.STOP_ASKING_ON_USER_DENIAL,
-    permissionProvider: AndroidPermissionProvider,
-    canStart: ()->Boolean = {true},
-    initialStateContent: @Composable () -> Unit,
-    rationalePrompt: @Composable (state: PermissionFlowStateEnum, permissionsStatus: Map<String, Boolean>, callMeWhen: AppPermissionRequestCallbackHolder) -> Unit,
-    terminalStateContent: @Composable (state: PermissionFlowStateEnum, permissionsStatus: Map<String, Boolean>) -> Unit
-) {
-
-    findActivityResultCaller().WithPermission(
-        askingStrategy,
-        permissionProvider,
-        canStart,
-        initialStateContent,
-        rationalePrompt,
-        terminalStateContent
-    )
-}
-
-
-@JvmName("withPermission1")
-@Composable
-fun WithPermission(
-    context: Context = LocalContext.current,
-    askingStrategy: AskingStrategy = AskingStrategy.STOP_ASKING_ON_USER_DENIAL,
-    permissionProvider: AndroidPermissionProvider,
-    canStart: ()->Boolean = {true},
-    initialStateContent: @Composable () -> Unit,
-    rationalePrompt: @Composable (state: PermissionFlowStateEnum, permissionsStatus: Map<String, Boolean>, callMeWhen: AppPermissionRequestCallbackHolder) -> Unit,
-    terminalStateContent: @Composable (state: PermissionFlowStateEnum, permissionsStatus: Map<String, Boolean>) -> Unit
-) {
-
-    context.findActivityResultCaller().WithPermission(
-        askingStrategy,
-        permissionProvider,
-        canStart = canStart,
-        initialStateContent,
-        rationalePrompt,
-        terminalStateContent
-    )
-}
-
-data class AppPermissionRequestCallbackHolder(
+data class PermissionsAskingStrategyInteraction(
     val requestedUserManualGrant: () -> Unit,
     val manuallyDeniedByUser: () -> Unit,
 )
