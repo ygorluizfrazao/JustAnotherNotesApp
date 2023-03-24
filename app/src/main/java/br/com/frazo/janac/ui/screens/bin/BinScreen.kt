@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
@@ -18,8 +19,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.*
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.frazo.janac.R
@@ -309,8 +315,13 @@ fun DisplayContentAsList(
                 }
 
                 val coroutineScope = rememberCoroutineScope()
+                var popupControl by remember {
+                    mutableStateOf(false)
+                }
+
                 if (deniedPermissions.value.isEmpty()) {
                     IconButton(onClick = {
+                        popupControl = true
                         coroutineScope.launch {
                             Toast.makeText(
                                 context,
@@ -327,6 +338,7 @@ fun DisplayContentAsList(
                     }
                 } else {
                     IconButton(onClick = {
+                        popupControl = true
                         coroutineScope.launch {
                             Toast.makeText(
                                 context,
@@ -340,6 +352,55 @@ fun DisplayContentAsList(
                             Icons.Default.Cancel,
                             ""
                         ).ComposeIcon()
+                    }
+                }
+
+                if (popupControl) {
+                    Popup(
+                        properties = PopupProperties(
+                            dismissOnBackPress = true,
+                            dismissOnClickOutside = true,
+                            focusable = true
+                        ),
+                        onDismissRequest = { popupControl = false },
+                        popupPositionProvider = object : PopupPositionProvider {
+                            override fun calculatePosition(
+                                anchorBounds: IntRect,
+                                windowSize: IntSize,
+                                layoutDirection: LayoutDirection,
+                                popupContentSize: IntSize
+                            ): IntOffset {
+                                return IntOffset(
+                                    (windowSize.width - popupContentSize.width) / 2,
+                                    (windowSize.height - popupContentSize.height) / 2
+                                )
+                            }
+                        }) {
+                        Surface(
+                            border = BorderStroke(4.dp, Color.Black),
+                            shape = MaterialTheme.shapes.medium
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(MaterialTheme.spacing.medium),
+                                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium)
+                            ) {
+                                Text(
+                                    text = "Granted Permissions: ${
+                                        grantedPermissions.value.map { it.key + "\n" }
+                                            .joinToString()
+                                    }"
+                                )
+
+                                Divider()
+
+                                Text(
+                                    text = "Denied Permissions: ${
+                                        deniedPermissions.value.map { it.key + "\n" }
+                                            .joinToString()
+                                    }"
+                                )
+                            }
+                        }
                     }
                 }
             }

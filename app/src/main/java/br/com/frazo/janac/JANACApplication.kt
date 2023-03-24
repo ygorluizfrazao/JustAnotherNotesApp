@@ -15,9 +15,4 @@ class JANACApplication : Application() {
             StrictMode.enableDefaults()
     }
 
-//    init {
-//        CoroutineScope(Dispatchers.IO).launch {
-//            RoomAppDatabase.getDataBase(applicationContext).notesDAO().deleteAllNoFilter()
-//        }
-//    }
 }
