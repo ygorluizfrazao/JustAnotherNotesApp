@@ -60,18 +60,18 @@ android {
 dependencies {
 
     implementation 'androidx.core:core-ktx:1.9.0'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.1'
-    implementation 'androidx.activity:activity-compose:1.6.1'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
+    implementation 'androidx.activity:activity-compose:1.7.0'
     implementation "androidx.compose.ui:ui:$compose_version"
     implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
-    implementation 'androidx.compose.material3:material3:1.1.0-alpha06'
+    implementation 'androidx.compose.material3:material3:1.1.0-beta01'
 
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.10'
     implementation "androidx.constraintlayout:constraintlayout-compose:1.0.1"
 
-    def room_version = "2.5.0"
+    def room_version = "2.5.1"
     implementation "androidx.room:room-runtime:$room_version"
     implementation "androidx.room:room-ktx:$room_version"
     kapt "androidx.room:room-compiler:$room_version"
@@ -81,7 +81,7 @@ dependencies {
     implementation 'androidx.hilt:hilt-navigation-fragment:1.0.0'
     implementation 'androidx.hilt:hilt-navigation-compose:1.0.0'
 
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.6'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.2'
 
     def nav_version = "2.5.3"
     implementation "androidx.navigation:navigation-compose:$nav_version"
@@ -107,7 +107,11 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
     // For App Authentication API testing
-    androidTestImplementation "androidx.security:security-app-authenticator:1.0.0-alpha01"
+    androidTestImplementation "androidx.security:security-app-authenticator:1.0.0-alpha02"
+
+    //Easy Permissions
+    implementation 'com.github.ygorluizfrazao.easy-permissions:core:v1.0.0-build-test'
+    implementation 'com.github.ygorluizfrazao.easy-permissions:ext:v1.0.0-build-test'
 
 }
 

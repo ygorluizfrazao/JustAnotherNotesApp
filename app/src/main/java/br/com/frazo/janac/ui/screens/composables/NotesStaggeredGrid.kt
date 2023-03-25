@@ -25,7 +25,7 @@ fun NotesStaggeredGrid(
         modifier = modifier,
         columns = StaggeredGridCells.Adaptive(MaterialTheme.dimensions.minNoteCardSize),
         state = gridState,
-        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
+        verticalItemSpacing = MaterialTheme.spacing.medium,
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
         contentPadding = PaddingValues(bottom = MaterialTheme.spacing.extraLarge)
     ) {

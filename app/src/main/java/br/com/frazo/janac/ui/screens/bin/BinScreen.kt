@@ -19,7 +19,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.*
@@ -28,6 +27,11 @@ import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
+import br.com.frazo.easy_permissions.base.providers.android.AndroidPermissionProvider.Companion.toHumanLanguage
+import br.com.frazo.easy_permissions.base.strategy.AskingStrategy
+import br.com.frazo.easy_permissions.base.strategy.rememberUserDrivenAskingStrategy
+import br.com.frazo.easy_permissions_ext.materialv3.WithPermission
+import br.com.frazo.easy_permissions_ext.materialv3.ui.createPermissionDialogProperties
 import br.com.frazo.janac.R
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.ui.mediator.ContentDisplayMode
@@ -42,10 +46,6 @@ import br.com.frazo.janac.ui.util.composables.IndeterminateLoading
 import br.com.frazo.janac.ui.util.composables.MyClickableText
 import br.com.frazo.janac.ui.util.composables.NoItemsContent
 import br.com.frazo.janac.ui.util.goToAppSettings
-import br.com.frazo.janac.ui.util.permissions.base.strategy.AskingStrategy
-import br.com.frazo.janac.ui.util.permissions.base.strategy.rememberUserDrivenAskingStrategy
-import br.com.frazo.janac.ui.util.permissions.materialv3.WithPermission
-import br.com.frazo.janac.ui.util.permissions.materialv3.createPermissionDialogProperties
 import br.com.frazo.janac.util.DateTimeFormatterFactory
 import kotlinx.coroutines.launch
 
@@ -237,7 +237,7 @@ fun DisplayContentAsList(
 
     val filter by viewModel.filter.collectAsState()
 
-    var clicked by rememberSaveable {
+    var canStart by rememberSaveable {
         mutableStateOf(false)
     }
 
@@ -249,7 +249,7 @@ fun DisplayContentAsList(
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_FINE_LOCATION
             ),
-            canStart = { clicked }
+            canStart = { canStart }
         )
 
     NotesList(
@@ -286,11 +286,11 @@ fun DisplayContentAsList(
                 permissionDialogProperties = createPermissionDialogProperties(
                     onGrantButtonClicked = { _, _ ->
                         context.goToAppSettings()
-                        clicked = false
+                        canStart = false
                     },
                 ),
                 initialStateContent = {
-                    IconButton(onClick = { clicked = true }) {
+                    IconButton(onClick = { canStart = true }) {
                         IconResource.fromImageVector(
                             Icons.Default.Warning,
                             ""
@@ -315,17 +315,17 @@ fun DisplayContentAsList(
                 }
 
                 val coroutineScope = rememberCoroutineScope()
-                var popupControl by remember {
+                var showPopup by remember {
                     mutableStateOf(false)
                 }
 
                 if (deniedPermissions.value.isEmpty()) {
                     IconButton(onClick = {
-                        popupControl = true
+                        showPopup = true
                         coroutineScope.launch {
                             Toast.makeText(
                                 context,
-                                "Granted : ${grantedPermissions.value}",
+                                "Call a fancy ViewModel Action!",
                                 Toast.LENGTH_SHORT
                             )
                                 .show()
@@ -338,7 +338,7 @@ fun DisplayContentAsList(
                     }
                 } else {
                     IconButton(onClick = {
-                        popupControl = true
+                        showPopup = true
                         coroutineScope.launch {
                             Toast.makeText(
                                 context,
@@ -355,14 +355,14 @@ fun DisplayContentAsList(
                     }
                 }
 
-                if (popupControl) {
+                if (showPopup) {
                     Popup(
                         properties = PopupProperties(
                             dismissOnBackPress = true,
                             dismissOnClickOutside = true,
                             focusable = true
                         ),
-                        onDismissRequest = { popupControl = false },
+                        onDismissRequest = { showPopup = false },
                         popupPositionProvider = object : PopupPositionProvider {
                             override fun calculatePosition(
                                 anchorBounds: IntRect,
@@ -377,7 +377,7 @@ fun DisplayContentAsList(
                             }
                         }) {
                         Surface(
-                            border = BorderStroke(4.dp, Color.Black),
+                            border = BorderStroke(1.dp, LocalContentColor.current),
                             shape = MaterialTheme.shapes.medium
                         ) {
                             Column(
@@ -385,18 +385,18 @@ fun DisplayContentAsList(
                                 verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium)
                             ) {
                                 Text(
-                                    text = "Granted Permissions: ${
-                                        grantedPermissions.value.map { it.key + "\n" }
-                                            .joinToString()
+                                    text = "Granted Permissions: \n${
+                                        grantedPermissions.value.map { it.key.toHumanLanguage() + "\n" }
+                                            .joinToString(separator = "")
                                     }"
                                 )
 
                                 Divider()
 
                                 Text(
-                                    text = "Denied Permissions: ${
-                                        deniedPermissions.value.map { it.key + "\n" }
-                                            .joinToString()
+                                    text = "Denied Permissions: \n${
+                                        deniedPermissions.value.map { it.key.toHumanLanguage() + "\n" }
+                                            .joinToString(separator = "")
                                     }"
                                 )
                             }
