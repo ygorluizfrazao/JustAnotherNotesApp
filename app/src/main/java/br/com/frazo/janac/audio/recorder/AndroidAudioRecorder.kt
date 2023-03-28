@@ -13,7 +13,7 @@ import java.util.UUID
 class AndroidAudioRecorder(private val context: Context) :
     AudioRecorder {
 
-    private val UPDATE_DATA_INTERVAL_MILLIS = 250L
+    private val UPDATE_DATA_INTERVAL_MILLIS = 100L
 
     private var recorder: MediaRecorder? = null
     private var audioRecordingDataFlowID: String? = null
@@ -55,6 +55,14 @@ class AndroidAudioRecorder(private val context: Context) :
         recorder = null
     }
 
+    override fun pause() {
+        recorder?.pause()
+    }
+
+    override fun resume() {
+        recorder?.resume()
+    }
+
     private fun startFlowingAudioRecordingData(flowId: String): Flow<AudioRecordingData> {
 
         return flow {
@@ -68,10 +76,11 @@ class AndroidAudioRecorder(private val context: Context) :
                 val cycleTime = currentTime - lastEmitTime
                 lastEmitTime = currentTime
 
+                //finishes the previous flow
                 if (flowId != audioRecordingDataFlowID)
                     break
-                emit(AudioRecordingData(elapsedTime, cycleTime, recorder?.maxAmplitude ?: 0))
 
+                emit(AudioRecordingData(elapsedTime, cycleTime, recorder?.maxAmplitude ?: 0))
                 delay(UPDATE_DATA_INTERVAL_MILLIS)
             }
         }

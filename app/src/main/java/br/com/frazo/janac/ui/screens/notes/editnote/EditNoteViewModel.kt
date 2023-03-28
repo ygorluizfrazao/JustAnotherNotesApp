@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import br.com.frazo.janac.R
+import br.com.frazo.janac.audio.recorder.AudioRecorder
 import br.com.frazo.janac.domain.extensions.isNewNote
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.domain.usecases.notes.NoteValidator
@@ -26,6 +27,7 @@ class EditNoteViewModel @AssistedInject constructor(
     private val updateNoteUseCase: UpdateNoteUseCase<Int>,
     private val noteValidatorUseCase: NoteValidatorUseCase,
     private val mediator: UIMediator,
+    private val audioRecorder: AudioRecorder,
     @Assisted noteToEdit: Note,
 ) :
     ViewModel() {
