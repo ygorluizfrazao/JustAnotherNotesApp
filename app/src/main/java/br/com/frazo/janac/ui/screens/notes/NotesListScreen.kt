@@ -34,9 +34,9 @@ import br.com.frazo.janac.ui.util.IconResource
 import br.com.frazo.janac.ui.util.TextResource
 import br.com.frazo.janac.ui.util.composables.IconTextRow
 import br.com.frazo.janac.ui.util.composables.IndeterminateLoading
-import br.com.frazo.janac.ui.util.composables.MyClickableText
 import br.com.frazo.janac.ui.util.composables.NoItemsContent
 import br.com.frazo.janac.util.DateTimeFormatterFactory
+import br.com.frazo.reusable_clickable_text.ReusableClickableText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -152,7 +152,7 @@ fun Screen(
                         end.linkTo(parent.end)
                         bottom.linkTo(parent.bottom)
                     }) {
-                MyClickableText(
+                ReusableClickableText(
                     modifier = Modifier.padding(top = MaterialTheme.spacing.small),
                     text = TextResource.StringResource(
                         R.string.click_to_add_a_note, stringResource(
@@ -161,7 +161,9 @@ fun Screen(
                     ).asString(),
                     clickableParts = mapOf(Pair(stringResource(id = R.string.here)) {
                         viewModel.editNewNote()
-                    })
+                    }),
+                    normalTextSpanStyle = LocalTextStyle.current.toSpanStyle()
+                        .copy(color = LocalContentColor.current)
                 )
             }
 
@@ -186,16 +188,14 @@ fun Screen(
                     },
                 icon = IconResource.fromImageVector(Icons.Default.SearchOff)
             ) {
-                MyClickableText(
+                ReusableClickableText(
                     modifier = Modifier.padding(top = MaterialTheme.spacing.small),
                     text = TextResource.StringResource(
-                        R.string.click_to_clear_search, stringResource(
-                            id = R.string.here
-                        )
+                        R.string.click_to_clear_search, stringResource(id = R.string.here)
                     ).asString(),
-                    clickableParts = mapOf(Pair(stringResource(id = R.string.here)) {
-                        viewModel.clearFilter()
-                    })
+                    clickableParts = mapOf(stringResource(id = R.string.here) to { viewModel.clearFilter() }),
+                    normalTextSpanStyle = LocalTextStyle.current.toSpanStyle()
+                        .copy(color = LocalContentColor.current)
                 )
             }
 

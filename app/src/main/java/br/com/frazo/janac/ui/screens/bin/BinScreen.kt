@@ -43,10 +43,10 @@ import br.com.frazo.janac.ui.util.IconResource
 import br.com.frazo.janac.ui.util.TextResource
 import br.com.frazo.janac.ui.util.composables.IconTextRow
 import br.com.frazo.janac.ui.util.composables.IndeterminateLoading
-import br.com.frazo.janac.ui.util.composables.MyClickableText
 import br.com.frazo.janac.ui.util.composables.NoItemsContent
 import br.com.frazo.janac.ui.util.goToAppSettings
 import br.com.frazo.janac.util.DateTimeFormatterFactory
+import br.com.frazo.reusable_clickable_text.ReusableClickableText
 import kotlinx.coroutines.launch
 
 @Composable
@@ -174,7 +174,7 @@ fun Screen(
                     },
                 icon = IconResource.fromImageVector(Icons.Default.SearchOff)
             ) {
-                MyClickableText(
+                ReusableClickableText(
                     modifier = Modifier.padding(top = MaterialTheme.spacing.small),
                     text = TextResource.StringResource(
                         R.string.click_to_clear_search, stringResource(
@@ -183,7 +183,9 @@ fun Screen(
                     ).asString(),
                     clickableParts = mapOf(Pair(stringResource(id = R.string.here)) {
                         viewModel.clearFilter()
-                    })
+                    }),
+                    normalTextSpanStyle = LocalTextStyle.current.toSpanStyle()
+                        .copy(color = LocalContentColor.current)
                 )
             }
 
@@ -241,17 +243,6 @@ fun DisplayContentAsList(
         mutableStateOf(false)
     }
 
-    val userDrivenAskingStrategy =
-        rememberUserDrivenAskingStrategy(
-            type = AskingStrategy.STOP_ASKING_ON_USER_DENIAL,
-            permissions = listOf(
-                Manifest.permission.RECORD_AUDIO,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ),
-            canStart = { canStart }
-        )
-
     NotesList(
         modifier = modifier,
         notesList = filteredNotesList.value,
@@ -280,132 +271,6 @@ fun DisplayContentAsList(
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.End
         ) {
-
-            WithPermission(
-                userDrivenAskingStrategy = userDrivenAskingStrategy,
-                permissionDialogProperties = createPermissionDialogProperties(
-                    onGrantButtonClicked = { _, _ ->
-                        context.goToAppSettings()
-                        canStart = false
-                    },
-                ),
-                initialStateContent = {
-                    IconButton(onClick = { canStart = true }) {
-                        IconResource.fromImageVector(
-                            Icons.Default.Warning,
-                            ""
-                        ).ComposeIcon()
-                    }
-                }) { _, permissionMap ->
-
-                val permissionsMapState = remember {
-                    mutableStateOf(permissionMap)
-                }
-
-                val grantedPermissions = remember {
-                    derivedStateOf {
-                        permissionsMapState.value.filter { (_, granted) -> granted }
-                    }
-                }
-
-                val deniedPermissions = remember {
-                    derivedStateOf {
-                        permissionsMapState.value.filter { (_, granted) -> !granted }
-                    }
-                }
-
-                val coroutineScope = rememberCoroutineScope()
-                var showPopup by remember {
-                    mutableStateOf(false)
-                }
-
-                if (deniedPermissions.value.isEmpty()) {
-                    IconButton(onClick = {
-                        showPopup = true
-                        coroutineScope.launch {
-                            Toast.makeText(
-                                context,
-                                "Call a fancy ViewModel Action!",
-                                Toast.LENGTH_SHORT
-                            )
-                                .show()
-                        }
-                    }) {
-                        IconResource.fromImageVector(
-                            Icons.Default.CheckCircle,
-                            ""
-                        ).ComposeIcon()
-                    }
-                } else {
-                    IconButton(onClick = {
-                        showPopup = true
-                        coroutineScope.launch {
-                            Toast.makeText(
-                                context,
-                                "Granted: ${grantedPermissions.value}\nDenied: ${deniedPermissions.value}",
-                                Toast.LENGTH_SHORT
-                            )
-                                .show()
-                        }
-                    }) {
-                        IconResource.fromImageVector(
-                            Icons.Default.Cancel,
-                            ""
-                        ).ComposeIcon()
-                    }
-                }
-
-                if (showPopup) {
-                    Popup(
-                        properties = PopupProperties(
-                            dismissOnBackPress = true,
-                            dismissOnClickOutside = true,
-                            focusable = true
-                        ),
-                        onDismissRequest = { showPopup = false },
-                        popupPositionProvider = object : PopupPositionProvider {
-                            override fun calculatePosition(
-                                anchorBounds: IntRect,
-                                windowSize: IntSize,
-                                layoutDirection: LayoutDirection,
-                                popupContentSize: IntSize
-                            ): IntOffset {
-                                return IntOffset(
-                                    (windowSize.width - popupContentSize.width) / 2,
-                                    (windowSize.height - popupContentSize.height) / 2
-                                )
-                            }
-                        }) {
-                        Surface(
-                            border = BorderStroke(1.dp, LocalContentColor.current),
-                            shape = MaterialTheme.shapes.medium
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(MaterialTheme.spacing.medium),
-                                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium)
-                            ) {
-                                Text(
-                                    text = "Granted Permissions: \n${
-                                        grantedPermissions.value.map { it.key.toHumanLanguage() + "\n" }
-                                            .joinToString(separator = "")
-                                    }"
-                                )
-
-                                Divider()
-
-                                Text(
-                                    text = "Denied Permissions: \n${
-                                        deniedPermissions.value.map { it.key.toHumanLanguage() + "\n" }
-                                            .joinToString(separator = "")
-                                    }"
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-
             IconButton(onClick = { viewModel.restoreNote(it) }) {
                 IconResource.fromImageVector(Icons.Filled.Restore, "").ComposeIcon()
             }

@@ -1,15 +1,16 @@
 package br.com.frazo.janac.ui.screens.composables
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import br.com.frazo.highlighted_text_compose.HighlightedText
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.ui.theme.spacing
-import br.com.frazo.janac.ui.util.composables.HighlightedText
 
 @Composable
 fun NoteCard(
@@ -18,7 +19,8 @@ fun NoteCard(
     highlightSentences: List<String> = emptyList(),
     titleEndContent: (@Composable (note: Note) -> Unit)? = null,
     footerContent: (@Composable ColumnScope.(note: Note) -> Unit)? = null
-) { Card(
+) {
+    Card(
         modifier = modifier
     ) {
         Column(
@@ -41,7 +43,11 @@ fun NoteCard(
                     text = note.title,
                     highlightedSentences = highlightSentences,
                     normalTextSpanStyle = MaterialTheme.typography.titleMedium.toSpanStyle()
-                        .copy(fontWeight = FontWeight.Bold)
+                        .copy(fontWeight = FontWeight.Bold),
+                    highlightedSentencesTextSpanStyle = MaterialTheme.typography.titleMedium.copy(
+                        color = LocalTextSelectionColors.current.handleColor,
+                        background = LocalTextSelectionColors.current.backgroundColor
+                    ).toSpanStyle()
                 ) {
                     Text(
                         modifier = Modifier.weight(1f),
@@ -59,9 +65,12 @@ fun NoteCard(
             HighlightedText(
                 text = note.text,
                 highlightedSentences = highlightSentences,
-                normalTextSpanStyle = MaterialTheme.typography.bodyMedium.toSpanStyle()
+                normalTextSpanStyle = MaterialTheme.typography.bodyMedium.toSpanStyle(),
+                highlightedSentencesTextSpanStyle = MaterialTheme.typography.bodyMedium.copy(
+                    color = LocalTextSelectionColors.current.handleColor,
+                    background = LocalTextSelectionColors.current.backgroundColor
+                ).toSpanStyle()
             ) {
-
                 Text(
                     modifier = Modifier
                         .padding(top = MaterialTheme.spacing.small),
@@ -69,7 +78,6 @@ fun NoteCard(
                     text = it,
                     style = MaterialTheme.typography.bodyMedium
                 )
-
             }
 
             footerContent?.let {

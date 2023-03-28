@@ -110,8 +110,11 @@ dependencies {
     androidTestImplementation "androidx.security:security-app-authenticator:1.0.0-alpha02"
 
     //Easy Permissions
-    implementation 'com.github.ygorluizfrazao.easy-permissions:core:v1.0.0-build-test'
-    implementation 'com.github.ygorluizfrazao.easy-permissions:ext:v1.0.0-build-test'
+    implementation 'com.github.ygorluizfrazao.easy-permissions:core:v1.0.1-alpha01'
+    implementation 'com.github.ygorluizfrazao.easy-permissions:ext:v1.0.1-alpha01'
+    //Highlight Text
+    implementation 'com.github.ygorluizfrazao.highlighted-text-compose:highlighted_text_compose:1.0.0-alpha01'
+    implementation 'com.github.ygorluizfrazao.highlighted-text-compose:reusable_clickable_text:1.0.0-alpha01'
 
 }
 
