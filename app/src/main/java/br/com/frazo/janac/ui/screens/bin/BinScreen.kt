@@ -227,7 +227,6 @@ fun Screen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DisplayContentAsList(
     modifier: Modifier = Modifier,

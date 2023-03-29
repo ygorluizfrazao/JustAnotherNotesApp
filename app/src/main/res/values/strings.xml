@@ -42,4 +42,5 @@
     <string name="binned_at">Binned At</string>
     <string name="view_content_as_list">View as list</string>
     <string name="view_content_as_grid">View as grid</string>
+    <string name="audio_note">Audio Note</string>
 </resources>

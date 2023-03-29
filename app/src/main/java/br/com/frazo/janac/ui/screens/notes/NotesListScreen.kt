@@ -373,7 +373,8 @@ fun DisplayContentAsGrid(
 @Composable
 fun EditDialogScreen(
     onDismissRequestExecute: () -> Unit,
-    noteToEdit: Note
+    noteToEdit: Note,
+    context: Context = LocalContext.current
 ) {
 
     val editNoteViewModel: EditNoteViewModel = assistedViewModel(data = noteToEdit)
@@ -384,6 +385,8 @@ fun EditDialogScreen(
 
     val inEditionNote by editNoteViewModel.inEditionNote.collectAsState()
     val addNoteUIState by editNoteViewModel.uiState.collectAsState()
+
+    val audioRecordingData by editNoteViewModel.audioRecordFlow.collectAsState()
 
     LaunchedEffect(key1 = addNoteUIState) {
         if (addNoteUIState is EditNoteViewModel.UIState.Saved) {
@@ -415,6 +418,9 @@ fun EditDialogScreen(
         saveButtonEnabled = addNoteUIState is EditNoteViewModel.UIState.CanSave,
         dialogTitle = if (noteToEdit.isNewNote()) stringResource(id = R.string.add_note) else stringResource(
             id = R.string.edit_note
-        )
+        ),
+        onAudioRecordStartRequested = {editNoteViewModel.startRecordingAudioNote(context.filesDir)},
+        onAudioRecordStopRequested = editNoteViewModel::stopRecordingAudio,
+        audioRecordingData = audioRecordingData
     )
 }

@@ -11,8 +11,13 @@ class JANACApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        if(BuildConfig.DEBUG)
-            StrictMode.enableDefaults()
+        if(BuildConfig.DEBUG) {
+            StrictMode.setVmPolicy(
+                VmPolicy.Builder(StrictMode.getVmPolicy())
+                    .detectLeakedClosableObjects()
+                    .build()
+            )
+        }
     }
 
 }

@@ -39,5 +39,6 @@
     <string name="binned_at">Na lixeira desde</string>
     <string name="view_content_as_list">Exibir como lista</string>
     <string name="view_content_as_grid">Exibir como grade</string>
+    <string name="audio_note">Nota de Áudio</string>
 
 </resources>

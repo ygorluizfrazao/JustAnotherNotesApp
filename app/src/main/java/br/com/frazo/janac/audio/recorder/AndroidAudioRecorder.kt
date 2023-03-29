@@ -27,18 +27,15 @@ class AndroidAudioRecorder(private val context: Context) :
     }
 
     override fun startRecording(outputFile: File): Flow<AudioRecordingData> {
-
         stopRecording()
-
-        val recorder = createRecorder().apply {
+        recorder = createRecorder().apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
             setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
             setOutputFile(FileOutputStream(outputFile).fd)
+            prepare()
+            start()
         }
-
-        recorder.prepare()
-        recorder.start()
 
         UUID.randomUUID().toString().apply {
             audioRecordingDataFlowID = this
@@ -49,7 +46,6 @@ class AndroidAudioRecorder(private val context: Context) :
 
     override fun stopRecording() {
         audioRecordingDataFlowID = null
-        recorder?.reset()
         recorder?.stop()
         recorder?.release()
         recorder = null

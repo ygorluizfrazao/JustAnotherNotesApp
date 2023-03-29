@@ -1,10 +1,9 @@
 package br.com.frazo.janac.ui.util.composables
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Stop
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
@@ -18,72 +17,51 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
-import br.com.frazo.janac.ui.util.IconResource
-import kotlinx.coroutines.launch
-import java.util.*
-import kotlin.concurrent.schedule
-import kotlin.random.Random
+import br.com.frazo.janac.audio.recorder.AudioRecordingData
 
 @Composable
 fun AudioRecordController(
     modifier: Modifier = Modifier,
-    recordIconResource: IconResource = IconResource.fromImageVector(Icons.Default.Mic),
-    stopRecordingIconResource: IconResource = IconResource.fromImageVector(Icons.Default.Stop),
+    recordIconResource: @Composable () -> Unit,
+    stopRecordingIconResource: @Composable () -> Unit,
     lineColor: Color = LocalContentColor.current,
+    axisColor: Color = LocalTextSelectionColors.current.handleColor,
     timeLabelStyle: TextStyle = LocalTextStyle.current,
-    amplitudesList: List<Float> = emptyList()
+    audioRecordingData: List<AudioRecordingData> = emptyList(),
+    onRecordRequested: () -> Unit,
+    onStopRequested: () -> Unit
 ) {
 
-    var amplitudes by remember {
-        mutableStateOf(amplitudesList)
+    val amplitudes by remember(audioRecordingData) {
+            mutableStateOf(audioRecordingData)
     }
 
     var isRunning by remember {
         mutableStateOf(false)
     }
 
-    var timer: Timer? by remember {
-        mutableStateOf(Timer())
-    }
-
-    var elapsedTime by remember {
-        mutableStateOf(0L)
-    }
-
-    val scope = rememberCoroutineScope()
-
     Row(
         modifier = modifier
-            .height(IntrinsicSize.Min),
+            .height(IntrinsicSize.Min)
+            .animateContentSize(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(
             modifier = Modifier.wrapContentSize(),
             onClick = {
-                scope.launch {
-                    if (isRunning) {
-                        amplitudes = emptyList()
-                        timer?.cancel()
-                        isRunning = false
-                        elapsedTime = 0
-                    } else {
-                        timer = Timer()
-                        elapsedTime = 0
-                        timer?.schedule(0, 100) {
-                            if (amplitudes.size >= 30)
-                                amplitudes = amplitudes - amplitudes.first()
-                            amplitudes = amplitudes + Random.nextFloat()
-                            elapsedTime += 100
-                        }
-                        isRunning = true
-                    }
+                isRunning = if (isRunning) {
+                    onStopRequested()
+                    false
+                } else {
+                    onRecordRequested()
+                    true
                 }
             }) {
             if (isRunning)
-                stopRecordingIconResource.ComposeIcon()
+                stopRecordingIconResource()
             else
-                recordIconResource.ComposeIcon()
+                recordIconResource()
         }
 
         AnimatedVisibility(
@@ -101,8 +79,8 @@ fun AudioRecordController(
                 Spacer(
                     modifier = Modifier
                         .weight(1f)
-                        .defaultMinSize(minHeight = 16.dp)
-                        .padding(horizontal = 12.dp)
+                        .defaultMinSize(minHeight = 32.dp)
+                        .padding(end = 12.dp)
                         .drawWithContent {
                             val canvasWidth = size.width
                             val canvasHeight = size.height
@@ -111,10 +89,11 @@ fun AudioRecordController(
                                 strokeWidth = 2f,
                                 start = Offset(x = 0f, y = canvasHeight / 2),
                                 end = Offset(x = canvasWidth, y = canvasHeight / 2),
-                                color = Color.Blue,
+                                color = axisColor,
                             )
-                            if (amplitudes.isNotEmpty()) {
-                                val maxAmp = amplitudes.max()
+                            val maxAmp =
+                                amplitudes.maxOfOrNull { it.maxAmplitudeInCycle.toFloat() }
+                            maxAmp?.let {
                                 var lastXR = canvasWidth / 2f
                                 var lastXL = canvasWidth / 2f
                                 var lastY = 1f
@@ -124,7 +103,7 @@ fun AudioRecordController(
                                     .asReversed()
                                     .forEach {
                                         val nextY =
-                                            canvasHeight - ((it / maxAmp) * canvasHeight)
+                                            canvasHeight - ((it.maxAmplitudeInCycle.toFloat() / maxAmp) * canvasHeight)
                                         drawLine(
                                             strokeWidth = 2f,
                                             start = Offset(x = lastXR, y = lastY),
@@ -142,11 +121,12 @@ fun AudioRecordController(
                                         lastXL -= stepX
                                         lastY = nextY
                                     }
+
                             }
                         }
                 )
-                val minutes = elapsedTime / 1000 / 60
-                val seconds = elapsedTime / 1000 % 60
+                val minutes = audioRecordingData.last().elapsedTime / 1000 / 60
+                val seconds = audioRecordingData.last().elapsedTime / 1000 % 60
                 Text(
                     text = "${minutes.toString().padStart(2, '0')}:${
                         seconds.toString().padStart(2, '0')

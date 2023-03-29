@@ -1,10 +1,12 @@
 package br.com.frazo.janac.ui.screens.notes.editnote
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import br.com.frazo.janac.R
 import br.com.frazo.janac.audio.recorder.AudioRecorder
+import br.com.frazo.janac.audio.recorder.AudioRecordingData
 import br.com.frazo.janac.domain.extensions.isNewNote
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.domain.usecases.notes.NoteValidator
@@ -20,7 +22,11 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.io.File
+import java.util.UUID
 
 class EditNoteViewModel @AssistedInject constructor(
     private val addNoteUseCase: AddNoteUseCase<Int>,
@@ -39,7 +45,10 @@ class EditNoteViewModel @AssistedInject constructor(
 
     @Suppress("UNCHECKED_CAST")
     companion object {
-        fun provideEditNoteViewModelFactory(factory: Factory, note: Note): ViewModelProvider.Factory {
+        fun provideEditNoteViewModelFactory(
+            factory: Factory,
+            note: Note
+        ): ViewModelProvider.Factory {
             return object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     return factory.create(note) as T
@@ -77,6 +86,10 @@ class EditNoteViewModel @AssistedInject constructor(
     private var _uiState = MutableStateFlow<UIState>(UIState.Editing)
     val uiState = _uiState.asStateFlow()
 
+    private var _audioRecordFlow = MutableStateFlow<List<AudioRecordingData>>(emptyList())
+    val audioRecordFlow = _audioRecordFlow.asStateFlow()
+    private var currentAudioFile: File? = null
+
 
     init {
         setForEditing(noteToEdit)
@@ -92,6 +105,8 @@ class EditNoteViewModel @AssistedInject constructor(
     private fun reset() {
         _inEditionNote.value = Note("", "")
         _uiState.value = UIState.Editing
+        _audioRecordFlow.value = emptyList()
+        currentAudioFile?.delete()
     }
 
     fun onTitleChanged(newTitle: String) {
@@ -169,6 +184,32 @@ class EditNoteViewModel @AssistedInject constructor(
 
     fun cancel() {
         reset()
+    }
+
+    fun startRecordingAudioNote(audioDirectory: File) {
+        viewModelScope.launch {
+            _audioRecordFlow.value = emptyList()
+            currentAudioFile?.delete()
+            currentAudioFile = File(audioDirectory, UUID.randomUUID().toString())
+            currentAudioFile?.let { fileOutput ->
+                val flow =
+                    audioRecorder.startRecording(fileOutput)
+                flow.catch {
+                    fileOutput.delete()
+                }
+                .collectLatest {
+                    if (_audioRecordFlow.value.size >= 50)
+                        _audioRecordFlow.value =
+                            _audioRecordFlow.value - _audioRecordFlow.value.first()
+                    _audioRecordFlow.value = _audioRecordFlow.value + it
+                    Log.d("Mic Inp", it.toString())
+                }
+            }
+        }
+    }
+
+    fun stopRecordingAudio() {
+        audioRecorder.stopRecording()
     }
 }
 
