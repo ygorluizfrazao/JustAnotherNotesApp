@@ -3,45 +3,94 @@ package br.com.frazo.janac.audio.player
 import android.content.Context
 import android.media.MediaPlayer
 import androidx.core.net.toUri
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import java.io.File
-import java.io.IOException
 
-class AndroidAudioPlayer(private val context: Context, audioFile: File? = null) : AudioPlayer {
+class AndroidAudioPlayer(
+    private val context: Context,
+    private val dispatcher: CoroutineDispatcher
+) : AudioPlayer {
+
+    private val UPDATE_DATA_INTERVAL_MILLIS = 200L
 
     private var player: MediaPlayer? = null
-    override var audioFile: File? = audioFile
-        set(value) {
-            stop()
-            field = value
-        }
+    private val _audioPlayingData =
+        MutableStateFlow(AudioPlayingData(AudioPlayerStatus.NOT_INITIALIZED, 0, 0))
 
-
-    override fun start() {
-
-
+    override fun start(file: File): Flow<AudioPlayingData> {
         player?.let {
-            if (!it.isPlaying)
-                it.start()
-            return
+            stop()
         }
-
-        audioFile?.let {
-            player = MediaPlayer.create(context, it.toUri())
-            player?.start()
-            return
+        player = MediaPlayer.create(context, file.toUri()).apply {
+            start()
+            setOnCompletionListener {
+                this@AndroidAudioPlayer.stop()
+            }
         }
-
-        throw IOException("File is null, cannot initialize")
+        _audioPlayingData.value = _audioPlayingData.value.copy(status = AudioPlayerStatus.PLAYING)
+        CoroutineScope(dispatcher).launch {
+            startFlowing(player!!.audioSessionId)
+                .collectLatest {
+                    _audioPlayingData.value = it
+                }
+        }
+        return _audioPlayingData.asStateFlow()
     }
 
     override fun pause() {
-        player?.pause()
+        player?.let {
+            it.pause()
+            _audioPlayingData.value =
+                _audioPlayingData.value.copy(status = AudioPlayerStatus.PAUSED)
+        }
+    }
+
+    override fun resume() {
+        player?.let {
+            if (!it.isPlaying)
+                it.start()
+            _audioPlayingData.value =
+                _audioPlayingData.value.copy(status = AudioPlayerStatus.PLAYING)
+        }
     }
 
     override fun stop() {
-        player?.stop()
-        player?.release()
+        player?.let {
+            if (it.isPlaying) {
+                it.stop()
+            }
+            it.reset()
+            it.release()
+        }
         player = null
+        _audioPlayingData.value = AudioPlayingData(AudioPlayerStatus.NOT_INITIALIZED, 0, 0)
     }
 
+    private fun startFlowing(audioSeasonId: Int): Flow<AudioPlayingData> {
+        return flow {
+            while (true) {
+                //finishes the flow
+                if (player == null)
+                    return@flow
+
+                player?.let {
+
+                    if (it.audioSessionId != audioSeasonId)
+                        return@flow
+
+                    val newData = _audioPlayingData.value.copy(
+                        duration = it.duration.toLong(),
+                        elapsed = it.currentPosition.toLong()
+                    )
+                    emit(newData)
+                }
+                delay(UPDATE_DATA_INTERVAL_MILLIS)
+            }
+        }
+    }
 }
+

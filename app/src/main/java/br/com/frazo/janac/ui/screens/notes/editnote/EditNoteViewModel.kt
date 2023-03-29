@@ -1,10 +1,12 @@
 package br.com.frazo.janac.ui.screens.notes.editnote
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import br.com.frazo.janac.R
+import br.com.frazo.janac.audio.player.AudioPlayer
+import br.com.frazo.janac.audio.player.AudioPlayerStatus
+import br.com.frazo.janac.audio.player.AudioPlayingData
 import br.com.frazo.janac.audio.recorder.AudioRecorder
 import br.com.frazo.janac.audio.recorder.AudioRecordingData
 import br.com.frazo.janac.domain.extensions.isNewNote
@@ -26,7 +28,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
-import java.util.UUID
+import java.util.*
 
 class EditNoteViewModel @AssistedInject constructor(
     private val addNoteUseCase: AddNoteUseCase<Int>,
@@ -34,6 +36,7 @@ class EditNoteViewModel @AssistedInject constructor(
     private val noteValidatorUseCase: NoteValidatorUseCase,
     private val mediator: UIMediator,
     private val audioRecorder: AudioRecorder,
+    private val audioPlayer: AudioPlayer,
     @Assisted noteToEdit: Note,
 ) :
     ViewModel() {
@@ -76,6 +79,10 @@ class EditNoteViewModel @AssistedInject constructor(
         object CanSave : UIState()
     }
 
+    enum class AudioNoteStatus {
+        HAVE_TO_RECORD, CAN_PLAY
+    }
+
     private val uiParticipantRepresentative = object : UIParticipant {}
 
     private var toEditNote = Note("", "")
@@ -89,6 +96,13 @@ class EditNoteViewModel @AssistedInject constructor(
     private var _audioRecordFlow = MutableStateFlow<List<AudioRecordingData>>(emptyList())
     val audioRecordFlow = _audioRecordFlow.asStateFlow()
     private var currentAudioFile: File? = null
+
+    private var _audioNoteStatus = MutableStateFlow(AudioNoteStatus.HAVE_TO_RECORD)
+    val audioStatus = _audioNoteStatus.asStateFlow()
+
+    private var _audioNotePlayingData =
+        MutableStateFlow(AudioPlayingData(AudioPlayerStatus.NOT_INITIALIZED, 0, 0))
+    val audioNotePlayingData = _audioNotePlayingData.asStateFlow()
 
 
     init {
@@ -105,6 +119,7 @@ class EditNoteViewModel @AssistedInject constructor(
     private fun reset() {
         _inEditionNote.value = Note("", "")
         _uiState.value = UIState.Editing
+        audioRecorder.stopRecording()
         _audioRecordFlow.value = emptyList()
         currentAudioFile?.delete()
     }
@@ -138,13 +153,13 @@ class EditNoteViewModel @AssistedInject constructor(
                         _uiState.value = UIState.TitleError(
                             titleInvalidError = TextResource.StringResource(
                                 R.string.invalid_title,
-                                "at least $minLength characters expected."
+                                "$minLength"
                             )
                         )
                     Note::text.name -> _uiState.value = UIState.TextError(
                         textInvalidError = TextResource.StringResource(
                             R.string.invalid_text,
-                            "at least $minLength characters expected."
+                            "$minLength"
                         )
                     )
                     else -> Unit
@@ -195,21 +210,67 @@ class EditNoteViewModel @AssistedInject constructor(
                 val flow =
                     audioRecorder.startRecording(fileOutput)
                 flow.catch {
+                    audioRecorder.stopRecording()
                     fileOutput.delete()
+                    currentAudioFile = null
+                    _uiState.value = UIState.Error(it)
+                    UIEvent.Error(TextResource.RuntimeString(it.localizedMessage?:it.message?:"An error has occurred."))
                 }
-                .collectLatest {
-                    if (_audioRecordFlow.value.size >= 50)
-                        _audioRecordFlow.value =
-                            _audioRecordFlow.value - _audioRecordFlow.value.first()
-                    _audioRecordFlow.value = _audioRecordFlow.value + it
-                    Log.d("Mic Inp", it.toString())
-                }
+                    .collectLatest {
+                        if (_audioRecordFlow.value.size >= 100)
+                            _audioRecordFlow.value =
+                                _audioRecordFlow.value - _audioRecordFlow.value.first()
+                        _audioRecordFlow.value = _audioRecordFlow.value + it
+                    }
             }
         }
     }
 
     fun stopRecordingAudio() {
         audioRecorder.stopRecording()
+        currentAudioFile?.let {
+            _audioNoteStatus.value = AudioNoteStatus.CAN_PLAY
+        }
+    }
+
+    fun playAudioNote() {
+        if(_audioNotePlayingData.value.status == AudioPlayerStatus.NOT_INITIALIZED) {
+            currentAudioFile?.let { file ->
+                viewModelScope.launch {
+                    val flow = audioPlayer.start(file)
+                    flow.catch {
+                        _uiState.value = UIState.Error(it)
+                        mediator.broadcast(
+                            uiParticipantRepresentative,
+                            UIEvent.Error(
+                                TextResource.RuntimeString(
+                                    it.localizedMessage ?: it.message ?: "An error has occurred."
+                                )
+                            )
+                        )
+                        audioPlayer.stop()
+                    }.collectLatest {
+                        _audioNotePlayingData.value = it
+                    }
+                }
+            }
+        }else{
+            resumeAudioNote()
+        }
+    }
+
+    fun pauseAudioNote() {
+        audioPlayer.pause()
+    }
+
+    private fun resumeAudioNote(){
+        audioPlayer.resume()
+    }
+
+    fun deleteAudioNote(){
+        audioPlayer.stop()
+        currentAudioFile?.delete()
+        _audioNoteStatus.value = AudioNoteStatus.HAVE_TO_RECORD
     }
 }
 

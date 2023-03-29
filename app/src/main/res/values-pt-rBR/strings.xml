@@ -10,8 +10,8 @@
     <string name="bin">Lixeira</string>
     <string name="no_content">Nada por aqui ainda.</string>
     <string name="loading">Carregando</string>
-    <string name="invalid_title">Título inválido, %1$s.</string>
-    <string name="invalid_text">Texto inválido, %1$s.</string>
+    <string name="invalid_title">Título inválido, deve conter pelo menos %1$s caracteres.</string>
+    <string name="invalid_text">Texto inválido, deve conter pelo menos %1$s caracteres.</string>
     <string name="title_label">Título</string>
     <string name="note_title_hint">O título da nota</string>
     <string name="text_label">Texto</string>

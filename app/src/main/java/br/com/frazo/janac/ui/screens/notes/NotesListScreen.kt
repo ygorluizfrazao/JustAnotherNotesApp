@@ -388,6 +388,9 @@ fun EditDialogScreen(
 
     val audioRecordingData by editNoteViewModel.audioRecordFlow.collectAsState()
 
+    val audioNoteStatus by editNoteViewModel.audioStatus.collectAsState()
+    val audioPlayingData by editNoteViewModel.audioNotePlayingData.collectAsState()
+
     LaunchedEffect(key1 = addNoteUIState) {
         if (addNoteUIState is EditNoteViewModel.UIState.Saved) {
             onDismissRequest()
@@ -421,6 +424,11 @@ fun EditDialogScreen(
         ),
         onAudioRecordStartRequested = {editNoteViewModel.startRecordingAudioNote(context.filesDir)},
         onAudioRecordStopRequested = editNoteViewModel::stopRecordingAudio,
-        audioRecordingData = audioRecordingData
+        audioRecordingData = audioRecordingData,
+        audioNoteStatus = audioNoteStatus,
+        audioPlayingData = audioPlayingData,
+        onAudioNoteDeleteRequest = editNoteViewModel::deleteAudioNote,
+        onAudioNotePauseRequest = editNoteViewModel::pauseAudioNote,
+        onAudioNotePlayRequest = editNoteViewModel::playAudioNote
     )
 }

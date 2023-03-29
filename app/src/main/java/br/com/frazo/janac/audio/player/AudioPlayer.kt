@@ -1,14 +1,15 @@
 package br.com.frazo.janac.audio.player
 
+import kotlinx.coroutines.flow.Flow
 import java.io.File
 
 interface AudioPlayer {
 
-    var audioFile: File?
-
-    fun start()
+    fun start(file: File): Flow<AudioPlayingData>
 
     fun pause()
+
+    fun resume()
 
     fun stop()
 

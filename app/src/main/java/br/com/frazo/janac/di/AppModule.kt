@@ -178,8 +178,8 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideAudioPlayer(@ApplicationContext appContext: Context): AudioPlayer {
-        return AndroidAudioPlayer(appContext)
+    fun provideAudioPlayer(@ApplicationContext appContext: Context, dispatchers: Dispatchers): AudioPlayer {
+        return AndroidAudioPlayer(appContext, dispatcher = dispatchers.default)
     }
 
 }
