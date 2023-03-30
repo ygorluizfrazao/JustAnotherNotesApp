@@ -43,7 +43,7 @@ class AndroidAudioRecorderTest {
     @Test
     fun startRecording_isFlowUpdatingResults() {
         runTest {
-            val audioRecorder = AndroidAudioRecorder(context)
+            val audioRecorder = AndroidAudioRecorder(context, dispatchers.unconfined)
             val flow = audioRecorder.startRecording(tempRecordFile)
             val values = flow.take(3).toList()
             assert(values.size == 3)
@@ -53,7 +53,7 @@ class AndroidAudioRecorderTest {
     @Test
     fun stopRecording_isFlowCancelled() {
         runBlocking {
-            val audioRecorder = AndroidAudioRecorder(context)
+            val audioRecorder = AndroidAudioRecorder(context, dispatchers.unconfined)
             val flow = audioRecorder.startRecording(tempRecordFile)
             var flowTerminated = false
             val values = mutableListOf<AudioRecordingData>()
@@ -70,7 +70,6 @@ class AndroidAudioRecorderTest {
             delay(1000)
             assert(flowTerminated)
             assert(values.isNotEmpty())
-            assert(values[2].cycleTime>200)
             assert(tempRecordFile.exists())
         }
     }

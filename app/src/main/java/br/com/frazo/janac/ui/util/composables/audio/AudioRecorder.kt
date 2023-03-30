@@ -29,11 +29,6 @@ fun AudioRecorder(
     onRecordRequested: () -> Unit,
     onStopRequested: () -> Unit
 ) {
-
-    val amplitudes by remember(audioRecordingData) {
-        mutableStateOf(audioRecordingData)
-    }
-
     var isRunning by remember {
         mutableStateOf(false)
     }
@@ -63,7 +58,7 @@ fun AudioRecorder(
         }
 
         AnimatedVisibility(
-            visible = amplitudes.isNotEmpty(),
+            visible = audioRecordingData.isNotEmpty(),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(IntrinsicSize.Min)
@@ -74,6 +69,13 @@ fun AudioRecorder(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                val amplitudes = audioRecordingData.map {
+                    when (it) {
+                        AudioRecordingData.NotStarted -> 0f
+                        is AudioRecordingData.Paused -> it.maxAmplitudeInCycle.toFloat()
+                        is AudioRecordingData.Recording -> it.maxAmplitudeInCycle.toFloat()
+                    }
+                }
                 Spacer(
                     modifier = Modifier
                         .weight(1f)
@@ -83,23 +85,28 @@ fun AudioRecorder(
                             drawIntoCanvas { canvas ->
                                 recordingWaveVisualizer.drawGraphics(
                                     canvas = canvas.nativeCanvas,
-                                    audioRecordingData = amplitudes,
+                                    amplitudes = amplitudes,
                                     width = size.width,
                                     height = size.height
                                 )
                             }
                         }
                 )
-                if(audioRecordingData.isNotEmpty()){
-                    val minutes = audioRecordingData.last().elapsedTime / 1000 / 60
-                    val seconds = audioRecordingData.last().elapsedTime / 1000 % 60
+                if (audioRecordingData.isNotEmpty()) {
+                    val elapsedTime = when (val lastData = audioRecordingData.last()) {
+                        AudioRecordingData.NotStarted -> 0
+                        is AudioRecordingData.Paused -> lastData.elapsedTime
+                        is AudioRecordingData.Recording -> lastData.elapsedTime
+                    }
+                    val minutes = elapsedTime / 1000 / 60
+                    val seconds = elapsedTime / 1000 % 60
                     Text(
                         text = "${minutes.toString().padStart(2, '0')}:${
                             seconds.toString().padStart(2, '0')
                         }",
                         style = timeLabelStyle
                     )
-                }else{
+                } else {
                     Text(
                         text = "00:00",
                         style = timeLabelStyle

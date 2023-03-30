@@ -1,3 +1,7 @@
 package br.com.frazo.janac.audio.recorder
 
-data class AudioRecordingData(val elapsedTime: Long, val cycleTime: Long, val maxAmplitudeInCycle: Int)
+sealed class AudioRecordingData {
+    object NotStarted: AudioRecordingData()
+    data class Recording(val elapsedTime: Long, val maxAmplitudeInCycle: Int): AudioRecordingData()
+    data class Paused(val elapsedTime: Long, val maxAmplitudeInCycle: Int): AudioRecordingData()
+}

@@ -4,7 +4,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
-import br.com.frazo.janac.audio.recorder.AudioRecordingData
 
 class MirrorWaveRecordingVisualizer(
     private val samples: Int = 50,
@@ -25,7 +24,7 @@ class MirrorWaveRecordingVisualizer(
         height: Float,
         offsetX: Float,
         offsetY: Float,
-        audioRecordingData: List<AudioRecordingData>
+        amplitudes: List<Float>
     ) {
 
         val midHeight = height/2f
@@ -34,11 +33,10 @@ class MirrorWaveRecordingVisualizer(
         }
 
         val drawSamplesList =
-            if (audioRecordingData.size >= samples) {
-                audioRecordingData.takeLast(samples).map { it.maxAmplitudeInCycle.toFloat() }
-                    .reversed()
+            if (amplitudes.size >= samples) {
+                amplitudes.takeLast(samples).reversed()
             } else {
-                (List(samples - audioRecordingData.size) { 0f } + audioRecordingData.map { it.maxAmplitudeInCycle.toFloat() }).reversed()
+                (List(samples - amplitudes.size) { 0f } + amplitudes.reversed())
             }
 
         val maxAmp =

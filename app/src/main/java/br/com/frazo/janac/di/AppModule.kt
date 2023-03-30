@@ -171,9 +171,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideAudioRecorder(
-        @ApplicationContext appContext: Context
+        @ApplicationContext appContext: Context,
+        dispatchers: Dispatchers
     ): AudioRecorder {
-        return AndroidAudioRecorder(appContext)
+        return AndroidAudioRecorder(appContext, dispatchers.default)
     }
 
     @Provides

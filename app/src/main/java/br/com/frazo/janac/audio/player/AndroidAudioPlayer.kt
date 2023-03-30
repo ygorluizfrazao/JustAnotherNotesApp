@@ -22,9 +22,9 @@ class AndroidAudioPlayer(
         MutableStateFlow(AudioPlayingData(AudioPlayerStatus.NOT_INITIALIZED, 0, 0))
 
     override fun start(file: File): Flow<AudioPlayingData> {
-        player?.let {
-            stop()
-        }
+
+        stop()
+
         player = MediaPlayer.create(context, file.toUri()).apply {
             start()
             setOnCompletionListener {

@@ -3,20 +3,27 @@ package br.com.frazo.janac.audio.recorder
 import android.content.Context
 import android.media.MediaRecorder
 import android.os.Build
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
 
-class AndroidAudioRecorder(private val context: Context) :
+class AndroidAudioRecorder(
+    private val context: Context,
+    private val dispatcher: CoroutineDispatcher
+) :
     AudioRecorder {
 
     private val UPDATE_DATA_INTERVAL_MILLIS = 50L
 
     private var recorder: MediaRecorder? = null
     private var audioRecordingDataFlowID: String? = null
+    private var _audioRecordingData =
+        MutableStateFlow<AudioRecordingData>(AudioRecordingData.NotStarted)
 
     private fun createRecorder(): MediaRecorder {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -37,10 +44,18 @@ class AndroidAudioRecorder(private val context: Context) :
             start()
         }
 
-        UUID.randomUUID().toString().apply {
-            audioRecordingDataFlowID = this
-            return startFlowingAudioRecordingData(this)
+        UUID.randomUUID().toString().also {uuid->
+            audioRecordingDataFlowID = uuid
+            _audioRecordingData.value = AudioRecordingData.Recording(0,0)
+            CoroutineScope(dispatcher).launch {
+                startFlowingAudioRecordingData(uuid)
+                    .collectLatest {
+                        _audioRecordingData.value = it
+                    }
+            }
         }
+
+        return _audioRecordingData.asStateFlow()
 
     }
 
@@ -50,33 +65,49 @@ class AndroidAudioRecorder(private val context: Context) :
         recorder?.reset()
         recorder?.release()
         recorder = null
+        _audioRecordingData.value = AudioRecordingData.NotStarted
     }
 
     override fun pause() {
-        recorder?.pause()
+        val currentData = _audioRecordingData.value
+        if(currentData is AudioRecordingData.Recording) {
+            recorder?.pause()
+            _audioRecordingData.value = AudioRecordingData.Paused(
+                currentData.elapsedTime,
+                recorder?.maxAmplitude ?: 0)
+        }
     }
 
     override fun resume() {
-        recorder?.resume()
+        val currentData = _audioRecordingData.value
+        if(currentData is AudioRecordingData.Paused) {
+            recorder?.resume()
+            _audioRecordingData.value = AudioRecordingData.Recording(
+                currentData.elapsedTime,
+                recorder?.maxAmplitude ?: 0)
+        }
     }
 
     private fun startFlowingAudioRecordingData(flowId: String): Flow<AudioRecordingData> {
 
         return flow {
-            val startTime = System.currentTimeMillis()
-            var lastEmitTime = startTime
-
             while (true) {
-                val currentTime = System.currentTimeMillis()
-                val elapsedTime = currentTime - startTime
-                val cycleTime = currentTime - lastEmitTime
-                lastEmitTime = currentTime
-
                 //finishes the previous flow
                 if (flowId != audioRecordingDataFlowID)
                     break
+                val currentData = _audioRecordingData.value
 
-                emit(AudioRecordingData(elapsedTime, cycleTime, recorder?.maxAmplitude ?: 0))
+                if(currentData is AudioRecordingData.NotStarted)
+                    break
+
+                if(currentData is AudioRecordingData.Recording) {
+                    emit(
+                        AudioRecordingData.Recording(
+                            currentData.elapsedTime+UPDATE_DATA_INTERVAL_MILLIS,
+                            recorder?.maxAmplitude ?: 0
+                        )
+                    )
+                }
                 delay(UPDATE_DATA_INTERVAL_MILLIS)
             }
         }
