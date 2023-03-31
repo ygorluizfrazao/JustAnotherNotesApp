@@ -25,7 +25,7 @@ import br.com.frazo.easy_permissions_ext.materialv3.WithPermission
 import br.com.frazo.janac.R
 import br.com.frazo.janac.audio.player.AudioPlayingData
 import br.com.frazo.janac.audio.recorder.AudioRecordingData
-import br.com.frazo.janac.audio.recorder.visualizer.MirrorWaveRecordingVisualizer
+import br.com.frazo.janac.audio.ui.visualizer.MirrorWaveRecordingVisualizer
 import br.com.frazo.janac.ui.screens.notes.editnote.EditNoteViewModel
 import br.com.frazo.janac.ui.util.composables.ValidationTextField
 import br.com.frazo.janac.ui.theme.spacing

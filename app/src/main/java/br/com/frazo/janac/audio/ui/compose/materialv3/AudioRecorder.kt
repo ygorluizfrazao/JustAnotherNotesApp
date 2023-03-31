@@ -15,8 +15,8 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import br.com.frazo.janac.audio.recorder.AudioRecordingData
-import br.com.frazo.janac.audio.recorder.visualizer.MirrorWaveRecordingVisualizer
-import br.com.frazo.janac.audio.recorder.visualizer.RecordingVisualizer
+import br.com.frazo.janac.audio.ui.visualizer.MirrorWaveRecordingVisualizer
+import br.com.frazo.janac.audio.ui.visualizer.RecordingVisualizer
 
 @Composable
 fun AudioRecorder(

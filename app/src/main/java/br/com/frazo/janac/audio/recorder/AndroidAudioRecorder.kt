@@ -95,6 +95,7 @@ class AndroidAudioRecorder(
                 //finishes the previous flow
                 if (flowId != audioRecordingDataFlowID)
                     break
+
                 val currentData = _audioRecordingData.value
 
                 if(currentData is AudioRecordingData.NotStarted)

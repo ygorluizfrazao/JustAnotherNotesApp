@@ -1,4 +1,4 @@
-package br.com.frazo.janac.audio.recorder.visualizer
+package br.com.frazo.janac.audio.ui.visualizer
 
 import android.graphics.Canvas
 

@@ -1,4 +1,4 @@
-package br.com.frazo.janac.audio.recorder.visualizer
+package br.com.frazo.janac.audio.ui.visualizer
 
 import android.graphics.Canvas
 import android.graphics.Color
@@ -36,11 +36,11 @@ class MirrorWaveRecordingVisualizer(
             if (amplitudes.size >= samples) {
                 amplitudes.takeLast(samples).reversed()
             } else {
-                (List(samples - amplitudes.size) { 0f } + amplitudes.reversed())
+                (List(samples - amplitudes.size) { 0f } + amplitudes).reversed()
             }
 
         val maxAmp =
-            drawSamplesList.maxOfOrNull { it }
+            amplitudes.maxOfOrNull { it }
         maxAmp?.let {
 
             var lastXR = width / 2f

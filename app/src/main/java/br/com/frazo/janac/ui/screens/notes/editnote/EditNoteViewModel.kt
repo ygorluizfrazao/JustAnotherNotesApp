@@ -217,7 +217,7 @@ class EditNoteViewModel @AssistedInject constructor(
                     UIEvent.Error(TextResource.RuntimeString(it.localizedMessage?:it.message?:"An error has occurred."))
                 }
                     .collectLatest {
-                        if (_audioRecordFlow.value.size >= 100)
+                        if (_audioRecordFlow.value.size >= 1000)
                             _audioRecordFlow.value =
                                 _audioRecordFlow.value - _audioRecordFlow.value.first()
                         _audioRecordFlow.value = _audioRecordFlow.value + it
