@@ -1,6 +1,7 @@
 package br.com.frazo.janac.data.db.room.converters
 
 import androidx.room.TypeConverter
+import java.io.File
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
@@ -19,4 +20,5 @@ class Converters {
     fun fromOffsetDateTime(date: OffsetDateTime?): String? {
         return date?.format(formatter)
     }
+
 }

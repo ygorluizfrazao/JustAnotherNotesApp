@@ -205,7 +205,7 @@ class EditNoteViewModel @AssistedInject constructor(
         viewModelScope.launch {
             _audioRecordFlow.value = emptyList()
             currentAudioFile?.delete()
-            currentAudioFile = File(audioDirectory, UUID.randomUUID().toString())
+            currentAudioFile = File(audioDirectory, UUID.randomUUID().toString()+".mp3")
             currentAudioFile?.let { fileOutput ->
                 val flow =
                     audioRecorder.startRecording(fileOutput)
