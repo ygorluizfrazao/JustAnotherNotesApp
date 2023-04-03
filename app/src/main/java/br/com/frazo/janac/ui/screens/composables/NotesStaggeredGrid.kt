@@ -32,7 +32,7 @@ fun NotesStaggeredGrid(
         items(notesList, key = {
             it.createdAt?.toInstant()?.epochSecond?:it.hashCode()
         }) { note ->
-            NoteCardWithBottomExtraData(
+            CompactNoteCard(
                 modifier = Modifier,
                 note = note,
                 highlightSentences = highlightSentences,

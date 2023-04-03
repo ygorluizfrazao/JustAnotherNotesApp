@@ -32,6 +32,7 @@
     <string name="note_not_deleted">Something wrong happened, the note could not be deleted.</string>
     <string name="note_not_restored">Something wrong happened, the note could not be restored.</string>
     <string name="some_notes_not_deleted">Something wrong happened, some notes could not be deleted.</string>
+    <string name="audio_note_error">Something wrong happened, the audio note could not be played.</string>
     <string name="uppercase_dismiss">DISMISS</string>
     <string name="type_your_search_here">Type your search here</string>
     <string name="search">Search</string>

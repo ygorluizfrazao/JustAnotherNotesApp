@@ -30,20 +30,20 @@ import br.com.frazo.janac.ui.screens.notes.editnote.EditNoteViewModel
 import br.com.frazo.janac.ui.util.composables.ValidationTextField
 import br.com.frazo.janac.ui.theme.spacing
 import br.com.frazo.janac.ui.util.IconResource
-import br.com.frazo.janac.ui.util.composables.audio.AudioPlayer
-import br.com.frazo.janac.ui.util.composables.audio.AudioRecorder
+import br.com.frazo.janac.audio.ui.compose.materialv3.AudioPlayer
+import br.com.frazo.janac.domain.models.Note
+import br.com.frazo.janac.audio.ui.compose.materialv3.AudioRecorder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditNoteDialog(
     modifier: Modifier = Modifier,
     properties: DialogProperties = DialogProperties(),
-    title: String,
+    note: Note,
     titleLabel: String = stringResource(R.string.title_label),
     titleHint: String = stringResource(R.string.note_title_hint),
     onTitleChanged: ((String) -> Unit)?,
     titleErrorMessage: String = "",
-    text: String,
     textLabel: String = stringResource(R.string.text_label),
     textHint: String = stringResource(R.string.text_hint),
     textErrorMessage: String = "",
@@ -85,7 +85,7 @@ fun EditNoteDialog(
                     style = MaterialTheme.typography.titleLarge
                 )
                 ValidationTextField(
-                    value = title,
+                    value = note.title,
                     onValueChange = {
                         onTitleChanged?.invoke(it)
                     },
@@ -99,7 +99,7 @@ fun EditNoteDialog(
                 )
 
                 ValidationTextField(
-                    value = text,
+                    value = note.text,
                     onValueChange = {
                         onTextChanged?.invoke(it)
                     },
@@ -178,27 +178,52 @@ fun EditNoteDialog(
                                 )
                             )
                         } else {
-                            AudioPlayer(
-                                modifier = Modifier.padding(horizontal = MaterialTheme.spacing.medium),
-                                audioPlayingData = audioPlayingData,
-                                playIcon = {
-                                    IconResource.fromImageVector(Icons.Default.PlayArrow)
-                                        .ComposeIcon()
-                                },
-                                pauseIcon = {
-                                    IconResource.fromImageVector(Icons.Default.Pause).ComposeIcon()
-                                },
-                                deleteIcon =
-                                if (onAudioNoteDeleteRequest != null) {
-                                    {
-                                        IconResource.fromImageVector(Icons.Default.Delete)
+                            note.audioNote?.let {
+//                                val context = LocalContext.current
+//                                val audioPlayer by remember {
+//                                    mutableStateOf(AndroidAudioPlayer(context))
+//                                }
+//
+//                                AudioPlayer(
+//                                    modifier = Modifier.padding(horizontal = MaterialTheme.spacing.medium),
+//                                    playIcon = {
+//                                        IconResource.fromImageVector(Icons.Default.PlayArrow)
+//                                            .ComposeIcon()
+//                                    },
+//                                    pauseIcon = {
+//                                        IconResource.fromImageVector(Icons.Default.Pause).ComposeIcon()
+//                                    },
+//                                    audioPlayer = audioPlayer,
+//                                    audioFile = note.audioNote,
+//                                    onError = {
+//                                        Toast.makeText(context, it.message, Toast.LENGTH_LONG).show()
+//                                    }
+//                                )
+//                            }
+                                AudioPlayer(
+                                    modifier = Modifier.padding(horizontal = MaterialTheme.spacing.medium),
+                                    audioPlayingData = audioPlayingData,
+                                    playIcon = {
+                                        IconResource.fromImageVector(Icons.Default.PlayArrow)
                                             .ComposeIcon()
-                                    }
-                                } else null,
-                                onPlay = onAudioNotePlayRequest,
-                                onPause = onAudioNotePauseRequest,
-                                onDelete = onAudioNoteDeleteRequest
-                            )
+                                    },
+                                    pauseIcon = {
+                                        IconResource.fromImageVector(Icons.Default.Pause)
+                                            .ComposeIcon()
+                                    },
+                                    endIcon =
+                                    if (onAudioNoteDeleteRequest != null) {
+                                        {
+                                            IconResource.fromImageVector(Icons.Default.Delete)
+                                                .ComposeIcon()
+                                        }
+                                    } else null,
+                                    onPlay = onAudioNotePlayRequest,
+                                    onPause = onAudioNotePauseRequest,
+                                    onEndIconClicked = onAudioNoteDeleteRequest,
+                                    onSeekPosition = {}
+                                )
+                            }
                         }
                     } else {
                         IconResource.fromImageVector(Icons.Default.MicOff)

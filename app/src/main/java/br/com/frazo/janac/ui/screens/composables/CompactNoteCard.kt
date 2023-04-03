@@ -22,7 +22,7 @@ import br.com.frazo.janac.util.DateTimeFormatterFactory
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun NoteCardWithBottomExtraData(
+fun CompactNoteCard(
     modifier: Modifier = Modifier,
     note: Note,
     highlightSentences: List<String> = emptyList(),

@@ -1,30 +1,29 @@
-package br.com.frazo.janac.ui.util.composables.audio
+package br.com.frazo.janac.audio.ui.compose.materialv3
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import br.com.frazo.janac.audio.player.AudioPlayerStatus
 import br.com.frazo.janac.audio.player.AudioPlayingData
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AudioPlayer(
     modifier: Modifier = Modifier,
     audioPlayingData: AudioPlayingData,
-    playIcon: @Composable () -> Unit,
-    pauseIcon: @Composable () -> Unit,
-    deleteIcon: (@Composable () -> Unit)? = null,
     timeLabelStyle: TextStyle = LocalTextStyle.current,
+    playIcon: @Composable () -> Unit,
     onPlay: () -> Unit,
+    pauseIcon: @Composable () -> Unit,
     onPause: () -> Unit,
-    onDelete: (() -> Unit)? = null
+    onSeekPosition: (Float) -> Unit,
+    endIcon: (@Composable () -> Unit)? = null,
+    onEndIconClicked: (() -> Unit)? = null
 ) {
 
     val progress = remember(audioPlayingData) {
@@ -34,6 +33,8 @@ fun AudioPlayer(
             return@remember elapsed / duration.toFloat()
         }
     }
+
+    val sliderInteractionSource = MutableInteractionSource()
 
     Row(
         modifier = modifier
@@ -60,24 +61,89 @@ fun AudioPlayer(
             modifier = Modifier.weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            LinearProgressIndicator(progress = progress)
-            val minutes = audioPlayingData.elapsed / 1000 / 60
-            val seconds = audioPlayingData.elapsed / 1000 % 60
-            Text(
-                text = "${minutes.toString().padStart(2, '0')}:${
-                    seconds.toString().padStart(2, '0')
-                }",
-                style = timeLabelStyle
-            )
+
+            Slider(
+                value = progress,
+                onValueChange = onSeekPosition,
+                valueRange = (0f..1f),
+                thumb = {
+                    BadgedBox(
+                        badge = {
+                            val minutes = audioPlayingData.elapsed / 1000 / 60
+                            val seconds = audioPlayingData.elapsed / 1000 % 60
+                            Badge(modifier = Modifier.align(Alignment.TopCenter)) {
+                                Text(
+                                    text = "${minutes.toString().padStart(2, '0')}:${
+                                        seconds.toString().padStart(2, '0')
+                                    }",
+                                    style = timeLabelStyle
+                                )
+                            }
+                        }) {
+                        SliderDefaults.Thumb(interactionSource = sliderInteractionSource)
+                    }
+                })
         }
-        deleteIcon?.let {
+
+        if (endIcon != null && onEndIconClicked != null) {
             IconButton(
-                modifier = Modifier.wrapContentSize(),
+                modifier = Modifier
+                    .wrapContentSize(),
                 onClick = {
-                    onDelete?.invoke()
+                    onEndIconClicked()
                 }) {
-                it()
+                endIcon()
             }
         }
     }
 }
+
+//TODO(Viewmodel independent audioplayer)
+
+//@Composable
+//fun AudioPlayer(
+//    modifier: Modifier = Modifier,
+//    coroutineScope: CoroutineScope = rememberCoroutineScope(),
+//    playIcon: @Composable () -> Unit,
+//    pauseIcon: @Composable () -> Unit,
+//    deleteIcon: (@Composable () -> Unit)? = null,
+//    timeLabelStyle: TextStyle = LocalTextStyle.current,
+//    audioPlayer: AudioPlayer,
+//    audioFile: File,
+//    onDelete: (() -> Unit)? = null,
+//    onError: (Throwable) -> Unit
+//) {
+//
+//    val audioPlayerData = rememberSaveable {
+//        mutableStateOf(AudioPlayingData(AudioPlayerStatus.NOT_INITIALIZED, 0, 0))
+//    }
+//
+//    AudioPlayer(
+//        modifier = modifier,
+//        audioPlayingData = audioPlayerData.value,
+//        playIcon = playIcon,
+//        pauseIcon = pauseIcon,
+//        onPlay = {
+//            if (audioPlayerData.value.status == AudioPlayerStatus.NOT_INITIALIZED) {
+//                coroutineScope.launch {
+//                    audioPlayer.start(audioFile).catch {
+//                        onError(it)
+//                    }.collectLatest {
+//                        audioPlayerData.value = it
+//                    }
+//                }
+//            } else {
+//                audioPlayer.resume()
+//            }
+//        },
+//        onPause = {
+//            audioPlayer.pause()
+//        },
+//        timeLabelStyle = timeLabelStyle,
+//        onSeekPosition = {
+//            audioPlayer.seek((it * audioPlayerData.value.duration).toLong())
+//        },
+//        endIcon = deleteIcon,
+//        onEndIconClicked = onDelete
+//    )
+//}

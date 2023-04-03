@@ -7,26 +7,27 @@ import br.com.frazo.janac.data.repository.note.mappers.toRoomNote
 import br.com.frazo.janac.domain.models.Note
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.io.File
 
-class RoomNoteDataSource(database: RoomAppDatabase) : NoteDataSource {
+class RoomNoteDataSource(database: RoomAppDatabase, private val audioNotesDir: File) : NoteDataSource {
 
     private val notesDAO: NotesDAO = database.notesDAO()
 
     override fun getAll(): Flow<List<Note>> {
         return notesDAO.getAll().map { list ->
-            list.map { it.toNote() }
+            list.map { it.toNote(audioNotesDir) }
         }
     }
 
     override fun getBinnedNotes(): Flow<List<Note>> {
         return notesDAO.getBinnedNotes().map { list ->
-            list.map { it.toNote() }
+            list.map { it.toNote(audioNotesDir) }
         }
     }
 
     override fun getNotBinnedNotes(): Flow<List<Note>> {
         return notesDAO.getNotBinnedNotes().map { list ->
-            list.map { it.toNote() }
+            list.map { it.toNote(audioNotesDir) }
         }
     }
 

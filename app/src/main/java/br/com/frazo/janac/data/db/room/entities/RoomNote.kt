@@ -11,6 +11,6 @@ data class RoomNote(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     @ColumnInfo(name = "title") val title: String = "",
     @ColumnInfo(name = "text") val text: String = "",
-    @ColumnInfo(name = "audio_note") val audioNote: String? = null,
+    @ColumnInfo(name = "audio_note", defaultValue = "NULL") val audioNote: String? = null,
     @ColumnInfo(name = "binned_at") val binnedAt: OffsetDateTime? = null
 ): RoomEntity()

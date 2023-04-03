@@ -95,7 +95,6 @@ class EditNoteViewModel @AssistedInject constructor(
 
     private var _audioRecordFlow = MutableStateFlow<List<AudioRecordingData>>(emptyList())
     val audioRecordFlow = _audioRecordFlow.asStateFlow()
-    private var currentAudioFile: File? = null
 
     private var _audioNoteStatus = MutableStateFlow(AudioNoteStatus.HAVE_TO_RECORD)
     val audioStatus = _audioNoteStatus.asStateFlow()
@@ -113,15 +112,20 @@ class EditNoteViewModel @AssistedInject constructor(
     fun setForEditing(note: Note) {
         toEditNote = note
         _inEditionNote.value = toEditNote
+        if (note.audioNote != null && note.audioNote.exists()) {
+            _audioNoteStatus.value = AudioNoteStatus.CAN_PLAY
+        } else {
+            _audioNoteStatus.value = AudioNoteStatus.HAVE_TO_RECORD
+        }
         validateCanSave()
     }
 
     private fun reset() {
-        _inEditionNote.value = Note("", "")
+        _inEditionNote.value = Note("", "", null)
         _uiState.value = UIState.Editing
         audioRecorder.stopRecording()
         _audioRecordFlow.value = emptyList()
-        currentAudioFile?.delete()
+        _audioNoteStatus.value = AudioNoteStatus.HAVE_TO_RECORD
     }
 
     fun onTitleChanged(newTitle: String) {
@@ -178,9 +182,9 @@ class EditNoteViewModel @AssistedInject constructor(
                 _uiState.value = UIState.Saved
                 mediator.broadcast(
                     uiParticipantRepresentative,
-                    if (toEditNote.isNewNote()) UIEvent.NoteCreated(inEditionNote.value) else UIEvent.NoteEdited(
+                    if (toEditNote.isNewNote()) UIEvent.NoteCreated(_inEditionNote.value) else UIEvent.NoteEdited(
                         toEditNote,
-                        inEditionNote.value
+                        _inEditionNote.value
                     )
                 )
             } else {
@@ -190,11 +194,11 @@ class EditNoteViewModel @AssistedInject constructor(
     }
 
     private suspend fun saveNewNote(): Int {
-        return addNoteUseCase(inEditionNote.value)
+        return addNoteUseCase(_inEditionNote.value)
     }
 
     private suspend fun editNote(): Int {
-        return updateNoteUseCase(toEditNote, inEditionNote.value)
+        return updateNoteUseCase(toEditNote, _inEditionNote.value)
     }
 
     fun cancel() {
@@ -204,17 +208,26 @@ class EditNoteViewModel @AssistedInject constructor(
     fun startRecordingAudioNote(audioDirectory: File) {
         viewModelScope.launch {
             _audioRecordFlow.value = emptyList()
-            currentAudioFile?.delete()
-            currentAudioFile = File(audioDirectory, UUID.randomUUID().toString()+".mp3")
-            currentAudioFile?.let { fileOutput ->
+            _inEditionNote.value.audioNote?.delete()
+            _inEditionNote.value = _inEditionNote.value.copy(
+                audioNote = File(
+                    audioDirectory,
+                    UUID.randomUUID().toString() + ".mp3"
+                )
+            )
+            _inEditionNote.value.audioNote?.let { fileOutput ->
                 val flow =
                     audioRecorder.startRecording(fileOutput)
                 flow.catch {
                     audioRecorder.stopRecording()
                     fileOutput.delete()
-                    currentAudioFile = null
+                    _inEditionNote.value = _inEditionNote.value.copy(audioNote = null)
                     _uiState.value = UIState.Error(it)
-                    UIEvent.Error(TextResource.RuntimeString(it.localizedMessage?:it.message?:"An error has occurred."))
+                    UIEvent.Error(
+                        TextResource.RuntimeString(
+                            it.localizedMessage ?: it.message ?: "An error has occurred."
+                        )
+                    )
                 }
                     .collectLatest {
                         if (_audioRecordFlow.value.size >= 1000)
@@ -228,14 +241,14 @@ class EditNoteViewModel @AssistedInject constructor(
 
     fun stopRecordingAudio() {
         audioRecorder.stopRecording()
-        currentAudioFile?.let {
+        _inEditionNote.value.audioNote?.let {
             _audioNoteStatus.value = AudioNoteStatus.CAN_PLAY
         }
     }
 
     fun playAudioNote() {
-        if(_audioNotePlayingData.value.status == AudioPlayerStatus.NOT_INITIALIZED) {
-            currentAudioFile?.let { file ->
+        if (_audioNotePlayingData.value.status == AudioPlayerStatus.NOT_INITIALIZED) {
+            _inEditionNote.value.audioNote?.let { file ->
                 viewModelScope.launch {
                     val flow = audioPlayer.start(file)
                     flow.catch {
@@ -243,9 +256,7 @@ class EditNoteViewModel @AssistedInject constructor(
                         mediator.broadcast(
                             uiParticipantRepresentative,
                             UIEvent.Error(
-                                TextResource.RuntimeString(
-                                    it.localizedMessage ?: it.message ?: "An error has occurred."
-                                )
+                                TextResource.StringResource(R.string.audio_note_error)
                             )
                         )
                         audioPlayer.stop()
@@ -254,7 +265,7 @@ class EditNoteViewModel @AssistedInject constructor(
                     }
                 }
             }
-        }else{
+        } else {
             resumeAudioNote()
         }
     }
@@ -263,14 +274,18 @@ class EditNoteViewModel @AssistedInject constructor(
         audioPlayer.pause()
     }
 
-    private fun resumeAudioNote(){
+    private fun resumeAudioNote() {
         audioPlayer.resume()
     }
 
-    fun deleteAudioNote(){
+    fun deleteAudioNote() {
         audioPlayer.stop()
-        currentAudioFile?.delete()
+        _inEditionNote.value.audioNote?.delete()
         _audioNoteStatus.value = AudioNoteStatus.HAVE_TO_RECORD
+    }
+
+    fun seekAudioNote(positionPercent: Float) {
+        audioPlayer.seek((positionPercent * _audioNotePlayingData.value.duration).toLong())
     }
 }
 

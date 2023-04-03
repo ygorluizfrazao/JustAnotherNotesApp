@@ -53,8 +53,8 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideNoteDataSource(roomAppDatabase: RoomAppDatabase): NoteDataSource {
-        return RoomNoteDataSource(roomAppDatabase)
+    fun provideNoteDataSource(roomAppDatabase: RoomAppDatabase, @ApplicationContext appContext: Context): NoteDataSource {
+        return RoomNoteDataSource(roomAppDatabase, appContext.filesDir)
     }
 
     @Provides

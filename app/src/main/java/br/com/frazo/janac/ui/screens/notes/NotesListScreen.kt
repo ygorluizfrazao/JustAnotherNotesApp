@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -377,7 +378,15 @@ fun EditDialogScreen(
     context: Context = LocalContext.current
 ) {
 
-    val editNoteViewModel: EditNoteViewModel = assistedViewModel(data = noteToEdit)
+    val noteToEditState = rememberSaveable {
+        mutableStateOf(noteToEdit)
+    }
+
+    var shouldUpdateNote by rememberSaveable(noteToEditState) {
+        mutableStateOf(true)
+    }
+
+    val editNoteViewModel: EditNoteViewModel = assistedViewModel(data = noteToEditState.value)
     val onDismissRequest = {
         editNoteViewModel.cancel()
         onDismissRequestExecute()
@@ -387,7 +396,6 @@ fun EditDialogScreen(
     val addNoteUIState by editNoteViewModel.uiState.collectAsState()
 
     val audioRecordingData by editNoteViewModel.audioRecordFlow.collectAsState()
-
     val audioNoteStatus by editNoteViewModel.audioStatus.collectAsState()
     val audioPlayingData by editNoteViewModel.audioNotePlayingData.collectAsState()
 
@@ -397,14 +405,16 @@ fun EditDialogScreen(
         }
     }
 
-    LaunchedEffect(key1 = noteToEdit, block = {
-        editNoteViewModel.setForEditing(noteToEdit)
+    LaunchedEffect(key1 = shouldUpdateNote, true, block = {
+        if(shouldUpdateNote) {
+            editNoteViewModel.setForEditing(noteToEditState.value)
+            shouldUpdateNote = false
+        }
     })
 
     EditNoteDialog(
-        title = inEditionNote.title,
+        note = inEditionNote,
         onTitleChanged = editNoteViewModel::onTitleChanged,
-        text = inEditionNote.text,
         onTextChanged = editNoteViewModel::onTextChanged,
         onDismissRequest = onDismissRequest,
         onSaveClicked = editNoteViewModel::save,
@@ -419,7 +429,7 @@ fun EditDialogScreen(
             else -> ""
         },
         saveButtonEnabled = addNoteUIState is EditNoteViewModel.UIState.CanSave,
-        dialogTitle = if (noteToEdit.isNewNote()) stringResource(id = R.string.add_note) else stringResource(
+        dialogTitle = if (noteToEditState.value.isNewNote()) stringResource(id = R.string.add_note) else stringResource(
             id = R.string.edit_note
         ),
         onAudioRecordStartRequested = {editNoteViewModel.startRecordingAudioNote(context.filesDir)},

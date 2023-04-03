@@ -29,6 +29,7 @@
     <string name="note_not_deleted">Algo de errado aconteceu, a nota não pôde ser removida.</string>
     <string name="note_not_restored">Algo de errado aconteceu, a nota não pôde ser restaurada.</string>
     <string name="some_notes_not_deleted">Algo de errado aconteceu, algumas notas não puderam ser removidas.</string>
+    <string name="audio_note_error">Algo de errado aconteceu, a nota de áudio não pôde ser reproduzida.</string>
     <string name="uppercase_dismiss">DISPENSAR</string>
     <string name="type_your_search_here">Digite os termos da pesquisa</string>
     <string name="search">Pesquisar</string>
