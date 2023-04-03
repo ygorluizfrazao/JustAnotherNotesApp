@@ -6,9 +6,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import br.com.frazo.highlighted_text_compose.HighlightedText
+import br.com.frazo.janac.R
+import br.com.frazo.janac.audio.player.AudioPlayingData
+import br.com.frazo.janac.audio.ui.compose.materialv3.AudioPlayer
+import br.com.frazo.janac.audio.ui.compose.materialv3.AudioPlayerCallbacks
+import br.com.frazo.janac.audio.ui.compose.materialv3.AudioPlayerParams
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.ui.theme.spacing
 
@@ -17,6 +23,9 @@ fun NoteCard(
     modifier: Modifier = Modifier,
     note: Note,
     highlightSentences: List<String> = emptyList(),
+    audioPlayingData: AudioPlayingData? = null,
+    audioPlayerParams: AudioPlayerParams? = null,
+    audioNoteCallbacks: AudioNoteCallbacks? = null,
     titleEndContent: (@Composable (note: Note) -> Unit)? = null,
     footerContent: (@Composable ColumnScope.(note: Note) -> Unit)? = null
 ) {
@@ -80,6 +89,43 @@ fun NoteCard(
                 )
             }
 
+            note.audioNote?.let {
+                if (audioNoteCallbacks != null && audioPlayerParams != null && audioPlayingData != null) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = MaterialTheme.spacing.medium),
+                        verticalArrangement = Arrangement.SpaceBetween,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Divider(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = MaterialTheme.spacing.medium),
+                            color = LocalContentColor.current,
+                        )
+
+                        Text(
+                            text = stringResource(R.string.audio_note),
+                        )
+                        AudioPlayer(
+                            audioPlayingData = audioPlayingData,
+                            audioPlayerParams = audioPlayerParams,
+                            audioPlayerCallbacks = AudioPlayerCallbacks(
+                                onPlay = { audioNoteCallbacks.onPlay(note) },
+                                onPause = { audioNoteCallbacks.onPause(note) },
+                                onSeekPosition = { audioNoteCallbacks.onSeekPosition(note, it) },
+                                onEndIconClicked = {
+                                    audioNoteCallbacks.onEndIconClicked?.invoke(
+                                        note
+                                    )
+                                }
+                            )
+                        )
+                    }
+                }
+            }
+
             footerContent?.let {
                 Column(
                     modifier = Modifier
@@ -98,3 +144,10 @@ fun NoteCard(
         }
     }
 }
+
+data class AudioNoteCallbacks(
+    val onPlay: (note: Note) -> Unit,
+    val onPause: (note: Note) -> Unit,
+    val onSeekPosition: (note: Note, positionPercent: Float) -> Unit,
+    val onEndIconClicked: ((note: Note) -> Unit)? = null
+)

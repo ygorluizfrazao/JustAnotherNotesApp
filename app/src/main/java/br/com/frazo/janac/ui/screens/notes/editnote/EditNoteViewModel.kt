@@ -241,6 +241,7 @@ class EditNoteViewModel @AssistedInject constructor(
 
     fun stopRecordingAudio() {
         audioRecorder.stopRecording()
+        _audioRecordFlow.value = emptyList()
         _inEditionNote.value.audioNote?.let {
             _audioNoteStatus.value = AudioNoteStatus.CAN_PLAY
         }

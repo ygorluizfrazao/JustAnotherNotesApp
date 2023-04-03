@@ -1,13 +1,21 @@
 package br.com.frazo.janac.audio.ui.compose.materialv3
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.dp
 import br.com.frazo.janac.audio.player.AudioPlayerStatus
 import br.com.frazo.janac.audio.player.AudioPlayingData
 
@@ -16,14 +24,8 @@ import br.com.frazo.janac.audio.player.AudioPlayingData
 fun AudioPlayer(
     modifier: Modifier = Modifier,
     audioPlayingData: AudioPlayingData,
-    timeLabelStyle: TextStyle = LocalTextStyle.current,
-    playIcon: @Composable () -> Unit,
-    onPlay: () -> Unit,
-    pauseIcon: @Composable () -> Unit,
-    onPause: () -> Unit,
-    onSeekPosition: (Float) -> Unit,
-    endIcon: (@Composable () -> Unit)? = null,
-    onEndIconClicked: (() -> Unit)? = null
+    audioPlayerParams: AudioPlayerParams = buildAudioPlayerParams(),
+    audioPlayerCallbacks: AudioPlayerCallbacks
 ) {
 
     val progress = remember(audioPlayingData) {
@@ -48,13 +50,13 @@ fun AudioPlayer(
             modifier = Modifier.wrapContentSize(),
             onClick = {
                 when (audioPlayingData.status) {
-                    AudioPlayerStatus.NOT_INITIALIZED, AudioPlayerStatus.PAUSED -> onPlay()
-                    AudioPlayerStatus.PLAYING -> onPause()
+                    AudioPlayerStatus.NOT_INITIALIZED, AudioPlayerStatus.PAUSED -> audioPlayerCallbacks.onPlay()
+                    AudioPlayerStatus.PLAYING -> audioPlayerCallbacks.onPause()
                 }
             }) {
             when (audioPlayingData.status) {
-                AudioPlayerStatus.NOT_INITIALIZED, AudioPlayerStatus.PAUSED -> playIcon()
-                AudioPlayerStatus.PLAYING -> pauseIcon()
+                AudioPlayerStatus.NOT_INITIALIZED, AudioPlayerStatus.PAUSED -> audioPlayerParams.playIcon()
+                AudioPlayerStatus.PLAYING -> audioPlayerParams.pauseIcon()
             }
         }
         Column(
@@ -64,86 +66,108 @@ fun AudioPlayer(
 
             Slider(
                 value = progress,
-                onValueChange = onSeekPosition,
+                onValueChange = audioPlayerCallbacks.onSeekPosition,
                 valueRange = (0f..1f),
                 thumb = {
-                    BadgedBox(
-                        badge = {
-                            val minutes = audioPlayingData.elapsed / 1000 / 60
-                            val seconds = audioPlayingData.elapsed / 1000 % 60
-                            Badge(modifier = Modifier.align(Alignment.TopCenter)) {
-                                Text(
-                                    text = "${minutes.toString().padStart(2, '0')}:${
-                                        seconds.toString().padStart(2, '0')
-                                    }",
-                                    style = timeLabelStyle
-                                )
-                            }
-                        }) {
-                        SliderDefaults.Thumb(interactionSource = sliderInteractionSource)
+                    Column(
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Box(
+                            modifier = audioPlayerParams.timeContainerModifier
+                        ) {
+                            audioPlayerParams.timeLabelContent(
+                                audioPlayingData.elapsed,
+                                audioPlayingData.duration
+                            )
+                        }
+                        Spacer(modifier = Modifier.size(4.dp))
+//                        SliderDefaults.Thumb(
+//                            interactionSource = sliderInteractionSource
+//                        )
                     }
+                },
+                track = {
+                    SliderDefaults.Track(
+                        sliderPositions = it, colors = SliderDefaults.colors(
+                            inactiveTrackColor = LocalContentColor.current.copy(alpha = 0.5f)
+                        )
+                    )
                 })
         }
 
-        if (endIcon != null && onEndIconClicked != null) {
+        if (audioPlayerParams.endIcon != null && audioPlayerCallbacks.onEndIconClicked != null) {
             IconButton(
                 modifier = Modifier
                     .wrapContentSize(),
                 onClick = {
-                    onEndIconClicked()
+                    audioPlayerCallbacks.onEndIconClicked.invoke()
                 }) {
-                endIcon()
+                audioPlayerParams.endIcon.invoke()
             }
         }
     }
 }
 
-//TODO(Viewmodel independent audioplayer)
 
-//@Composable
-//fun AudioPlayer(
-//    modifier: Modifier = Modifier,
-//    coroutineScope: CoroutineScope = rememberCoroutineScope(),
-//    playIcon: @Composable () -> Unit,
-//    pauseIcon: @Composable () -> Unit,
-//    deleteIcon: (@Composable () -> Unit)? = null,
-//    timeLabelStyle: TextStyle = LocalTextStyle.current,
-//    audioPlayer: AudioPlayer,
-//    audioFile: File,
-//    onDelete: (() -> Unit)? = null,
-//    onError: (Throwable) -> Unit
-//) {
-//
-//    val audioPlayerData = rememberSaveable {
-//        mutableStateOf(AudioPlayingData(AudioPlayerStatus.NOT_INITIALIZED, 0, 0))
-//    }
-//
-//    AudioPlayer(
-//        modifier = modifier,
-//        audioPlayingData = audioPlayerData.value,
-//        playIcon = playIcon,
-//        pauseIcon = pauseIcon,
-//        onPlay = {
-//            if (audioPlayerData.value.status == AudioPlayerStatus.NOT_INITIALIZED) {
-//                coroutineScope.launch {
-//                    audioPlayer.start(audioFile).catch {
-//                        onError(it)
-//                    }.collectLatest {
-//                        audioPlayerData.value = it
-//                    }
-//                }
-//            } else {
-//                audioPlayer.resume()
-//            }
-//        },
-//        onPause = {
-//            audioPlayer.pause()
-//        },
-//        timeLabelStyle = timeLabelStyle,
-//        onSeekPosition = {
-//            audioPlayer.seek((it * audioPlayerData.value.duration).toLong())
-//        },
-//        endIcon = deleteIcon,
-//        onEndIconClicked = onDelete
-//    )
-//}
+@Composable
+fun buildAudioPlayerParams(
+    timeLabelStyle: TextStyle = LocalTextStyle.current.copy(color = contentColorFor(backgroundColor = LocalTextSelectionColors.current.handleColor)),
+    timeContainerModifier: Modifier = Modifier
+        .background(
+            LocalTextSelectionColors.current.handleColor,
+            shape = RoundedCornerShape(6.dp)
+        )
+        .shadow(
+            elevation = 10.dp
+        )
+        .padding(2.dp),
+    timeLabelContent: (@Composable (elapsedTime: Long, totalDuration: Long) -> Unit) = { elapsedTime, _ ->
+        val minutes = elapsedTime / 1000 / 60
+        val seconds = elapsedTime / 1000 % 60
+        Text(
+            text = "${minutes.toString().padStart(2, '0')}:${
+                seconds.toString().padStart(2, '0')
+            }",
+            style = timeLabelStyle
+        )
+    },
+    playIcon: @Composable () -> Unit = {
+        Icon(
+            imageVector = Icons.Default.PlayArrow,
+            contentDescription = "Play"
+        )
+    },
+    pauseIcon: @Composable () -> Unit = {
+        Icon(
+            imageVector = Icons.Default.Pause,
+            contentDescription = "Pause"
+        )
+    },
+    endIcon: (@Composable () -> Unit)? = null,
+): AudioPlayerParams {
+    return AudioPlayerParams(
+        timeLabelStyle,
+        timeContainerModifier,
+        timeLabelContent,
+        playIcon,
+        pauseIcon,
+        endIcon
+    )
+}
+
+data class AudioPlayerParams(
+    val timeLabelStyle: TextStyle,
+    val timeContainerModifier: Modifier,
+    val timeLabelContent: (@Composable (elapsedTime: Long, totalDuration: Long) -> Unit),
+    val playIcon: @Composable () -> Unit,
+    val pauseIcon: @Composable () -> Unit,
+    val endIcon: (@Composable () -> Unit)?,
+)
+
+data class AudioPlayerCallbacks(
+    val onPlay: () -> Unit,
+    val onPause: () -> Unit,
+    val onSeekPosition: (Float) -> Unit,
+    val onEndIconClicked: (() -> Unit)? = null
+)

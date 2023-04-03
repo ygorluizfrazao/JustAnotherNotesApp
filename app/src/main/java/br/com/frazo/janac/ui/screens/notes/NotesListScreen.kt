@@ -21,10 +21,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.frazo.janac.R
+import br.com.frazo.janac.audio.ui.compose.materialv3.buildAudioPlayerParams
 import br.com.frazo.janac.di.assisted.assistedViewModel
 import br.com.frazo.janac.domain.extensions.isNewNote
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.ui.mediator.ContentDisplayMode
+import br.com.frazo.janac.ui.screens.composables.AudioNoteCallbacks
 import br.com.frazo.janac.ui.screens.composables.EditNoteDialog
 import br.com.frazo.janac.ui.screens.composables.NotesList
 import br.com.frazo.janac.ui.screens.composables.NotesStaggeredGrid
@@ -267,12 +269,20 @@ fun DisplayContentAsList(
     coroutineScope: CoroutineScope = rememberCoroutineScope()
 ) {
     val filter = viewModel.filter.collectAsState()
+    val audioPlayingData = viewModel.audioNotePlayingData.collectAsState()
 
     NotesList(
         modifier = modifier,
         notesList = notesList,
         listState = listState,
         highlightSentences = listOf(filter.value),
+        audioPlayerParams = buildAudioPlayerParams(),
+        audioPlayingData = audioPlayingData.value,
+        audioNoteCallbacks = AudioNoteCallbacks(
+            onPlay = viewModel::playAudioNote,
+            onPause = viewModel::pauseAudioNote,
+            onSeekPosition = viewModel::seekAudioNote
+        ),
         titleEndContent = { note ->
             note.createdAt?.let {
                 IconTextRow(
@@ -439,6 +449,7 @@ fun EditDialogScreen(
         audioPlayingData = audioPlayingData,
         onAudioNoteDeleteRequest = editNoteViewModel::deleteAudioNote,
         onAudioNotePauseRequest = editNoteViewModel::pauseAudioNote,
-        onAudioNotePlayRequest = editNoteViewModel::playAudioNote
+        onAudioNotePlayRequest = editNoteViewModel::playAudioNote,
+        onAudionNoteSeekPosition = editNoteViewModel::seekAudioNote
     )
 }

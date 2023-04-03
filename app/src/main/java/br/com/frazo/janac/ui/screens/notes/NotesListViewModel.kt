@@ -4,11 +4,15 @@ import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.frazo.janac.R
+import br.com.frazo.janac.audio.player.AudioPlayer
+import br.com.frazo.janac.audio.player.AudioPlayerStatus
+import br.com.frazo.janac.audio.player.AudioPlayingData
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.domain.usecases.SearchTermInNotBinnedNoteUseCase
 import br.com.frazo.janac.domain.usecases.notes.read.GetNotBinnedNotesUseCase
 import br.com.frazo.janac.domain.usecases.notes.update.BinNoteUseCase
 import br.com.frazo.janac.ui.mediator.*
+import br.com.frazo.janac.ui.screens.notes.editnote.EditNoteViewModel
 import br.com.frazo.janac.ui.util.TextResource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -21,7 +25,8 @@ class NotesListViewModel @Inject constructor(
     private val getNotBinnedNotesUseCase: GetNotBinnedNotesUseCase<Flow<List<Note>>>,
     private val binNoteUseCase: BinNoteUseCase<Int>,
     private val mediator: UIMediator,
-    private val searchTermInNotBinnedNoteUseCase: SearchTermInNotBinnedNoteUseCase
+    private val searchTermInNotBinnedNoteUseCase: SearchTermInNotBinnedNoteUseCase,
+    private val audioPlayer: AudioPlayer,
 ) : ViewModel() {
 
     sealed class ScreenState {
@@ -62,6 +67,10 @@ class NotesListViewModel @Inject constructor(
 
     private val startTime = System.currentTimeMillis()
     private var fetchDataFromRepository = false
+
+    private var _audioNotePlayingData =
+        MutableStateFlow(AudioPlayingData(AudioPlayerStatus.NOT_INITIALIZED, 0, 0))
+    val audioNotePlayingData = _audioNotePlayingData.asStateFlow()
 
     init {
         mediator.addParticipant(uiParticipantRepresentative)
@@ -228,6 +237,43 @@ class NotesListViewModel @Inject constructor(
     fun clearFilter() {
         mediator.broadcast(uiParticipantRepresentative, UIEvent.FinishSearchQuery)
         filterNotes("")
+    }
+
+    fun playAudioNote(note: Note) {
+
+        if (_audioNotePlayingData.value.status == AudioPlayerStatus.NOT_INITIALIZED) {
+            note.audioNote?.let { file ->
+                viewModelScope.launch {
+                    val flow = audioPlayer.start(file)
+                    flow.catch {
+                        _screenState.value = ScreenState.Error(it)
+                        mediator.broadcast(
+                            uiParticipantRepresentative,
+                            UIEvent.Error(
+                                TextResource.StringResource(R.string.audio_note_error)
+                            )
+                        )
+                        audioPlayer.stop()
+                    }.collectLatest {
+                        _audioNotePlayingData.value = it
+                    }
+                }
+            }
+        } else {
+            resumeAudioNote(note)
+        }
+    }
+
+    fun pauseAudioNote(note: Note) {
+        audioPlayer.pause()
+    }
+
+    private fun resumeAudioNote(note: Note) {
+        audioPlayer.resume()
+    }
+
+    fun seekAudioNote(note: Note, positionPercent: Float) {
+        audioPlayer.seek((positionPercent * _audioNotePlayingData.value.duration).toLong())
     }
 
 }

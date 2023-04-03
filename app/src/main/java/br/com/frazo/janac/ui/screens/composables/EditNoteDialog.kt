@@ -31,8 +31,10 @@ import br.com.frazo.janac.ui.util.composables.ValidationTextField
 import br.com.frazo.janac.ui.theme.spacing
 import br.com.frazo.janac.ui.util.IconResource
 import br.com.frazo.janac.audio.ui.compose.materialv3.AudioPlayer
+import br.com.frazo.janac.audio.ui.compose.materialv3.AudioPlayerCallbacks
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.audio.ui.compose.materialv3.AudioRecorder
+import br.com.frazo.janac.audio.ui.compose.materialv3.buildAudioPlayerParams
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,6 +61,7 @@ fun EditNoteDialog(
     audioPlayingData: AudioPlayingData,
     onAudioNotePlayRequest: () -> Unit,
     onAudioNotePauseRequest: () -> Unit,
+    onAudionNoteSeekPosition: (Float) -> Unit,
     onAudioNoteDeleteRequest: (() -> Unit)? = null
 ) {
     AlertDialog(
@@ -179,49 +182,32 @@ fun EditNoteDialog(
                             )
                         } else {
                             note.audioNote?.let {
-//                                val context = LocalContext.current
-//                                val audioPlayer by remember {
-//                                    mutableStateOf(AndroidAudioPlayer(context))
-//                                }
-//
-//                                AudioPlayer(
-//                                    modifier = Modifier.padding(horizontal = MaterialTheme.spacing.medium),
-//                                    playIcon = {
-//                                        IconResource.fromImageVector(Icons.Default.PlayArrow)
-//                                            .ComposeIcon()
-//                                    },
-//                                    pauseIcon = {
-//                                        IconResource.fromImageVector(Icons.Default.Pause).ComposeIcon()
-//                                    },
-//                                    audioPlayer = audioPlayer,
-//                                    audioFile = note.audioNote,
-//                                    onError = {
-//                                        Toast.makeText(context, it.message, Toast.LENGTH_LONG).show()
-//                                    }
-//                                )
-//                            }
                                 AudioPlayer(
                                     modifier = Modifier.padding(horizontal = MaterialTheme.spacing.medium),
                                     audioPlayingData = audioPlayingData,
-                                    playIcon = {
-                                        IconResource.fromImageVector(Icons.Default.PlayArrow)
-                                            .ComposeIcon()
-                                    },
-                                    pauseIcon = {
-                                        IconResource.fromImageVector(Icons.Default.Pause)
-                                            .ComposeIcon()
-                                    },
-                                    endIcon =
-                                    if (onAudioNoteDeleteRequest != null) {
-                                        {
-                                            IconResource.fromImageVector(Icons.Default.Delete)
+                                    audioPlayerParams = buildAudioPlayerParams(
+                                        playIcon = {
+                                            IconResource.fromImageVector(Icons.Default.PlayArrow)
                                                 .ComposeIcon()
-                                        }
-                                    } else null,
-                                    onPlay = onAudioNotePlayRequest,
-                                    onPause = onAudioNotePauseRequest,
-                                    onEndIconClicked = onAudioNoteDeleteRequest,
-                                    onSeekPosition = {}
+                                        },
+                                        pauseIcon = {
+                                            IconResource.fromImageVector(Icons.Default.Pause)
+                                                .ComposeIcon()
+                                        },
+                                        endIcon =
+                                        if (onAudioNoteDeleteRequest != null) {
+                                            {
+                                                IconResource.fromImageVector(Icons.Default.Delete)
+                                                    .ComposeIcon()
+                                            }
+                                        } else null,
+                                    ),
+                                    audioPlayerCallbacks = AudioPlayerCallbacks(
+                                        onPlay = onAudioNotePlayRequest,
+                                        onPause = onAudioNotePauseRequest,
+                                        onEndIconClicked = onAudioNoteDeleteRequest,
+                                        onSeekPosition = onAudionNoteSeekPosition
+                                    )
                                 )
                             }
                         }

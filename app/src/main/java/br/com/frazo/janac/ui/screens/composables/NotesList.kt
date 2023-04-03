@@ -9,6 +9,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import br.com.frazo.janac.audio.player.AudioPlayingData
+import br.com.frazo.janac.audio.ui.compose.materialv3.AudioPlayerParams
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.ui.theme.spacing
 
@@ -19,6 +21,9 @@ fun NotesList(
     notesList: List<Note>,
     listState: LazyListState = rememberLazyListState(),
     highlightSentences: List<String> = emptyList(),
+    audioPlayingData: AudioPlayingData? = null,
+    audioPlayerParams: AudioPlayerParams? = null,
+    audioNoteCallbacks: AudioNoteCallbacks? = null,
     titleEndContent: (@Composable (note: Note) -> Unit)? = null,
     cardFooterContent: (@Composable ColumnScope.(note: Note) -> Unit)? = null
 ) {
@@ -30,12 +35,15 @@ fun NotesList(
         contentPadding = PaddingValues(bottom = MaterialTheme.spacing.extraLarge)
     ) {
         items(notesList, key = {
-            it.createdAt?.toInstant()?.epochSecond?:it.hashCode()
+            it.createdAt?.toInstant()?.epochSecond ?: it.hashCode()
         }) { note ->
             NoteCard(
                 modifier = Modifier.animateItemPlacement(),
                 highlightSentences = highlightSentences,
                 note = note,
+                audioPlayerParams = audioPlayerParams,
+                audioNoteCallbacks = audioNoteCallbacks,
+                audioPlayingData = audioPlayingData,
                 titleEndContent = titleEndContent,
                 footerContent = cardFooterContent
             )
