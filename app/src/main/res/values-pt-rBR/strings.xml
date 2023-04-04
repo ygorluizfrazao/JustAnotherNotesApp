@@ -41,5 +41,7 @@
     <string name="view_content_as_list">Exibir como lista</string>
     <string name="view_content_as_grid">Exibir como grade</string>
     <string name="audio_note">Nota de Áudio</string>
+    <string name="share_note">Compartilhar</string>
+    <string name="bin_note">Enviar para lixeira</string>
 
 </resources>

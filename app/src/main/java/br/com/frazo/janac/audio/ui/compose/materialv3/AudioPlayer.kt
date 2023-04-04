@@ -15,7 +15,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import br.com.frazo.janac.audio.player.AudioPlayerStatus
 import br.com.frazo.janac.audio.player.AudioPlayingData
 
@@ -24,7 +26,7 @@ import br.com.frazo.janac.audio.player.AudioPlayingData
 fun AudioPlayer(
     modifier: Modifier = Modifier,
     audioPlayingData: AudioPlayingData,
-    audioPlayerParams: AudioPlayerParams = buildAudioPlayerParams(),
+    audioPlayerParams: AudioPlayerParams = rememberAudioPlayerParams(),
     audioPlayerCallbacks: AudioPlayerCallbacks
 ) {
 
@@ -111,8 +113,12 @@ fun AudioPlayer(
 
 
 @Composable
-fun buildAudioPlayerParams(
-    timeLabelStyle: TextStyle = LocalTextStyle.current.copy(color = contentColorFor(backgroundColor = LocalTextSelectionColors.current.handleColor)),
+fun rememberAudioPlayerParams(
+    timeLabelStyle: TextStyle = LocalTextStyle.current.copy(
+        color = contentColorFor(backgroundColor = LocalTextSelectionColors.current.handleColor),
+        fontSize = 10.sp,
+        fontWeight = FontWeight.Bold
+    ),
     timeContainerModifier: Modifier = Modifier
         .background(
             LocalTextSelectionColors.current.handleColor,
@@ -146,14 +152,19 @@ fun buildAudioPlayerParams(
     },
     endIcon: (@Composable () -> Unit)? = null,
 ): AudioPlayerParams {
-    return AudioPlayerParams(
-        timeLabelStyle,
-        timeContainerModifier,
-        timeLabelContent,
-        playIcon,
-        pauseIcon,
-        endIcon
-    )
+    val params by remember {
+        mutableStateOf(
+            AudioPlayerParams(
+                timeLabelStyle,
+                timeContainerModifier,
+                timeLabelContent,
+                playIcon,
+                pauseIcon,
+                endIcon
+            )
+        )
+    }
+    return params
 }
 
 data class AudioPlayerParams(

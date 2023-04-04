@@ -9,8 +9,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import br.com.frazo.janac.audio.player.AudioPlayerStatus
 import br.com.frazo.janac.audio.player.AudioPlayingData
 import br.com.frazo.janac.audio.ui.compose.materialv3.AudioPlayerParams
+import br.com.frazo.janac.audio.ui.compose.materialv3.rememberAudioPlayerParams
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.ui.theme.spacing
 
@@ -19,11 +21,12 @@ import br.com.frazo.janac.ui.theme.spacing
 fun NotesList(
     modifier: Modifier,
     notesList: List<Note>,
+    notePlaying: Note? = null,
+    audioPlayingData: AudioPlayingData? = null,
+    audioNoteCallbacks: AudioNoteCallbacks? = null,
+    audioPlayerParams: AudioPlayerParams? = rememberAudioPlayerParams(),
     listState: LazyListState = rememberLazyListState(),
     highlightSentences: List<String> = emptyList(),
-    audioPlayingData: AudioPlayingData? = null,
-    audioPlayerParams: AudioPlayerParams? = null,
-    audioNoteCallbacks: AudioNoteCallbacks? = null,
     titleEndContent: (@Composable (note: Note) -> Unit)? = null,
     cardFooterContent: (@Composable ColumnScope.(note: Note) -> Unit)? = null
 ) {
@@ -43,7 +46,7 @@ fun NotesList(
                 note = note,
                 audioPlayerParams = audioPlayerParams,
                 audioNoteCallbacks = audioNoteCallbacks,
-                audioPlayingData = audioPlayingData,
+                audioPlayingData = if(note==notePlaying) audioPlayingData else AudioPlayingData(AudioPlayerStatus.NOT_INITIALIZED,0,0),
                 titleEndContent = titleEndContent,
                 footerContent = cardFooterContent
             )

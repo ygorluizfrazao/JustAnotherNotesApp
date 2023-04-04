@@ -44,4 +44,6 @@
     <string name="view_content_as_list">View as list</string>
     <string name="view_content_as_grid">View as grid</string>
     <string name="audio_note">Audio Note</string>
+    <string name="share_note">Share Note</string>
+    <string name="bin_note">Send to Bin</string>
 </resources>

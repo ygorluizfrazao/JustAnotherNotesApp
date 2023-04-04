@@ -1,12 +1,9 @@
 package br.com.frazo.janac.ui.screens.bin
 
-import android.Manifest
 import android.content.Context
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
@@ -17,21 +14,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.*
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupPositionProvider
-import androidx.compose.ui.window.PopupProperties
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
-import br.com.frazo.easy_permissions.base.providers.android.AndroidPermissionProvider.Companion.toHumanLanguage
-import br.com.frazo.easy_permissions.base.strategy.AskingStrategy
-import br.com.frazo.easy_permissions.base.strategy.rememberUserDrivenAskingStrategy
-import br.com.frazo.easy_permissions_ext.materialv3.WithPermission
-import br.com.frazo.easy_permissions_ext.materialv3.ui.createPermissionDialogProperties
 import br.com.frazo.janac.R
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.ui.mediator.ContentDisplayMode
@@ -44,10 +32,8 @@ import br.com.frazo.janac.ui.util.TextResource
 import br.com.frazo.janac.ui.util.composables.IconTextRow
 import br.com.frazo.janac.ui.util.composables.IndeterminateLoading
 import br.com.frazo.janac.ui.util.composables.NoItemsContent
-import br.com.frazo.janac.ui.util.goToAppSettings
 import br.com.frazo.janac.util.DateTimeFormatterFactory
 import br.com.frazo.reusable_clickable_text.ReusableClickableText
-import kotlinx.coroutines.launch
 
 @Composable
 fun BinScreen(modifier: Modifier = Modifier) {
@@ -237,10 +223,6 @@ fun DisplayContentAsList(
 ) {
 
     val filter by viewModel.filter.collectAsState()
-
-    var canStart by rememberSaveable {
-        mutableStateOf(false)
-    }
 
     NotesList(
         modifier = modifier,

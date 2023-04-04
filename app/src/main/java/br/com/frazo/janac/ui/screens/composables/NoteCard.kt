@@ -15,6 +15,7 @@ import br.com.frazo.janac.audio.player.AudioPlayingData
 import br.com.frazo.janac.audio.ui.compose.materialv3.AudioPlayer
 import br.com.frazo.janac.audio.ui.compose.materialv3.AudioPlayerCallbacks
 import br.com.frazo.janac.audio.ui.compose.materialv3.AudioPlayerParams
+import br.com.frazo.janac.audio.ui.compose.materialv3.rememberAudioPlayerParams
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.ui.theme.spacing
 
@@ -24,7 +25,7 @@ fun NoteCard(
     note: Note,
     highlightSentences: List<String> = emptyList(),
     audioPlayingData: AudioPlayingData? = null,
-    audioPlayerParams: AudioPlayerParams? = null,
+    audioPlayerParams: AudioPlayerParams? = rememberAudioPlayerParams(),
     audioNoteCallbacks: AudioNoteCallbacks? = null,
     titleEndContent: (@Composable (note: Note) -> Unit)? = null,
     footerContent: (@Composable ColumnScope.(note: Note) -> Unit)? = null

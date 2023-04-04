@@ -11,8 +11,10 @@ import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.domain.usecases.SearchTermInNotBinnedNoteUseCase
 import br.com.frazo.janac.domain.usecases.notes.read.GetNotBinnedNotesUseCase
 import br.com.frazo.janac.domain.usecases.notes.update.BinNoteUseCase
-import br.com.frazo.janac.ui.mediator.*
-import br.com.frazo.janac.ui.screens.notes.editnote.EditNoteViewModel
+import br.com.frazo.janac.ui.mediator.CallBackUIParticipant
+import br.com.frazo.janac.ui.mediator.ContentDisplayMode
+import br.com.frazo.janac.ui.mediator.UIEvent
+import br.com.frazo.janac.ui.mediator.UIMediator
 import br.com.frazo.janac.ui.util.TextResource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -71,6 +73,9 @@ class NotesListViewModel @Inject constructor(
     private var _audioNotePlayingData =
         MutableStateFlow(AudioPlayingData(AudioPlayerStatus.NOT_INITIALIZED, 0, 0))
     val audioNotePlayingData = _audioNotePlayingData.asStateFlow()
+    private var _audioNotePLaying = MutableStateFlow<Note?>(null)
+    val audioNotePlaying = _audioNotePLaying.asStateFlow()
+
 
     init {
         mediator.addParticipant(uiParticipantRepresentative)
@@ -143,7 +148,7 @@ class NotesListViewModel @Inject constructor(
             mediator.broadcastFlowOfEvent(UIEvent.FilterQuery::class).collectLatest { eventPair ->
                 eventPair?.let { (_, event) ->
                     val query = (event as UIEvent.FilterQuery).query
-                    if(_filter.value != query)
+                    if (_filter.value != query)
                         _filter.value = query
                 }
             }
@@ -229,7 +234,7 @@ class NotesListViewModel @Inject constructor(
             else
                 _screenState.value = ScreenState.Success(filteredNotes.value)
         } else {
-            if( System.currentTimeMillis() - startTime >= 3000  || fetchDataFromRepository)
+            if (System.currentTimeMillis() - startTime >= 3000 || fetchDataFromRepository)
                 _screenState.value = ScreenState.NoData
         }
     }
@@ -240,6 +245,12 @@ class NotesListViewModel @Inject constructor(
     }
 
     fun playAudioNote(note: Note) {
+
+        if (note != _audioNotePLaying.value) {
+            audioPlayer.stop()
+            _audioNotePlayingData.value = AudioPlayingData(AudioPlayerStatus.NOT_INITIALIZED, 0, 0)
+            _audioNotePLaying.value = note
+        }
 
         if (_audioNotePlayingData.value.status == AudioPlayerStatus.NOT_INITIALIZED) {
             note.audioNote?.let { file ->
@@ -265,15 +276,18 @@ class NotesListViewModel @Inject constructor(
     }
 
     fun pauseAudioNote(note: Note) {
-        audioPlayer.pause()
+        if(note == _audioNotePLaying.value)
+            audioPlayer.pause()
     }
 
     private fun resumeAudioNote(note: Note) {
-        audioPlayer.resume()
+        if(note == _audioNotePLaying.value)
+            audioPlayer.resume()
     }
 
     fun seekAudioNote(note: Note, positionPercent: Float) {
-        audioPlayer.seek((positionPercent * _audioNotePlayingData.value.duration).toLong())
+        if(note == _audioNotePLaying.value)
+            audioPlayer.seek((positionPercent * _audioNotePlayingData.value.duration).toLong())
     }
 
 }

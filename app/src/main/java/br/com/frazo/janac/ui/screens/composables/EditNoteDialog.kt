@@ -34,7 +34,7 @@ import br.com.frazo.janac.audio.ui.compose.materialv3.AudioPlayer
 import br.com.frazo.janac.audio.ui.compose.materialv3.AudioPlayerCallbacks
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.audio.ui.compose.materialv3.AudioRecorder
-import br.com.frazo.janac.audio.ui.compose.materialv3.buildAudioPlayerParams
+import br.com.frazo.janac.audio.ui.compose.materialv3.rememberAudioPlayerParams
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -185,7 +185,7 @@ fun EditNoteDialog(
                                 AudioPlayer(
                                     modifier = Modifier.padding(horizontal = MaterialTheme.spacing.medium),
                                     audioPlayingData = audioPlayingData,
-                                    audioPlayerParams = buildAudioPlayerParams(
+                                    audioPlayerParams = rememberAudioPlayerParams(
                                         playIcon = {
                                             IconResource.fromImageVector(Icons.Default.PlayArrow)
                                                 .ComposeIcon()

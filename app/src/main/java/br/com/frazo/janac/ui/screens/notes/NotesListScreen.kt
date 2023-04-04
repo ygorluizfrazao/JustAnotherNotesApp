@@ -21,15 +21,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.frazo.janac.R
-import br.com.frazo.janac.audio.ui.compose.materialv3.buildAudioPlayerParams
+import br.com.frazo.janac.audio.ui.compose.materialv3.rememberAudioPlayerParams
 import br.com.frazo.janac.di.assisted.assistedViewModel
 import br.com.frazo.janac.domain.extensions.isNewNote
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.ui.mediator.ContentDisplayMode
-import br.com.frazo.janac.ui.screens.composables.AudioNoteCallbacks
-import br.com.frazo.janac.ui.screens.composables.EditNoteDialog
-import br.com.frazo.janac.ui.screens.composables.NotesList
-import br.com.frazo.janac.ui.screens.composables.NotesStaggeredGrid
+import br.com.frazo.janac.ui.screens.composables.*
 import br.com.frazo.janac.ui.screens.notes.editnote.EditNoteViewModel
 import br.com.frazo.janac.ui.theme.dimensions
 import br.com.frazo.janac.ui.theme.spacing
@@ -269,20 +266,23 @@ fun DisplayContentAsList(
     coroutineScope: CoroutineScope = rememberCoroutineScope()
 ) {
     val filter = viewModel.filter.collectAsState()
-    val audioPlayingData = viewModel.audioNotePlayingData.collectAsState()
+    val audioPlayingData by viewModel.audioNotePlayingData.collectAsState()
+    val audioNotePlaying by viewModel.audioNotePlaying.collectAsState()
+    val audioPlayerParams = rememberAudioPlayerParams()
 
     NotesList(
         modifier = modifier,
         notesList = notesList,
         listState = listState,
         highlightSentences = listOf(filter.value),
-        audioPlayerParams = buildAudioPlayerParams(),
-        audioPlayingData = audioPlayingData.value,
+        notePlaying = audioNotePlaying,
+        audioPlayerParams = audioPlayerParams,
         audioNoteCallbacks = AudioNoteCallbacks(
             onPlay = viewModel::playAudioNote,
             onPause = viewModel::pauseAudioNote,
             onSeekPosition = viewModel::seekAudioNote
         ),
+        audioPlayingData = audioPlayingData,
         titleEndContent = { note ->
             note.createdAt?.let {
                 IconTextRow(
@@ -308,13 +308,13 @@ fun DisplayContentAsList(
             horizontalArrangement = Arrangement.End
         ) {
             IconButton(onClick = { viewModel.editNote(note) }) {
-                IconResource.fromImageVector(Icons.Default.Edit, "").ComposeIcon()
+                IconResource.fromImageVector(Icons.Default.Edit, stringResource(id = R.string.edit_note)).ComposeIcon()
             }
             IconButton(onClick = { viewModel.shareNote(note).also { context.startActivity(it) } }) {
-                IconResource.fromImageVector(Icons.Default.Share, "").ComposeIcon()
+                IconResource.fromImageVector(Icons.Default.Share, stringResource(id = R.string.share_note)).ComposeIcon()
             }
             IconButton(onClick = { viewModel.binNote(note) }) {
-                IconResource.fromImageVector(Icons.Default.Delete, "").ComposeIcon()
+                IconResource.fromImageVector(Icons.Default.Delete, stringResource(id = R.string.bin_note)).ComposeIcon()
             }
         }
     }
