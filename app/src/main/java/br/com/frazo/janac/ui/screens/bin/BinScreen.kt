@@ -21,8 +21,10 @@ import androidx.compose.ui.unit.*
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.frazo.janac.R
+import br.com.frazo.janac.audio.ui.compose.materialv3.rememberAudioPlayerParams
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.ui.mediator.ContentDisplayMode
+import br.com.frazo.janac.ui.screens.composables.AudioNoteCallbacks
 import br.com.frazo.janac.ui.screens.composables.NotesList
 import br.com.frazo.janac.ui.screens.composables.NotesStaggeredGrid
 import br.com.frazo.janac.ui.theme.dimensions
@@ -223,12 +225,23 @@ fun DisplayContentAsList(
 ) {
 
     val filter by viewModel.filter.collectAsState()
+    val audioPlayingData by viewModel.audioNotePlayingData.collectAsState()
+    val audioNotePlaying by viewModel.audioNotePlaying.collectAsState()
+    val audioPlayerParams = rememberAudioPlayerParams()
 
     NotesList(
         modifier = modifier,
         notesList = filteredNotesList.value,
         listState = listState,
         highlightSentences = listOf(filter),
+        notePlaying = audioNotePlaying,
+        audioPlayerParams = audioPlayerParams,
+        audioNoteCallbacks = AudioNoteCallbacks(
+            onPlay = viewModel::playAudioNote,
+            onPause = viewModel::pauseAudioNote,
+            onSeekPosition = viewModel::seekAudioNote
+        ),
+        audioPlayingData = audioPlayingData,
         titleEndContent = { note ->
             note.binnedAt?.let {
                 IconTextRow(
@@ -273,12 +286,23 @@ fun DisplayContentAsGrid(
 ) {
 
     val filter by viewModel.filter.collectAsState()
+    val audioPlayingData by viewModel.audioNotePlayingData.collectAsState()
+    val audioNotePlaying by viewModel.audioNotePlaying.collectAsState()
+    val audioPlayerParams = rememberAudioPlayerParams()
 
     NotesStaggeredGrid(
         modifier = modifier,
         notesList = filteredNotesList.value,
         gridState = gridState,
-        highlightSentences = listOf(filter)
+        highlightSentences = listOf(filter),
+        notePlaying = audioNotePlaying,
+        audioPlayerParams = audioPlayerParams,
+        audioNoteCallbacks = AudioNoteCallbacks(
+            onPlay = viewModel::playAudioNote,
+            onPause = viewModel::pauseAudioNote,
+            onSeekPosition = viewModel::seekAudioNote
+        ),
+        audioPlayingData = audioPlayingData,
     ) {
         Row(
             modifier = Modifier

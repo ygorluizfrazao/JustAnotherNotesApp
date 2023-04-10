@@ -3,6 +3,9 @@ package br.com.frazo.janac.ui.screens.bin
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.frazo.janac.R
+import br.com.frazo.janac.audio.player.AudioPlayer
+import br.com.frazo.janac.audio.player.AudioPlayerStatus
+import br.com.frazo.janac.audio.player.AudioPlayingData
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.domain.usecases.SearchTermInBinnedNoteUseCase
 import br.com.frazo.janac.domain.usecases.notes.delete.DeleteNoteUseCase
@@ -25,7 +28,8 @@ class BinScreenViewModel @Inject constructor(
     private val deleteNoteUseCase: DeleteNoteUseCase<Int>,
     private val updateNoteUseCase: UpdateNoteUseCase<Int>,
     private val mediator: UIMediator,
-    private val searchTermInBinnedNoteUseCase: SearchTermInBinnedNoteUseCase
+    private val searchTermInBinnedNoteUseCase: SearchTermInBinnedNoteUseCase,
+    private val audioPlayer: AudioPlayer
 ) : ViewModel() {
 
     sealed class ScreenState {
@@ -55,6 +59,12 @@ class BinScreenViewModel @Inject constructor(
 
     private val startTime = System.currentTimeMillis()
     private var fetchDataFromRepository = false
+
+    private var _audioNotePlayingData =
+        MutableStateFlow(AudioPlayingData(AudioPlayerStatus.NOT_INITIALIZED, 0, 0))
+    val audioNotePlayingData = _audioNotePlayingData.asStateFlow()
+    private var _audioNotePLaying = MutableStateFlow<Note?>(null)
+    val audioNotePlaying = _audioNotePLaying.asStateFlow()
 
     init {
         mediator.addParticipant(uiParticipantRepresentative)
@@ -210,6 +220,52 @@ class BinScreenViewModel @Inject constructor(
     fun clearFilter() {
         mediator.broadcast(uiParticipantRepresentative, UIEvent.FinishSearchQuery)
         filterNotes("")
+    }
+
+    fun playAudioNote(note: Note) {
+
+        if (note != _audioNotePLaying.value) {
+            audioPlayer.stop()
+            _audioNotePlayingData.value = AudioPlayingData(AudioPlayerStatus.NOT_INITIALIZED, 0, 0)
+            _audioNotePLaying.value = note
+        }
+
+        if (_audioNotePlayingData.value.status == AudioPlayerStatus.NOT_INITIALIZED) {
+            note.audioNote?.let { file ->
+                viewModelScope.launch {
+                    val flow = audioPlayer.start(file)
+                    flow.catch {
+                        _screenState.value = ScreenState.Error(it)
+                        mediator.broadcast(
+                            uiParticipantRepresentative,
+                            UIEvent.Error(
+                                TextResource.StringResource(R.string.audio_note_error)
+                            )
+                        )
+                        audioPlayer.stop()
+                    }.collectLatest {
+                        _audioNotePlayingData.value = it
+                    }
+                }
+            }
+        } else {
+            resumeAudioNote(note)
+        }
+    }
+
+    fun pauseAudioNote(note: Note) {
+        if(note == _audioNotePLaying.value)
+            audioPlayer.pause()
+    }
+
+    private fun resumeAudioNote(note: Note) {
+        if(note == _audioNotePLaying.value)
+            audioPlayer.resume()
+    }
+
+    fun seekAudioNote(note: Note, positionPercent: Float) {
+        if(note == _audioNotePLaying.value)
+            audioPlayer.seek((positionPercent * _audioNotePlayingData.value.duration).toLong())
     }
 
 }
