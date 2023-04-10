@@ -4,17 +4,20 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination
@@ -32,6 +35,9 @@ import br.com.frazo.janac.ui.theme.NotesAppTheme
 import br.com.frazo.janac.ui.theme.spacing
 import br.com.frazo.janac.ui.util.IconResource
 import br.com.frazo.janac.ui.util.composables.MyTextField
+import br.com.frazo.splashscreens.CenteredGifAndText
+import br.com.frazo.splashscreens.CenteredImageAndText
+import br.com.frazo.splashscreens.CountDownSplashScreen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -42,22 +48,42 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             NotesAppTheme {
-
                 val navController = rememberNavController()
                 val viewModel = hiltViewModel<MainViewModel>()
-
-                Screen(
-                    navController = navController,
-                    navStarDestination = Screen.NotesList,
-                    viewModel = viewModel
-                )
+                CountDownSplashScreen(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background),
+                    beforeFinished = {
+                        CenteredImageAndText(
+                            modifier = Modifier
+                                .fillMaxSize(0.4f)
+                                .align(Alignment.Center),
+                            imageDrawableRes = R.drawable.sticky_note,
+                            contentDescription = stringResource(id = R.string.app_name),
+                            text = stringResource(id = R.string.app_name),
+                            textStyle = MaterialTheme.typography.titleMedium.copy(
+                                color = contentColorFor(
+                                    backgroundColor = MaterialTheme.colorScheme.background
+                                ),
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        )
+                    }
+                ) {
+                    MainScreen(
+                        navController = navController,
+                        navStarDestination = Screen.NotesList,
+                        viewModel = viewModel
+                    )
+                }
             }
         }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun Screen(
+    fun MainScreen(
         navController: NavHostController,
         navStarDestination: Screen,
         viewModel: MainViewModel
@@ -222,10 +248,6 @@ class MainActivity : ComponentActivity() {
                         focusRequester.requestFocus()
                     }
                 }
-
-//                val showPermissionManager
-//                        by viewModel.permissionAdapterState(Manifest.permission.RECORD_AUDIO)
-//                            .collectAsState()
 
                 Navigation(
                     modifier = Modifier.padding(top = MaterialTheme.spacing.medium),

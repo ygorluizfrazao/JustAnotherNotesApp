@@ -5,6 +5,8 @@
 
     <string name="nav_notes_list" translatable="false">Notes List</string>
     <string name="nav_notes_bin" translatable="false">Bin</string>
+    <string name="nav_notes_home" translatable="false">Home</string>
+    <string name="nav_notes_splash" translatable="false">Splash</string>
 
     <string name="date_format">default</string>
 

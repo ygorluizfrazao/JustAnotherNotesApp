@@ -2,7 +2,6 @@ package br.com.frazo.janac.audio.ui.compose.materialv3
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
@@ -37,8 +36,6 @@ fun AudioPlayer(
             return@remember elapsed / duration.toFloat()
         }
     }
-
-    val sliderInteractionSource = MutableInteractionSource()
 
     Row(
         modifier = modifier
@@ -84,9 +81,6 @@ fun AudioPlayer(
                             )
                         }
                         Spacer(modifier = Modifier.size(4.dp))
-//                        SliderDefaults.Thumb(
-//                            interactionSource = sliderInteractionSource
-//                        )
                     }
                 },
                 track = {
