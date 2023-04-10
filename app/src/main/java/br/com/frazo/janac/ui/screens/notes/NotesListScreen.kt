@@ -342,11 +342,22 @@ fun DisplayContentAsGrid(
 
     val filter = viewModel.filter.collectAsState()
     val context = LocalContext.current
+    val audioPlayingData by viewModel.audioNotePlayingData.collectAsState()
+    val audioNotePlaying by viewModel.audioNotePlaying.collectAsState()
+    val audioPlayerParams = rememberAudioPlayerParams()
 
     NotesStaggeredGrid(
         modifier = modifier,
         notesList = notesList,
         gridState = gridState,
+        notePlaying = audioNotePlaying,
+        audioPlayerParams = audioPlayerParams,
+        audioNoteCallbacks = AudioNoteCallbacks(
+            onPlay = viewModel::playAudioNote,
+            onPause = viewModel::pauseAudioNote,
+            onSeekPosition = viewModel::seekAudioNote
+        ),
+        audioPlayingData = audioPlayingData,
         highlightSentences = listOf(filter.value)
     ) { note ->
         FlowRow(

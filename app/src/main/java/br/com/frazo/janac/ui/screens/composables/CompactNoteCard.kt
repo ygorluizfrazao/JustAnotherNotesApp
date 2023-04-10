@@ -13,6 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import br.com.frazo.janac.R
+import br.com.frazo.janac.audio.player.AudioPlayingData
+import br.com.frazo.janac.audio.ui.compose.materialv3.AudioPlayerParams
+import br.com.frazo.janac.audio.ui.compose.materialv3.rememberAudioPlayerParams
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.ui.theme.spacing
 import br.com.frazo.janac.ui.util.IconResource
@@ -25,6 +28,9 @@ import br.com.frazo.janac.util.DateTimeFormatterFactory
 fun CompactNoteCard(
     modifier: Modifier = Modifier,
     note: Note,
+    audioPlayingData: AudioPlayingData? = null,
+    audioPlayerParams: AudioPlayerParams? = rememberAudioPlayerParams(),
+    audioNoteCallbacks: AudioNoteCallbacks? = null,
     highlightSentences: List<String> = emptyList(),
     createdAtIconResource: IconResource = IconResource.fromImageVector(Icons.Default.CalendarToday),
     binnedAtIconResource: IconResource = IconResource.fromImageVector(Icons.Default.Recycling),
@@ -36,7 +42,10 @@ fun CompactNoteCard(
     NoteCard(
         modifier = modifier,
         highlightSentences = highlightSentences,
-        note = note
+        note = note,
+        audioPlayingData = audioPlayingData,
+        audioPlayerParams = audioPlayerParams,
+        audioNoteCallbacks = audioNoteCallbacks
     ) {
         if (note.createdAt != null || note.binnedAt != null) {
 
