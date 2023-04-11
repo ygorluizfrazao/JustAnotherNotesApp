@@ -75,7 +75,8 @@ fun Screen(
     ConstraintLayout(
         modifier = modifier
     ) {
-        val (contentRef, buttonsRef) = createRefs()
+        val (contentRef,
+            buttonsRef) = createRefs()
 
         AnimatedVisibility(
             modifier = Modifier
@@ -135,7 +136,16 @@ fun Screen(
 
         }
 
-        AnimatedVisibility(visible = screenState is NotesListViewModel.ScreenState.NoData || screenState is NotesListViewModel.ScreenState.Error,
+        AnimatedVisibility(
+            modifier = Modifier
+                .fillMaxSize()
+                .constrainAs(contentRef) {
+                    start.linkTo(parent.start)
+                    top.linkTo(parent.top)
+                    end.linkTo(parent.end)
+                    bottom.linkTo(parent.bottom)
+                },
+            visible = screenState is NotesListViewModel.ScreenState.NoData || screenState is NotesListViewModel.ScreenState.Error,
             enter = slideInVertically { it },
             exit = slideOutVertically { -it }) {
 
@@ -146,12 +156,7 @@ fun Screen(
                     .size(MaterialTheme.dimensions.mediumIconSize),
                 modifier = Modifier
                     .fillMaxSize()
-                    .constrainAs(contentRef) {
-                        start.linkTo(parent.start)
-                        top.linkTo(parent.top)
-                        end.linkTo(parent.end)
-                        bottom.linkTo(parent.bottom)
-                    }) {
+            ) {
                 ReusableClickableText(
                     modifier = Modifier.padding(top = MaterialTheme.spacing.small),
                     text = TextResource.StringResource(
@@ -169,7 +174,15 @@ fun Screen(
 
         }
 
-        AnimatedVisibility(visible = screenState is NotesListViewModel.ScreenState.NoDataForFilter,
+        AnimatedVisibility(
+            modifier = Modifier
+                .fillMaxSize()
+                .constrainAs(contentRef) {
+                    start.linkTo(parent.start)
+                    top.linkTo(parent.top)
+                    end.linkTo(parent.end)
+                    bottom.linkTo(parent.bottom)
+                },visible = screenState is NotesListViewModel.ScreenState.NoDataForFilter,
             enter = slideInVertically { it },
             exit = slideOutVertically { -it }) {
 
@@ -179,13 +192,7 @@ fun Screen(
                     .padding(bottom = MaterialTheme.spacing.medium)
                     .size(MaterialTheme.dimensions.mediumIconSize),
                 modifier = Modifier
-                    .fillMaxSize()
-                    .constrainAs(contentRef) {
-                        start.linkTo(parent.start)
-                        top.linkTo(parent.top)
-                        end.linkTo(parent.end)
-                        bottom.linkTo(parent.bottom)
-                    },
+                    .fillMaxSize(),
                 icon = IconResource.fromImageVector(Icons.Default.SearchOff)
             ) {
                 ReusableClickableText(
@@ -201,20 +208,23 @@ fun Screen(
 
         }
 
-        AnimatedVisibility(visible = screenState is NotesListViewModel.ScreenState.Loading,
+        AnimatedVisibility(
+            modifier = Modifier
+                .fillMaxSize()
+                .constrainAs(contentRef) {
+                    start.linkTo(parent.start)
+                    top.linkTo(parent.top)
+                    end.linkTo(parent.end)
+                    bottom.linkTo(parent.bottom)
+                },
+            visible = screenState is NotesListViewModel.ScreenState.Loading,
             enter = slideInVertically { it },
             exit = slideOutVertically { -it }) {
 
             IndeterminateLoading(
                 loadingText = stringResource(R.string.loading),
                 modifier = Modifier
-                    .fillMaxSize()
-                    .constrainAs(contentRef) {
-                        start.linkTo(parent.start)
-                        top.linkTo(parent.top)
-                        end.linkTo(parent.end)
-                        bottom.linkTo(parent.bottom)
-                    })
+                    .fillMaxSize())
 
         }
 
@@ -308,13 +318,22 @@ fun DisplayContentAsList(
             horizontalArrangement = Arrangement.End
         ) {
             IconButton(onClick = { viewModel.editNote(note) }) {
-                IconResource.fromImageVector(Icons.Default.Edit, stringResource(id = R.string.edit_note)).ComposeIcon()
+                IconResource.fromImageVector(
+                    Icons.Default.Edit,
+                    stringResource(id = R.string.edit_note)
+                ).ComposeIcon()
             }
             IconButton(onClick = { viewModel.shareNote(note).also { context.startActivity(it) } }) {
-                IconResource.fromImageVector(Icons.Default.Share, stringResource(id = R.string.share_note)).ComposeIcon()
+                IconResource.fromImageVector(
+                    Icons.Default.Share,
+                    stringResource(id = R.string.share_note)
+                ).ComposeIcon()
             }
             IconButton(onClick = { viewModel.binNote(note) }) {
-                IconResource.fromImageVector(Icons.Default.Delete, stringResource(id = R.string.bin_note)).ComposeIcon()
+                IconResource.fromImageVector(
+                    Icons.Default.Delete,
+                    stringResource(id = R.string.bin_note)
+                ).ComposeIcon()
             }
         }
     }
@@ -427,7 +446,7 @@ fun EditDialogScreen(
     }
 
     LaunchedEffect(key1 = shouldUpdateNote, true, block = {
-        if(shouldUpdateNote) {
+        if (shouldUpdateNote) {
             editNoteViewModel.setForEditing(noteToEditState.value)
             shouldUpdateNote = false
         }
@@ -453,7 +472,7 @@ fun EditDialogScreen(
         dialogTitle = if (noteToEditState.value.isNewNote()) stringResource(id = R.string.add_note) else stringResource(
             id = R.string.edit_note
         ),
-        onAudioRecordStartRequested = {editNoteViewModel.startRecordingAudioNote(context.filesDir)},
+        onAudioRecordStartRequested = { editNoteViewModel.startRecordingAudioNote(context.filesDir) },
         onAudioRecordStopRequested = editNoteViewModel::stopRecordingAudio,
         audioRecordingData = audioRecordingData,
         audioNoteStatus = audioNoteStatus,

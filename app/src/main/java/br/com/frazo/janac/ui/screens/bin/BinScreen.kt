@@ -68,13 +68,13 @@ fun Screen(
     ConstraintLayout(
         modifier = modifier
     ) {
-        val (contentRef, buttonsRef, countRef) = createRefs()
+        val (contentRef, buttonsRef) = createRefs()
         AnimatedVisibility(
             modifier = Modifier
                 .fillMaxSize()
                 .constrainAs(contentRef) {
                     start.linkTo(parent.start)
-                    top.linkTo(countRef.bottom)
+                    top.linkTo(parent.top)
                     end.linkTo(parent.end)
                     bottom.linkTo(parent.bottom)
                 },
@@ -121,20 +121,23 @@ fun Screen(
 
         }
 
-        AnimatedVisibility(visible = screenState is BinScreenViewModel.ScreenState.NoData || screenState is BinScreenViewModel.ScreenState.Error,
+        AnimatedVisibility(
+            modifier = Modifier
+                .fillMaxSize()
+                .constrainAs(contentRef) {
+                    start.linkTo(parent.start)
+                    top.linkTo(parent.top)
+                    end.linkTo(parent.end)
+                    bottom.linkTo(parent.bottom)
+                },
+            visible = screenState is BinScreenViewModel.ScreenState.NoData || screenState is BinScreenViewModel.ScreenState.Error,
             enter = slideInVertically {
                 it
             },
             exit = slideOutVertically { -it }) {
             NoItemsContent(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .constrainAs(contentRef) {
-                        start.linkTo(parent.start)
-                        top.linkTo(countRef.bottom)
-                        end.linkTo(parent.end)
-                        bottom.linkTo(parent.bottom)
-                    },
+                    .fillMaxSize(),
                 text = stringResource(R.string.all_clear_here),
                 icon = IconResource.fromImageVector(Icons.Default.CheckCircle),
                 iconModifier = Modifier
@@ -143,7 +146,16 @@ fun Screen(
             )
         }
 
-        AnimatedVisibility(visible = screenState is BinScreenViewModel.ScreenState.NoDataForFilter,
+        AnimatedVisibility(
+            modifier = Modifier
+                .fillMaxSize()
+                .constrainAs(contentRef) {
+                    start.linkTo(parent.start)
+                    top.linkTo(parent.top)
+                    end.linkTo(parent.end)
+                    bottom.linkTo(parent.bottom)
+                },
+            visible = screenState is BinScreenViewModel.ScreenState.NoDataForFilter,
             enter = slideInVertically { it },
             exit = slideOutVertically { -it }) {
 
@@ -153,13 +165,7 @@ fun Screen(
                     .padding(bottom = MaterialTheme.spacing.medium)
                     .size(MaterialTheme.dimensions.mediumIconSize),
                 modifier = Modifier
-                    .fillMaxSize()
-                    .constrainAs(contentRef) {
-                        start.linkTo(parent.start)
-                        top.linkTo(countRef.bottom)
-                        end.linkTo(parent.end)
-                        bottom.linkTo(parent.bottom)
-                    },
+                    .fillMaxSize(),
                 icon = IconResource.fromImageVector(Icons.Default.SearchOff)
             ) {
                 ReusableClickableText(
@@ -179,7 +185,16 @@ fun Screen(
 
         }
 
-        AnimatedVisibility(visible = screenState is BinScreenViewModel.ScreenState.Loading,
+        AnimatedVisibility(
+            modifier = Modifier
+                .fillMaxSize()
+                .constrainAs(contentRef) {
+                    start.linkTo(parent.start)
+                    top.linkTo(parent.top)
+                    end.linkTo(parent.end)
+                    bottom.linkTo(parent.bottom)
+                },
+            visible = screenState is BinScreenViewModel.ScreenState.Loading,
             enter = slideInVertically {
                 it
             },
@@ -187,13 +202,7 @@ fun Screen(
             IndeterminateLoading(
                 loadingText = stringResource(R.string.loading),
                 modifier = Modifier
-                    .fillMaxSize()
-                    .constrainAs(contentRef) {
-                        start.linkTo(parent.start)
-                        top.linkTo(countRef.bottom)
-                        end.linkTo(parent.end)
-                        bottom.linkTo(parent.bottom)
-                    })
+                    .fillMaxSize())
         }
 
         DeleteButton(
