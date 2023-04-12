@@ -18,7 +18,6 @@
     <string name="text_hint">Escreva aqui o texto da nota</string>
     <string name="save">Salvar</string>
     <string name="cancel">Cancelar</string>
-    <string name="add_a_note_title">Adicionar uma nota</string>
     <string name="click_to_add_a_note">Toque %1$s para adicionar uma nota.</string>
     <string name="here">aqui</string>
     <string name="edit_note">Editar nota</string>
@@ -43,5 +42,8 @@
     <string name="audio_note">Nota de Áudio</string>
     <string name="share_note">Compartilhar</string>
     <string name="bin_note">Enviar para lixeira</string>
+    <string name="note_created">Nota Criada</string>
+    <string name="undo">DESFAZER</string>
+    <string name="audio_recording_permisison_needed">Permissão para gravar áudio necessária</string>
 
 </resources>

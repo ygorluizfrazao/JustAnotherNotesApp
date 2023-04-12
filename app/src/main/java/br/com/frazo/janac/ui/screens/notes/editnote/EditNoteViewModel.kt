@@ -14,10 +14,11 @@ import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.domain.usecases.notes.NoteValidator
 import br.com.frazo.janac.domain.usecases.notes.NoteValidatorUseCase
 import br.com.frazo.janac.domain.usecases.notes.create.AddNoteUseCase
+import br.com.frazo.janac.domain.usecases.notes.delete.DeleteNoteUseCase
 import br.com.frazo.janac.domain.usecases.notes.update.UpdateNoteUseCase
+import br.com.frazo.janac.ui.mediator.CallBackUIParticipant
 import br.com.frazo.janac.ui.mediator.UIEvent
 import br.com.frazo.janac.ui.mediator.UIMediator
-import br.com.frazo.janac.ui.mediator.UIParticipant
 import br.com.frazo.janac.ui.util.TextResource
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -33,6 +34,7 @@ import java.util.*
 class EditNoteViewModel @AssistedInject constructor(
     private val addNoteUseCase: AddNoteUseCase<Int>,
     private val updateNoteUseCase: UpdateNoteUseCase<Int>,
+    private val deleteNoteUseCase: DeleteNoteUseCase<Int>,
     private val noteValidatorUseCase: NoteValidatorUseCase,
     private val mediator: UIMediator,
     private val audioRecorder: AudioRecorder,
@@ -83,7 +85,9 @@ class EditNoteViewModel @AssistedInject constructor(
         HAVE_TO_RECORD, CAN_PLAY
     }
 
-    private val uiParticipantRepresentative = object : UIParticipant {}
+    private val uiParticipantRepresentative = CallBackUIParticipant { sender, event ->
+        handleMediatorMessage(event)
+    }
 
     private var toEditNote = Note("", "")
 
@@ -107,6 +111,29 @@ class EditNoteViewModel @AssistedInject constructor(
     init {
         setForEditing(noteToEdit)
         mediator.addParticipant(uiParticipantRepresentative)
+    }
+
+    override fun onCleared() {
+        mediator.removeParticipant(uiParticipantRepresentative)
+        super.onCleared()
+    }
+
+    private fun handleMediatorMessage(event: UIEvent) {
+
+        when (event) {
+            is UIEvent.Rollback -> {
+                when (event.originalEvent) {
+                    is UIEvent.NoteCreated -> {
+                        viewModelScope.launch {
+                            deleteNoteUseCase(event.originalEvent.newNote)
+                        }
+                    }
+                    else -> Unit
+                }
+            }
+            else -> Unit
+        }
+
     }
 
     fun setForEditing(note: Note) {

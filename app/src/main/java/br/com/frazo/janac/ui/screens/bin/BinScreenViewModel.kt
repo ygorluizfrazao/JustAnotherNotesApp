@@ -80,8 +80,8 @@ class BinScreenViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        super.onCleared()
         mediator.removeParticipant(uiParticipantRepresentative)
+        super.onCleared()
     }
 
     private fun CoroutineScope.startCollectingBinnedNotes() {

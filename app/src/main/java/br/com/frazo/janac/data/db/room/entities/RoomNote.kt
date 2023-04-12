@@ -3,7 +3,6 @@ package br.com.frazo.janac.data.db.room.entities
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.io.File
 import java.time.OffsetDateTime
 
 @Entity(tableName = "notes")

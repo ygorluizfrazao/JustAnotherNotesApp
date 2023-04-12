@@ -25,8 +25,8 @@ fun ValidationOutlinedTextField(
     label: String,
     onValueChange: (String) -> Unit,
     singleLine: Boolean = false,
-    colors: TextFieldColors = TextFieldDefaults.outlinedTextFieldColors(),
-    errorColors: TextFieldColors? = TextFieldDefaults.outlinedTextFieldColors(),
+    colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
+    errorColors: TextFieldColors? = OutlinedTextFieldDefaults.colors(),
     maxLines: Int = 1,
     maxColumns: Int = -1,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
@@ -41,16 +41,19 @@ fun ValidationOutlinedTextField(
         Icon(Icons.Default.CheckCircle, "Success", tint = Color.Green)
     },
     loadingTrailingIcon: @Composable (() -> Unit)? = {
-        CircularProgressIndicator(Modifier.wrapContentSize().scale(0.5f))
+        CircularProgressIndicator(
+            Modifier
+                .wrapContentSize()
+                .scale(0.5f))
     },
-    successColors: TextFieldColors? = TextFieldDefaults.outlinedTextFieldColors(
+    successColors: TextFieldColors? = OutlinedTextFieldDefaults.colors(
         cursorColor = Color.Green,
         focusedLabelColor = Color.Green,
         unfocusedLabelColor = Color.Green,
         focusedBorderColor = Color.Green,
         unfocusedBorderColor = Color.Green,
     ),
-    loadingColors: TextFieldColors? = TextFieldDefaults.outlinedTextFieldColors(),
+    loadingColors: TextFieldColors? = OutlinedTextFieldDefaults.colors(),
     isError: Boolean = errorMessage.isNotEmpty(),
     isSuccess: Boolean = false,
     isLoading: Boolean = false

@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -44,6 +45,34 @@ import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private sealed class MainActivitySnackBarVisuals(
+        val action: Pair<String, () -> Unit>?,
+        override val duration: SnackbarDuration = SnackbarDuration.Short,
+        override val message: String,
+        override val withDismissAction: Boolean = false,
+    ) : SnackbarVisuals {
+
+        override val actionLabel: String?
+            get() = action?.first
+
+        class Error(
+            action: Pair<String, () -> Unit>?,
+            message: String,
+            val throwable: Throwable?
+        ) : MainActivitySnackBarVisuals(
+            action = action,
+            message = message
+        )
+
+        class Message(
+            action: Pair<String, () -> Unit>?,
+            message: String
+        ) : MainActivitySnackBarVisuals(
+            action = action,
+            message = message
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -130,16 +159,30 @@ class MainActivity : ComponentActivity() {
         Scaffold(
             snackbarHost = {
                 SnackbarHost(snackbarHostState) { data ->
+
+                    val visuals = data.visuals as MainActivitySnackBarVisuals
                     Snackbar(
-                        modifier = Modifier
-                            .padding(MaterialTheme.spacing.medium),
                         action = {
+                            visuals.action?.let {
+                                TextButton(
+                                    onClick = {
+                                        data.dismiss()
+                                        it.second
+                                    },
+                                ) { Text(it.first) }
+                            }
+                        },
+                        dismissAction = {
                             TextButton(
-                                onClick = { data.dismiss() },
-                            ) { Text(data.visuals.actionLabel ?: "") }
-                        }
+                                onClick = {
+                                    data.dismiss()
+                                },
+                            ) { Text(stringResource(id = R.string.uppercase_dismiss)) }
+                        },
+                        containerColor = if (visuals is MainActivitySnackBarVisuals.Error) Color.Red else SnackbarDefaults.color,
+                        contentColor = if (visuals is MainActivitySnackBarVisuals.Error) Color.White else SnackbarDefaults.contentColor,
                     ) {
-                        Text(data.visuals.message)
+                        Text(visuals.message)
                     }
                 }
             },
@@ -263,13 +306,36 @@ class MainActivity : ComponentActivity() {
 
         LaunchedEffect(key1 = Unit) {
 
-            viewModel.errorMessage.collect { errorMessage ->
+            viewModel.snackBarData.collect { data ->
                 scope.launch {
-                    snackbarHostState.showSnackbar(
-                        errorMessage.asString(context),
-                        actionLabel = context.getString(R.string.uppercase_dismiss),
-                        duration = SnackbarDuration.Short
-                    )
+
+                    val visuals = when (data) {
+                        is MainViewModel.SnackBarData.Error -> {
+                            MainActivitySnackBarVisuals.Error(
+                                action = data.action?.let {
+                                    Pair(it.first.asString(context), it.second)
+                                },
+                                message = data.message.asString(context),
+                                throwable = data.throwable
+                            )
+                        }
+
+                        is MainViewModel.SnackBarData.Message -> {
+                            MainActivitySnackBarVisuals.Message(
+                                action = data.action?.let {
+                                    Pair(it.first.asString(context), it.second)
+                                },
+                                message = data.message.asString(context)
+                            )
+                        }
+                    }
+
+                    val result = snackbarHostState.showSnackbar(visuals)
+
+                    data.action?.let {
+                        if (result == SnackbarResult.ActionPerformed)
+                            it.second()
+                    }
                 }
             }
 
@@ -376,5 +442,4 @@ class MainActivity : ComponentActivity() {
         )
     }
 }
-
 

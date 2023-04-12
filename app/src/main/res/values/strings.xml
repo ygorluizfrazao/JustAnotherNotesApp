@@ -5,8 +5,6 @@
 
     <string name="nav_notes_list" translatable="false">Notes List</string>
     <string name="nav_notes_bin" translatable="false">Bin</string>
-    <string name="nav_notes_home" translatable="false">Home</string>
-    <string name="nav_notes_splash" translatable="false">Splash</string>
 
     <string name="date_format">default</string>
 
@@ -23,7 +21,6 @@
     <string name="text_hint">Type here your note</string>
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
-    <string name="add_a_note_title">Add a note</string>
     <string name="click_to_add_a_note">Click %1$s to add a note.</string>
     <string name="here">here</string>
     <string name="edit_note">Edit Note</string>
@@ -46,6 +43,9 @@
     <string name="view_content_as_list">View as list</string>
     <string name="view_content_as_grid">View as grid</string>
     <string name="audio_note">Audio Note</string>
+    <string name="audio_recording_permisison_needed">Audio Recording permission needed</string>
     <string name="share_note">Share Note</string>
     <string name="bin_note">Send to Bin</string>
+    <string name="note_created">Note Created</string>
+    <string name="undo">UNDO</string>
 </resources>

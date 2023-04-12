@@ -1,7 +1,6 @@
 package br.com.frazo.janac.data.db.room.converters
 
 import androidx.room.TypeConverter
-import java.io.File
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 

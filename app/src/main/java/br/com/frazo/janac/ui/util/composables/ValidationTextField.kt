@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
@@ -16,7 +15,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ValidationTextField(
     modifier: Modifier = Modifier,
@@ -24,8 +22,8 @@ fun ValidationTextField(
     label: String,
     onValueChange: (String) -> Unit,
     singleLine: Boolean = false,
-    colors: TextFieldColors = TextFieldDefaults.textFieldColors(),
-    errorColors: TextFieldColors? = TextFieldDefaults.textFieldColors(
+    colors: TextFieldColors = TextFieldDefaults.colors(),
+    errorColors: TextFieldColors? = TextFieldDefaults.colors(
         errorLabelColor = MaterialTheme.colorScheme.error,
         errorCursorColor = MaterialTheme.colorScheme.error,
         errorIndicatorColor = MaterialTheme.colorScheme.error,
@@ -52,12 +50,12 @@ fun ValidationTextField(
                 .scale(0.5f)
         )
     },
-    successColors: TextFieldColors? = TextFieldDefaults.textFieldColors(
+    successColors: TextFieldColors? = TextFieldDefaults.colors(
         cursorColor = Color.Green,
         focusedLabelColor = Color.Green,
         unfocusedLabelColor = Color.Green,
     ),
-    loadingColors: TextFieldColors? = TextFieldDefaults.textFieldColors(),
+    loadingColors: TextFieldColors? = TextFieldDefaults.colors(),
     isError: Boolean = errorMessage.isNotEmpty(),
     isSuccess: Boolean = false,
     isLoading: Boolean = false,

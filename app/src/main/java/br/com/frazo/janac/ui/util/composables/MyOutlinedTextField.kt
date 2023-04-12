@@ -28,7 +28,7 @@ fun MyOutlinedTextField(
     },
     trailingIcon: @Composable (() -> Unit)? = null,
     visualTransformation: VisualTransformation = VisualTransformation.None,
-    colors: TextFieldColors = TextFieldDefaults.outlinedTextFieldColors(),
+    colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
     isError: Boolean = false
 ) {
 

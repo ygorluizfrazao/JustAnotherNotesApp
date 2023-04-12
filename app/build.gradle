@@ -14,7 +14,7 @@ android {
         applicationId "br.com.frazo.janac"
         minSdk 24
         targetSdk 33
-        versionCode 1
+        versionCode 2
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -111,8 +111,8 @@ dependencies {
     androidTestImplementation "androidx.security:security-app-authenticator:1.0.0-alpha02"
 
     //Easy Permissions
-    implementation 'com.github.ygorluizfrazao.easy-permissions:core:v1.0.1-alpha01'
-    implementation 'com.github.ygorluizfrazao.easy-permissions:ext:v1.0.1-alpha01'
+    implementation 'com.github.ygorluizfrazao.easy-permissions:core:1.0.2-alpha01'
+    implementation 'com.github.ygorluizfrazao.easy-permissions:ext:1.0.2-alpha01'
 
     //Highlight Text
     implementation 'com.github.ygorluizfrazao.highlighted-text-compose:highlighted_text_compose:1.0.0-alpha01'

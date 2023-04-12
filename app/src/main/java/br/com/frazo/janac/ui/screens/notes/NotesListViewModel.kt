@@ -92,8 +92,8 @@ class NotesListViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        super.onCleared()
         mediator.removeParticipant(uiParticipantRepresentative)
+        super.onCleared()
     }
 
     private fun CoroutineScope.startCollectingNotes() {
@@ -170,9 +170,7 @@ class NotesListViewModel @Inject constructor(
     private fun handleMediatorMessage(event: UIEvent) {
 
         when (event) {
-
             is UIEvent.NoteCreated -> emitShowFirstNote()
-
             else -> Unit
         }
 

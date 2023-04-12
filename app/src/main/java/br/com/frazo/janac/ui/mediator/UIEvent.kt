@@ -1,6 +1,5 @@
 package br.com.frazo.janac.ui.mediator
 
-import android.annotation.SuppressLint
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.ui.util.TextResource
 
@@ -15,18 +14,9 @@ sealed class UIEvent {
     data class FilterQuery(val query: String) : UIEvent()
     object FinishSearchQuery : UIEvent()
     data class ContentDisplayModeChanged(val newContentDisplayMode: ContentDisplayMode) : UIEvent()
-    @SuppressLint
-    data class DisableFeatures(val features: List<Feature>) : UIEvent()
-    @SuppressLint
-    data class EnableFeatures(val features: List<Feature>) : UIEvent()
     data class Error(val message: TextResource, val throwable: Throwable? = null) : UIEvent()
+    data class Rollback(val originalEvent: UIEvent): UIEvent()
 
-}
-
-
-enum class Feature {
-    SEARCH,
-    CHANGE_DISPLAY_MODE
 }
 
 enum class ContentDisplayMode {

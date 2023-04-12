@@ -3,6 +3,7 @@ package br.com.frazo.janac.ui.screens.composables
 import android.Manifest
 import android.graphics.DashPathEffect
 import android.graphics.Paint
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
@@ -15,6 +16,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.DialogProperties
@@ -35,6 +37,7 @@ import br.com.frazo.janac.audio.ui.compose.materialv3.AudioPlayerCallbacks
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.audio.ui.compose.materialv3.AudioRecorder
 import br.com.frazo.janac.audio.ui.compose.materialv3.rememberAudioPlayerParams
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -212,7 +215,22 @@ fun EditNoteDialog(
                             }
                         }
                     } else {
-                        IconResource.fromImageVector(Icons.Default.MicOff)
+                        val scope = rememberCoroutineScope()
+                        val context = LocalContext.current
+                        IconButton(onClick = {
+                            scope.launch {
+                                Toast.makeText(
+                                    context,
+                                    context.getText(R.string.audio_recording_permisison_needed),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }) {
+                            IconResource.fromImageVector(
+                                Icons.Default.MicOff,
+                                stringResource(id = R.string.audio_recording_permisison_needed)
+                            ).ComposeIcon()
+                        }
                     }
                 }
 

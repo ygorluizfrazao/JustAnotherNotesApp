@@ -2,6 +2,7 @@ package br.com.frazo.janac.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.frazo.janac.R
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.domain.usecases.notes.read.GetBinnedNotesUseCase
 import br.com.frazo.janac.domain.usecases.notes.read.GetNotBinnedNotesUseCase
@@ -22,6 +23,22 @@ class MainViewModel @Inject constructor(
     private val getNotBinnedNotesUseCase: GetNotBinnedNotesUseCase<Flow<List<Note>>>,
 ) : ViewModel() {
 
+    sealed class SnackBarData(
+        val message: TextResource,
+        val action: Pair<TextResource, () -> Unit>? = null
+    ) {
+        class Error(
+            message: TextResource,
+            val throwable: Throwable? = null,
+            action: Pair<TextResource, () -> Unit>? = null
+        ) : SnackBarData(message, action)
+
+        class Message(
+            message: TextResource,
+            action: Pair<TextResource, () -> Unit>? = null
+        ) : SnackBarData(message, action)
+    }
+
     private val uiParticipantRepresentative = CallBackUIParticipant { _, event ->
         handleMediatorMessage(event)
     }
@@ -38,8 +55,8 @@ class MainViewModel @Inject constructor(
     private val _filteredBinnedNotesCount = MutableStateFlow(Int.MIN_VALUE)
     val filteredBinnedNotesCount = _filteredBinnedNotesCount.asStateFlow()
 
-    private val _errorMessage = MutableSharedFlow<TextResource>()
-    val errorMessage = _errorMessage.asSharedFlow()
+    private val _snackBarData = MutableSharedFlow<SnackBarData>()
+    val snackBarData = _snackBarData.asSharedFlow()
 
     private val _filterQuery = MutableStateFlow("")
     val filterQuery = _filterQuery.asStateFlow()
@@ -66,22 +83,33 @@ class MainViewModel @Inject constructor(
     private fun handleMediatorMessage(event: UIEvent) {
         when (event) {
 
-            is UIEvent.Error -> emitErrorMessage(event.message)
+            is UIEvent.Error -> emitMessage(SnackBarData.Error(event.message, event.throwable))
             is UIEvent.FilterQuery -> _filterQuery.value = event.query
             is UIEvent.FinishSearchQuery -> resetSearchQuery()
             is UIEvent.BinnedNotesFiltered -> _filteredBinnedNotesCount.value =
                 event.filteredNotes.size
             is UIEvent.NotBinnedNotesFiltered -> _filteredNotBinnedNotesCount.value =
                 event.filteredNotes.size
+            is UIEvent.NoteCreated -> emitMessage(
+                SnackBarData.Message(
+                    message = TextResource.StringResource(
+                        R.string.note_created
+                    ),
+                    action = Pair(TextResource.StringResource(
+                        R.string.undo
+                    )){
 
+                    }
+                )
+            )
             else -> Unit
         }
     }
 
-    fun emitErrorMessage(message: TextResource) {
-        if (!_errorMessage.tryEmit(message)) {
+    private fun emitMessage(snackBarData: SnackBarData) {
+        if (!_snackBarData.tryEmit(snackBarData)) {
             viewModelScope.launch {
-                _errorMessage.emit(message)
+                _snackBarData.emit(snackBarData)
             }
         }
     }
@@ -112,17 +140,5 @@ class MainViewModel @Inject constructor(
             changeContentDisplayMode(ContentDisplayMode.values()[contentDisplayMode.value.ordinal + 1])
         }
     }
-
-//    fun permissionAdapterState(permission: String): StateFlow<StateBasedPermissionAdapter.PermissionAdapterState> {
-//        return permissionAdapters.first { it.getTargetPermission() == permission }.permissionAdapterState
-//    }
-//
-//    fun permissionAdapter(permission: String): StateBasedPermissionAdapter {
-//        return permissionAdapters.first { it.getTargetPermission() == permission }
-//    }
-//
-//    fun onRequestPermission(permission: String) {
-//        permissionAdapters.first { it.getTargetPermission() == permission }.onRequestPermission()
-//    }
 
 }
