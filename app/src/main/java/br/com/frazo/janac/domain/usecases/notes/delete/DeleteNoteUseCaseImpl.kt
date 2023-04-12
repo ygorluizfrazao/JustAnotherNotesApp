@@ -4,7 +4,7 @@ import br.com.frazo.janac.data.repository.note.NoteRepository
 import br.com.frazo.janac.domain.models.Note
 
 class DeleteNoteUseCaseImpl(private val noteRepository: NoteRepository) : DeleteNoteUseCase<Int> {
-    override suspend fun invoke(vararg note: Note): Int {
-        return noteRepository.removeNotes(*note)
+    override suspend fun invoke(vararg notes: Note): Int {
+        return noteRepository.removeNotes(*notes)
     }
 }

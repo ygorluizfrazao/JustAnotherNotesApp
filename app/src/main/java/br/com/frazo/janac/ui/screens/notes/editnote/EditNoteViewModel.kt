@@ -1,5 +1,6 @@
 package br.com.frazo.janac.ui.screens.notes.editnote
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -30,11 +31,12 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.*
+import javax.inject.Named
 
 class EditNoteViewModel @AssistedInject constructor(
     private val addNoteUseCase: AddNoteUseCase<Int>,
     private val updateNoteUseCase: UpdateNoteUseCase<Int>,
-    private val deleteNoteUseCase: DeleteNoteUseCase<Int>,
+    @Named("DeleteLatestNoteWithTitleAndTextUseCase") private val deleteNoteUseCase: DeleteNoteUseCase<Int>,
     private val noteValidatorUseCase: NoteValidatorUseCase,
     private val mediator: UIMediator,
     private val audioRecorder: AudioRecorder,
@@ -85,7 +87,7 @@ class EditNoteViewModel @AssistedInject constructor(
         HAVE_TO_RECORD, CAN_PLAY
     }
 
-    private val uiParticipantRepresentative = CallBackUIParticipant { sender, event ->
+    private val uiParticipantRepresentative = CallBackUIParticipant { _, event ->
         handleMediatorMessage(event)
     }
 
@@ -122,6 +124,7 @@ class EditNoteViewModel @AssistedInject constructor(
 
         when (event) {
             is UIEvent.Rollback -> {
+                Log.d("EditNoteViewModel", "UNDO received")
                 when (event.originalEvent) {
                     is UIEvent.NoteCreated -> {
                         viewModelScope.launch {

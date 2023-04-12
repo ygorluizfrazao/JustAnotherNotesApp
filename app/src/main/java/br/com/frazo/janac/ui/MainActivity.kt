@@ -167,7 +167,7 @@ class MainActivity : ComponentActivity() {
                                 TextButton(
                                     onClick = {
                                         data.dismiss()
-                                        it.second
+                                        it.second()
                                     },
                                 ) { Text(it.first) }
                             }

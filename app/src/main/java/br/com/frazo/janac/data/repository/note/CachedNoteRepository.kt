@@ -54,6 +54,16 @@ class CachedNoteRepository(
         }
     }
 
+    override suspend fun removeLatestByTitleAndText(title: String, text: String): Int {
+        return withContext(dispatchers.io) {
+            noteDataSource.getNotesByTitleAndText(title, text).sortedByDescending { it.createdAt }
+                .firstOrNull()?.let {
+                    return@withContext noteDataSource.deleteAll(it)
+            }
+            return@withContext 0
+        }
+    }
+
     override suspend fun editNote(oldNote: Note, newNote: Note): Int {
         return withContext(dispatchers.io) {
             noteDataSource.updateNote(oldNote, newNote)

@@ -1,15 +1,13 @@
 package br.com.frazo.janac.ui
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.frazo.janac.R
 import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.domain.usecases.notes.read.GetBinnedNotesUseCase
 import br.com.frazo.janac.domain.usecases.notes.read.GetNotBinnedNotesUseCase
-import br.com.frazo.janac.ui.mediator.CallBackUIParticipant
-import br.com.frazo.janac.ui.mediator.ContentDisplayMode
-import br.com.frazo.janac.ui.mediator.UIEvent
-import br.com.frazo.janac.ui.mediator.UIMediator
+import br.com.frazo.janac.ui.mediator.*
 import br.com.frazo.janac.ui.util.TextResource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -39,8 +37,8 @@ class MainViewModel @Inject constructor(
         ) : SnackBarData(message, action)
     }
 
-    private val uiParticipantRepresentative = CallBackUIParticipant { _, event ->
-        handleMediatorMessage(event)
+    private val uiParticipantRepresentative = CallBackUIParticipant { sender, event ->
+        handleMediatorMessage(sender, event)
     }
 
     private val _notBinnedNotesCount = MutableStateFlow(0)
@@ -80,9 +78,8 @@ class MainViewModel @Inject constructor(
         mediator.removeParticipant(uiParticipantRepresentative)
     }
 
-    private fun handleMediatorMessage(event: UIEvent) {
+    private fun handleMediatorMessage(sender: UIParticipant, event: UIEvent) {
         when (event) {
-
             is UIEvent.Error -> emitMessage(SnackBarData.Error(event.message, event.throwable))
             is UIEvent.FilterQuery -> _filterQuery.value = event.query
             is UIEvent.FinishSearchQuery -> resetSearchQuery()
@@ -95,10 +92,9 @@ class MainViewModel @Inject constructor(
                     message = TextResource.StringResource(
                         R.string.note_created
                     ),
-                    action = Pair(TextResource.StringResource(
-                        R.string.undo
-                    )){
-
+                    action = Pair(TextResource.StringResource(R.string.undo)) {
+                        mediator.inform(uiParticipantRepresentative, UIEvent.Rollback(event), listOf(sender))
+                        Log.d("MainViewModel", "UNDO sent")
                     }
                 )
             )

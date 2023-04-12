@@ -15,6 +15,8 @@ interface NoteRepository {
 
     suspend fun removeNotes(vararg notes: Note): Int
 
+    suspend fun removeLatestByTitleAndText(title: String, text: String): Int
+
     suspend fun editNote(oldNote: Note, newNote: Note): Int
 
     suspend fun binNote(note: Note): Int

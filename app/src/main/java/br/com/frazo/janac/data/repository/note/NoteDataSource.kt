@@ -10,6 +10,7 @@ interface NoteDataSource {
     fun getBinnedNotes() : Flow<List<Note>>
 
     fun getNotBinnedNotes(): Flow<List<Note>>
+    suspend fun getNotesByTitleAndText(title: String, text: String): List<Note>
 
     suspend fun insertAll(vararg notes: Note): Int
 

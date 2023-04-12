@@ -16,6 +16,7 @@ import br.com.frazo.janac.domain.usecases.*
 import br.com.frazo.janac.domain.usecases.notes.*
 import br.com.frazo.janac.domain.usecases.notes.create.AddNoteUseCase
 import br.com.frazo.janac.domain.usecases.notes.create.AddNoteUseCaseImpl
+import br.com.frazo.janac.domain.usecases.notes.delete.DeleteLatestNoteWithTitleAndTextUseCase
 import br.com.frazo.janac.domain.usecases.notes.delete.DeleteNoteUseCase
 import br.com.frazo.janac.domain.usecases.notes.delete.DeleteNoteUseCaseImpl
 import br.com.frazo.janac.domain.usecases.notes.read.*
@@ -33,6 +34,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -114,6 +116,13 @@ object AppModule {
     @Singleton
     fun provideRemoveNoteUseCase(noteRepository: NoteRepository): DeleteNoteUseCase<Int> {
         return DeleteNoteUseCaseImpl(noteRepository)
+    }
+
+    @Provides
+    @Singleton
+    @Named("DeleteLatestNoteWithTitleAndTextUseCase")
+    fun provideRemoveLatestNoteUseCase(noteRepository: NoteRepository): DeleteNoteUseCase<Int> {
+        return DeleteLatestNoteWithTitleAndTextUseCase(noteRepository)
     }
 
     @Provides
