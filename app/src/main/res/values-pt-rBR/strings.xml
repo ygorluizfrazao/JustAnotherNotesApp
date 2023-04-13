@@ -42,8 +42,9 @@
     <string name="audio_note">Nota de Áudio</string>
     <string name="share_note">Compartilhar</string>
     <string name="bin_note">Enviar para lixeira</string>
-    <string name="note_created">Nota Criada</string>
+    <string name="note_created">Nota criada com sucesso</string>
     <string name="undo">DESFAZER</string>
     <string name="audio_recording_permisison_needed">Permissão para gravar áudio necessária</string>
+    <string name="note_edited">Nota editada com sucesso</string>
 
 </resources>

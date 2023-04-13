@@ -2,7 +2,6 @@ package br.com.frazo.janac.data.repository.note
 
 import br.com.frazo.janac.data.db.room.RoomAppDatabase
 import br.com.frazo.janac.data.db.room.dao.NotesDAO
-import br.com.frazo.janac.data.db.room.entities.RoomNote
 import br.com.frazo.janac.data.repository.note.mappers.toNote
 import br.com.frazo.janac.data.repository.note.mappers.toRoomNote
 import br.com.frazo.janac.domain.models.Note

@@ -131,6 +131,14 @@ class EditNoteViewModel @AssistedInject constructor(
                             deleteNoteUseCase(event.originalEvent.newNote)
                         }
                     }
+                    is UIEvent.NoteEdited -> {
+                        viewModelScope.launch {
+                            updateNoteUseCase(
+                                event.originalEvent.newNote,
+                                event.originalEvent.oldNote
+                            )
+                        }
+                    }
                     else -> Unit
                 }
             }

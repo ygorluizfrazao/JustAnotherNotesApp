@@ -1,6 +1,5 @@
 package br.com.frazo.janac.ui
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.frazo.janac.R
@@ -94,7 +93,16 @@ class MainViewModel @Inject constructor(
                     ),
                     action = Pair(TextResource.StringResource(R.string.undo)) {
                         mediator.inform(uiParticipantRepresentative, UIEvent.Rollback(event), listOf(sender))
-                        Log.d("MainViewModel", "UNDO sent")
+                    }
+                )
+            )
+            is UIEvent.NoteEdited -> emitMessage(
+                SnackBarData.Message(
+                    message = TextResource.StringResource(
+                        R.string.note_edited
+                    ),
+                    action = Pair(TextResource.StringResource(R.string.undo)) {
+                        mediator.inform(uiParticipantRepresentative, UIEvent.Rollback(event), listOf(sender))
                     }
                 )
             )

@@ -46,6 +46,7 @@
     <string name="audio_recording_permisison_needed">Audio Recording permission needed</string>
     <string name="share_note">Share Note</string>
     <string name="bin_note">Send to Bin</string>
-    <string name="note_created">Note Created</string>
+    <string name="note_created">Note successfully created</string>
+    <string name="note_edited">Note successfully edited</string>
     <string name="undo">UNDO</string>
 </resources>
