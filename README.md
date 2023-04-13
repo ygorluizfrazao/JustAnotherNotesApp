@@ -1,4 +1,4 @@
 # Just Another Notes App
 
-Built with Jetpack Compose, feel free to use the app and the sources in any way that you like.
+A full Jetpack Compose App with modern MVVM Android Architecture, uses Dagger/Hilt, ROOM and Material3 design as well as my other libs.
 
