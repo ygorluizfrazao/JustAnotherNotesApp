@@ -11,6 +11,7 @@ import br.com.frazo.janac.domain.models.Note
 import br.com.frazo.janac.domain.usecases.SearchTermInNotBinnedNoteUseCase
 import br.com.frazo.janac.domain.usecases.notes.read.GetNotBinnedNotesUseCase
 import br.com.frazo.janac.domain.usecases.notes.update.BinNoteUseCase
+import br.com.frazo.janac.domain.usecases.notes.update.UpdateNoteUseCase
 import br.com.frazo.janac.ui.mediator.CallBackUIParticipant
 import br.com.frazo.janac.ui.mediator.ContentDisplayMode
 import br.com.frazo.janac.ui.mediator.UIEvent
@@ -26,6 +27,7 @@ import javax.inject.Inject
 class NotesListViewModel @Inject constructor(
     private val getNotBinnedNotesUseCase: GetNotBinnedNotesUseCase<Flow<List<Note>>>,
     private val binNoteUseCase: BinNoteUseCase<Int>,
+    private val updateNoteUseCase: UpdateNoteUseCase<Int>,
     private val mediator: UIMediator,
     private val searchTermInNotBinnedNoteUseCase: SearchTermInNotBinnedNoteUseCase,
     private val audioPlayer: AudioPlayer,
@@ -55,8 +57,8 @@ class NotesListViewModel @Inject constructor(
     val filteredNotes = _filteredNotes.asStateFlow()
 
 
-    private var _showFirstNote = MutableSharedFlow<Boolean>()
-    val showFirstNote = _showFirstNote.asSharedFlow()
+    private var _showNote = MutableSharedFlow<Int>()
+    val showNote = _showNote.asSharedFlow()
 
     private val _screenState: MutableStateFlow<ScreenState> = MutableStateFlow(ScreenState.Loading)
     val screenState = _screenState.asStateFlow()
@@ -76,6 +78,7 @@ class NotesListViewModel @Inject constructor(
     private var _audioNotePLaying = MutableStateFlow<Note?>(null)
     val audioNotePlaying = _audioNotePLaying.asStateFlow()
 
+    var onNextNotesListShow: Note? = null
 
     init {
         mediator.addParticipant(uiParticipantRepresentative)
@@ -170,16 +173,41 @@ class NotesListViewModel @Inject constructor(
     private fun handleMediatorMessage(event: UIEvent) {
 
         when (event) {
-            is UIEvent.NoteCreated -> emitShowFirstNote()
+            is UIEvent.NoteCreated -> emitShowNote(0)
+            is UIEvent.Rollback -> {
+                when (event.originalEvent) {
+                    is UIEvent.NoteBinned -> {
+                        viewModelScope.launch {
+                            updateNoteUseCase(
+                                event.originalEvent.binnedNote,
+                                event.originalEvent.binnedNote.copy(binnedAt = null)
+                            )
+                            onNextNotesListShow = event.originalEvent.binnedNote.copy(binnedAt = null)
+                        }
+                    }
+                    else -> Unit
+                }
+            }
             else -> Unit
         }
 
     }
 
-    private fun emitShowFirstNote() {
-        if (!_showFirstNote.tryEmit(true)) {
+    private fun emitShowNote(index: Int) {
+        if (!_showNote.tryEmit(index)) {
             viewModelScope.launch {
-                _showFirstNote.emit(true)
+                _showNote.emit(index)
+            }
+        }
+    }
+
+    private fun emitShowNote(note: Note) {
+        val noteIdx = _filteredNotes.value.indexOf(note)
+        if (noteIdx >= 0) {
+            if (!_showNote.tryEmit(noteIdx)) {
+                viewModelScope.launch {
+                    _showNote.emit(noteIdx)
+                }
             }
         }
     }
@@ -199,6 +227,7 @@ class NotesListViewModel @Inject constructor(
     fun binNote(note: Note) {
         viewModelScope.launch {
             binNoteUseCase(note)
+            mediator.broadcast(uiParticipantRepresentative, UIEvent.NoteBinned(note))
         }
     }
 
@@ -218,6 +247,10 @@ class NotesListViewModel @Inject constructor(
             }
         else
             _filteredNotes.value = _notes.value
+        onNextNotesListShow?.let {
+            emitShowNote(it)
+            onNextNotesListShow = null
+        }
         mediator.broadcast(
             uiParticipantRepresentative,
             UIEvent.NotBinnedNotesFiltered(_filteredNotes.value)
@@ -274,17 +307,17 @@ class NotesListViewModel @Inject constructor(
     }
 
     fun pauseAudioNote(note: Note) {
-        if(note == _audioNotePLaying.value)
+        if (note == _audioNotePLaying.value)
             audioPlayer.pause()
     }
 
     private fun resumeAudioNote(note: Note) {
-        if(note == _audioNotePLaying.value)
+        if (note == _audioNotePLaying.value)
             audioPlayer.resume()
     }
 
     fun seekAudioNote(note: Note, positionPercent: Float) {
-        if(note == _audioNotePLaying.value)
+        if (note == _audioNotePLaying.value)
             audioPlayer.seek((positionPercent * _audioNotePlayingData.value.duration).toLong())
     }
 

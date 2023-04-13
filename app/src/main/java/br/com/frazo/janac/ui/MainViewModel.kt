@@ -106,6 +106,16 @@ class MainViewModel @Inject constructor(
                     }
                 )
             )
+            is UIEvent.NoteBinned -> emitMessage(
+                SnackBarData.Message(
+                    message = TextResource.StringResource(
+                        R.string.note_binned
+                    ),
+                    action = Pair(TextResource.StringResource(R.string.undo)) {
+                        mediator.inform(uiParticipantRepresentative, UIEvent.Rollback(event), listOf(sender))
+                    }
+                )
+            )
             else -> Unit
         }
     }

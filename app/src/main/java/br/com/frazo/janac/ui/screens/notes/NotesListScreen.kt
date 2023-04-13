@@ -339,10 +339,10 @@ fun DisplayContentAsList(
     }
 
     LaunchedEffect(key1 = Unit) {
-        viewModel.showFirstNote.collectLatest { showFirstNote ->
-            if (showFirstNote) {
+        viewModel.showNote.collectLatest { scrollToNote ->
+            if (scrollToNote in notesList.indices) {
                 coroutineScope.launch {
-                    listState.animateScrollToItem(0)
+                    listState.animateScrollToItem(scrollToNote)
                 }
             }
         }
@@ -401,10 +401,10 @@ fun DisplayContentAsGrid(
     }
 
     LaunchedEffect(key1 = Unit) {
-        viewModel.showFirstNote.collectLatest { showFirstNote ->
-            if (showFirstNote) {
+        viewModel.showNote.collectLatest { scrollToNote ->
+            if (scrollToNote in notesList.indices) {
                 coroutineScope.launch {
-                    gridState.animateScrollToItem(0)
+                    gridState.animateScrollToItem(scrollToNote)
                 }
             }
         }

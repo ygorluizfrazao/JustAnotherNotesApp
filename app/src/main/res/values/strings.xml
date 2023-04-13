@@ -48,5 +48,6 @@
     <string name="bin_note">Send to Bin</string>
     <string name="note_created">Note successfully created</string>
     <string name="note_edited">Note successfully edited</string>
+    <string name="note_binned">Note moved to bin</string>
     <string name="undo">UNDO</string>
 </resources>

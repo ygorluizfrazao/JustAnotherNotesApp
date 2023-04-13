@@ -1,6 +1,5 @@
 package br.com.frazo.janac.ui.screens.notes.editnote
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -124,7 +123,6 @@ class EditNoteViewModel @AssistedInject constructor(
 
         when (event) {
             is UIEvent.Rollback -> {
-                Log.d("EditNoteViewModel", "UNDO received")
                 when (event.originalEvent) {
                     is UIEvent.NoteCreated -> {
                         viewModelScope.launch {
