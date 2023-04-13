@@ -50,4 +50,5 @@
     <string name="note_edited">Note successfully edited</string>
     <string name="note_binned">Note moved to bin</string>
     <string name="undo">UNDO</string>
+    <string name="share_audio_note">Share Audio Note</string>
 </resources>

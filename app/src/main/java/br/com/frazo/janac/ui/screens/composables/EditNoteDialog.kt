@@ -90,32 +90,16 @@ fun EditNoteDialog(
                     text = dialogTitle,
                     style = MaterialTheme.typography.titleLarge
                 )
-                ValidationTextField(
-                    value = note.title,
-                    onValueChange = {
-                        onTitleChanged?.invoke(it)
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = MaterialTheme.spacing.medium),
-                    singleLine = true,
-                    hint = titleHint,
-                    label = titleLabel,
-                    errorMessage = titleErrorMessage
-                )
-
-                ValidationTextField(
-                    value = note.text,
-                    onValueChange = {
-                        onTextChanged?.invoke(it)
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = MaterialTheme.spacing.medium),
-                    minLines = 5,
-                    label = textLabel,
-                    hint = textHint,
-                    errorMessage = textErrorMessage
+                Inputs(
+                    note,
+                    onTitleChanged,
+                    titleHint,
+                    titleLabel,
+                    titleErrorMessage,
+                    onTextChanged,
+                    textLabel,
+                    textHint,
+                    textErrorMessage
                 )
 
                 Divider(
@@ -123,142 +107,220 @@ fun EditNoteDialog(
                     modifier = Modifier.padding(MaterialTheme.spacing.medium)
                 )
 
-                Text(
-                    text = stringResource(R.string.audio_note),
-                    Modifier.padding(bottom = MaterialTheme.spacing.small)
+                AudioInputs(
+                    audioNoteStatus,
+                    onAudioRecordStartRequested,
+                    onAudioRecordStopRequested,
+                    audioRecordingData,
+                    note,
+                    audioPlayingData,
+                    onAudioNoteDeleteRequest,
+                    onAudioNotePlayRequest,
+                    onAudioNotePauseRequest,
+                    onAudionNoteSeekPosition
                 )
-
-                var canStart by rememberSaveable {
-                    mutableStateOf(false)
-                }
-
-                val userDrivenAskingStrategy =
-                    rememberUserDrivenAskingStrategy(
-                        type = AskingStrategy.STOP_ASKING_ON_USER_DENIAL,
-                        permissions = listOf(
-                            Manifest.permission.RECORD_AUDIO
-                        ),
-                        canStart = { canStart }
-                    )
-
-                WithPermission(
-                    userDrivenAskingStrategy = userDrivenAskingStrategy,
-                    initialStateContent = {
-                        IconButton(onClick = { canStart = true }) {
-                            IconResource.fromImageVector(
-                                Icons.Default.Mic,
-                                stringResource(id = R.string.audio_note)
-                            ).ComposeIcon()
-                        }
-                    }) { state: PermissionFlowStateEnum, _: Map<String, Boolean> ->
-                    if (state == PermissionFlowStateEnum.TERMINAL_GRANTED) {
-                        if (audioNoteStatus == EditNoteViewModel.AudioNoteStatus.HAVE_TO_RECORD) {
-                            AudioRecorder(
-                                modifier = Modifier.padding(horizontal = MaterialTheme.spacing.medium),
-                                recordIcon = {
-                                    IconResource.fromImageVector(Icons.Default.Mic).ComposeIcon()
-                                },
-                                stopIcon = {
-                                    IconResource.fromImageVector(Icons.Default.Stop).ComposeIcon()
-                                },
-                                onRecordRequested = onAudioRecordStartRequested,
-                                onStopRequested = onAudioRecordStopRequested,
-                                audioRecordingData = audioRecordingData,
-                                recordingWaveVisualizer = MirrorWaveRecordingVisualizer(
-                                    wavePaint = Paint().apply {
-                                        color = LocalContentColor.current.toArgb()
-                                        strokeWidth = 2f
-                                        style = Paint.Style.STROKE
-                                        strokeCap = Paint.Cap.ROUND
-                                        flags = Paint.ANTI_ALIAS_FLAG
-                                        strokeJoin = Paint.Join.BEVEL
-                                    },
-                                    middleLinePaint = Paint().apply {
-                                        color =
-                                            LocalTextSelectionColors.current.handleColor.toArgb()
-                                        style = Paint.Style.FILL_AND_STROKE
-                                        strokeWidth = 2f
-                                        pathEffect =
-                                            DashPathEffect(arrayOf(4f, 4f).toFloatArray(), 0f)
-                                    }
-                                )
-                            )
-                        } else {
-                            note.audioNote?.let {
-                                AudioPlayer(
-                                    modifier = Modifier.padding(horizontal = MaterialTheme.spacing.medium),
-                                    audioPlayingData = audioPlayingData,
-                                    audioPlayerParams = rememberAudioPlayerParams(
-                                        playIcon = {
-                                            IconResource.fromImageVector(Icons.Default.PlayArrow)
-                                                .ComposeIcon()
-                                        },
-                                        pauseIcon = {
-                                            IconResource.fromImageVector(Icons.Default.Pause)
-                                                .ComposeIcon()
-                                        },
-                                        endIcon =
-                                        if (onAudioNoteDeleteRequest != null) {
-                                            {
-                                                IconResource.fromImageVector(Icons.Default.Delete)
-                                                    .ComposeIcon()
-                                            }
-                                        } else null,
-                                    ),
-                                    audioPlayerCallbacks = AudioPlayerCallbacks(
-                                        onPlay = onAudioNotePlayRequest,
-                                        onPause = onAudioNotePauseRequest,
-                                        onEndIconClicked = onAudioNoteDeleteRequest,
-                                        onSeekPosition = onAudionNoteSeekPosition
-                                    )
-                                )
-                            }
-                        }
-                    } else {
-                        val scope = rememberCoroutineScope()
-                        val context = LocalContext.current
-                        IconButton(onClick = {
-                            scope.launch {
-                                Toast.makeText(
-                                    context,
-                                    context.getText(R.string.audio_recording_permisison_needed),
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        }) {
-                            IconResource.fromImageVector(
-                                Icons.Default.MicOff,
-                                stringResource(id = R.string.audio_recording_permisison_needed)
-                            ).ComposeIcon()
-                        }
-                    }
-                }
 
                 Divider(
                     color = LocalContentColor.current,
                     modifier = Modifier.padding(MaterialTheme.spacing.medium)
                 )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    ElevatedButton(
-                        modifier = Modifier.padding(MaterialTheme.spacing.medium),
-                        onClick = onDismissRequest
-                    ) {
-                        Text(text = stringResource(R.string.cancel))
-                    }
-
-                    Button(
-                        modifier = Modifier.padding(MaterialTheme.spacing.medium),
-                        onClick = onSaveClicked,
-                        enabled = saveButtonEnabled
-                    ) {
-                        Text(text = stringResource(R.string.save))
-                    }
-                }
+                Buttons(onDismissRequest, onSaveClicked, saveButtonEnabled)
             }
         }
     }
 }
+
+@Composable
+private fun Buttons(
+    onDismissRequest: () -> Unit,
+    onSaveClicked: () -> Unit,
+    saveButtonEnabled: Boolean
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        ElevatedButton(
+            modifier = Modifier.padding(MaterialTheme.spacing.medium),
+            onClick = onDismissRequest
+        ) {
+            Text(text = stringResource(R.string.cancel))
+        }
+
+        Button(
+            modifier = Modifier.padding(MaterialTheme.spacing.medium),
+            onClick = onSaveClicked,
+            enabled = saveButtonEnabled
+        ) {
+            Text(text = stringResource(R.string.save))
+        }
+    }
+}
+
+@Composable
+private fun AudioInputs(
+    audioNoteStatus: EditNoteViewModel.AudioNoteStatus,
+    onAudioRecordStartRequested: () -> Unit,
+    onAudioRecordStopRequested: () -> Unit,
+    audioRecordingData: List<AudioRecordingData>,
+    note: Note,
+    audioPlayingData: AudioPlayingData,
+    onAudioNoteDeleteRequest: (() -> Unit)?,
+    onAudioNotePlayRequest: () -> Unit,
+    onAudioNotePauseRequest: () -> Unit,
+    onAudionNoteSeekPosition: (Float) -> Unit
+) {
+    Text(
+        text = stringResource(R.string.audio_note),
+        Modifier.padding(bottom = MaterialTheme.spacing.small)
+    )
+
+    var canStart by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    val userDrivenAskingStrategy =
+        rememberUserDrivenAskingStrategy(
+            type = AskingStrategy.STOP_ASKING_ON_USER_DENIAL,
+            permissions = listOf(
+                Manifest.permission.RECORD_AUDIO
+            ),
+            canStart = { canStart }
+        )
+
+    WithPermission(
+        userDrivenAskingStrategy = userDrivenAskingStrategy,
+        initialStateContent = {
+            IconButton(onClick = { canStart = true }) {
+                IconResource.fromImageVector(
+                    Icons.Default.Mic,
+                    stringResource(id = R.string.audio_note)
+                ).ComposeIcon()
+            }
+        }) { state: PermissionFlowStateEnum, _: Map<String, Boolean> ->
+        if (state == PermissionFlowStateEnum.TERMINAL_GRANTED) {
+            if (audioNoteStatus == EditNoteViewModel.AudioNoteStatus.HAVE_TO_RECORD) {
+                AudioRecorder(
+                    modifier = Modifier.padding(horizontal = MaterialTheme.spacing.medium),
+                    recordIcon = {
+                        IconResource.fromImageVector(Icons.Default.Mic).ComposeIcon()
+                    },
+                    stopIcon = {
+                        IconResource.fromImageVector(Icons.Default.Stop).ComposeIcon()
+                    },
+                    onRecordRequested = onAudioRecordStartRequested,
+                    onStopRequested = onAudioRecordStopRequested,
+                    audioRecordingData = audioRecordingData,
+                    recordingWaveVisualizer = MirrorWaveRecordingVisualizer(
+                        wavePaint = Paint().apply {
+                            color = LocalContentColor.current.toArgb()
+                            strokeWidth = 2f
+                            style = Paint.Style.STROKE
+                            strokeCap = Paint.Cap.ROUND
+                            flags = Paint.ANTI_ALIAS_FLAG
+                            strokeJoin = Paint.Join.BEVEL
+                        },
+                        middleLinePaint = Paint().apply {
+                            color =
+                                LocalTextSelectionColors.current.handleColor.toArgb()
+                            style = Paint.Style.FILL_AND_STROKE
+                            strokeWidth = 2f
+                            pathEffect =
+                                DashPathEffect(arrayOf(4f, 4f).toFloatArray(), 0f)
+                        }
+                    )
+                )
+            } else {
+                note.audioNote?.let {
+                    AudioPlayer(
+                        modifier = Modifier.padding(horizontal = MaterialTheme.spacing.medium),
+                        audioPlayingData = audioPlayingData,
+                        audioPlayerParams = rememberAudioPlayerParams(
+                            playIcon = {
+                                IconResource.fromImageVector(Icons.Default.PlayArrow)
+                                    .ComposeIcon()
+                            },
+                            pauseIcon = {
+                                IconResource.fromImageVector(Icons.Default.Pause)
+                                    .ComposeIcon()
+                            },
+                            endIcon =
+                            if (onAudioNoteDeleteRequest != null) {
+                                {
+                                    IconResource.fromImageVector(Icons.Default.Delete)
+                                        .ComposeIcon()
+                                }
+                            } else null,
+                        ),
+                        audioPlayerCallbacks = AudioPlayerCallbacks(
+                            onPlay = onAudioNotePlayRequest,
+                            onPause = onAudioNotePauseRequest,
+                            onEndIconClicked = onAudioNoteDeleteRequest,
+                            onSeekPosition = onAudionNoteSeekPosition
+                        )
+                    )
+                }
+            }
+        } else {
+            val scope = rememberCoroutineScope()
+            val context = LocalContext.current
+            IconButton(onClick = {
+                scope.launch {
+                    Toast.makeText(
+                        context,
+                        context.getText(R.string.audio_recording_permisison_needed),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }) {
+                IconResource.fromImageVector(
+                    Icons.Default.MicOff,
+                    stringResource(id = R.string.audio_recording_permisison_needed)
+                ).ComposeIcon()
+            }
+        }
+    }
+}
+
+@Composable
+private fun Inputs(
+    note: Note,
+    onTitleChanged: ((String) -> Unit)?,
+    titleHint: String,
+    titleLabel: String,
+    titleErrorMessage: String,
+    onTextChanged: ((String) -> Unit)?,
+    textLabel: String,
+    textHint: String,
+    textErrorMessage: String
+) {
+    ValidationTextField(
+        value = note.title,
+        onValueChange = {
+            onTitleChanged?.invoke(it)
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = MaterialTheme.spacing.medium),
+        singleLine = true,
+        hint = titleHint,
+        label = titleLabel,
+        errorMessage = titleErrorMessage
+    )
+
+    ValidationTextField(
+        value = note.text,
+        onValueChange = {
+            onTextChanged?.invoke(it)
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = MaterialTheme.spacing.medium),
+        minLines = 5,
+        label = textLabel,
+        hint = textHint,
+        errorMessage = textErrorMessage
+    )
+}
+

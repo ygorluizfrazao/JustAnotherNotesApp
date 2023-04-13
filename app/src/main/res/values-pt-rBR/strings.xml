@@ -47,5 +47,6 @@
     <string name="audio_recording_permisison_needed">Permissão para gravar áudio necessária</string>
     <string name="note_edited">Nota editada com sucesso</string>
     <string name="note_binned">Nota movida para a lixeira</string>
+    <string name="share_audio_note">Compartilhar Nota em Áudio</string>
 
 </resources>

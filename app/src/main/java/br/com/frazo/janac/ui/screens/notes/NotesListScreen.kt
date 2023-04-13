@@ -1,6 +1,9 @@
 package br.com.frazo.janac.ui.screens.notes
 
+import android.content.ClipData
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -19,7 +22,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
+import br.com.frazo.janac.BuildConfig
 import br.com.frazo.janac.R
 import br.com.frazo.janac.audio.ui.compose.materialv3.rememberAudioPlayerParams
 import br.com.frazo.janac.di.assisted.assistedViewModel
@@ -182,7 +187,7 @@ fun Screen(
                     top.linkTo(parent.top)
                     end.linkTo(parent.end)
                     bottom.linkTo(parent.bottom)
-                },visible = screenState is NotesListViewModel.ScreenState.NoDataForFilter,
+                }, visible = screenState is NotesListViewModel.ScreenState.NoDataForFilter,
             enter = slideInVertically { it },
             exit = slideOutVertically { -it }) {
 
@@ -224,7 +229,8 @@ fun Screen(
             IndeterminateLoading(
                 loadingText = stringResource(R.string.loading),
                 modifier = Modifier
-                    .fillMaxSize())
+                    .fillMaxSize()
+            )
 
         }
 
@@ -278,7 +284,11 @@ fun DisplayContentAsList(
     val filter = viewModel.filter.collectAsState()
     val audioPlayingData by viewModel.audioNotePlayingData.collectAsState()
     val audioNotePlaying by viewModel.audioNotePlaying.collectAsState()
-    val audioPlayerParams = rememberAudioPlayerParams()
+    val audioPlayerParams = rememberAudioPlayerParams(
+        endIcon = {
+            IconResource.fromImageVector(Icons.Default.Share).ComposeIcon()
+        }
+    )
 
     NotesList(
         modifier = modifier,
@@ -290,7 +300,23 @@ fun DisplayContentAsList(
         audioNoteCallbacks = AudioNoteCallbacks(
             onPlay = viewModel::playAudioNote,
             onPause = viewModel::pauseAudioNote,
-            onSeekPosition = viewModel::seekAudioNote
+            onSeekPosition = viewModel::seekAudioNote,
+            onEndIconClicked = {
+                it.audioNote?.let { audioNoteFile ->
+                    val authorities: String = BuildConfig.APPLICATION_ID + ".provider"
+                    val path: Uri = FileProvider.getUriForFile(context, authorities, audioNoteFile)
+
+                    val intent = Intent()
+                    intent.action = Intent.ACTION_SEND
+                    intent.putExtra(Intent.EXTRA_STREAM, path)
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    intent.clipData = ClipData.newRawUri("", path)
+                    intent.type = "audio/mp3"
+                    Intent.createChooser(intent, context.getString(R.string.share_audio_note)).also { chooserIntent ->
+                        context.startActivity(chooserIntent)
+                    }
+                }
+            }
         ),
         audioPlayingData = audioPlayingData,
         titleEndContent = { note ->
@@ -323,7 +349,16 @@ fun DisplayContentAsList(
                     stringResource(id = R.string.edit_note)
                 ).ComposeIcon()
             }
-            IconButton(onClick = { viewModel.shareNote(note).also { context.startActivity(it) } }) {
+            IconButton(onClick = {
+                val sendIntent: Intent = Intent().apply {
+                    action = Intent.ACTION_SEND
+                    putExtra(Intent.EXTRA_TEXT, "${note.title}\n${note.text}")
+                    type = "text/plain"
+                }
+                Intent.createChooser(sendIntent, null).also {
+                    context.startActivity(it)
+                }
+            }) {
                 IconResource.fromImageVector(
                     Icons.Default.Share,
                     stringResource(id = R.string.share_note)
@@ -363,7 +398,11 @@ fun DisplayContentAsGrid(
     val context = LocalContext.current
     val audioPlayingData by viewModel.audioNotePlayingData.collectAsState()
     val audioNotePlaying by viewModel.audioNotePlaying.collectAsState()
-    val audioPlayerParams = rememberAudioPlayerParams()
+    val audioPlayerParams = rememberAudioPlayerParams(
+        endIcon = {
+            IconResource.fromImageVector(Icons.Default.Share).ComposeIcon()
+        }
+    )
 
     NotesStaggeredGrid(
         modifier = modifier,
@@ -374,7 +413,23 @@ fun DisplayContentAsGrid(
         audioNoteCallbacks = AudioNoteCallbacks(
             onPlay = viewModel::playAudioNote,
             onPause = viewModel::pauseAudioNote,
-            onSeekPosition = viewModel::seekAudioNote
+            onSeekPosition = viewModel::seekAudioNote,
+            onEndIconClicked = {
+                it.audioNote?.let { audioNoteFile ->
+                    val authorities: String = BuildConfig.APPLICATION_ID + ".provider"
+                    val path: Uri = FileProvider.getUriForFile(context, authorities, audioNoteFile)
+
+                    val intent = Intent()
+                    intent.action = Intent.ACTION_SEND
+                    intent.putExtra(Intent.EXTRA_STREAM, path)
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    intent.clipData = ClipData.newRawUri("", path)
+                    intent.type = "audio/mp3"
+                    Intent.createChooser(intent, context.getString(R.string.share_audio_note)).also { chooserIntent ->
+                        context.startActivity(chooserIntent)
+                    }
+                }
+            }
         ),
         audioPlayingData = audioPlayingData,
         highlightSentences = listOf(filter.value)
@@ -389,8 +444,14 @@ fun DisplayContentAsGrid(
                 IconResource.fromImageVector(Icons.Default.Edit, "").ComposeIcon()
             }
             IconButton(onClick = {
-                val intent = viewModel.shareNote(note)
-                context.startActivity(intent)
+                val sendIntent: Intent = Intent().apply {
+                    action = Intent.ACTION_SEND
+                    putExtra(Intent.EXTRA_TEXT, "${note.title}\n${note.text}")
+                    type = "text/plain"
+                }
+                Intent.createChooser(sendIntent, null).also {
+                    context.startActivity(it)
+                }
             }) {
                 IconResource.fromImageVector(Icons.Default.Share, "").ComposeIcon()
             }

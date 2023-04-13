@@ -1,6 +1,5 @@
 package br.com.frazo.janac.ui.screens.notes
 
-import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.frazo.janac.R
@@ -22,6 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
 
 @HiltViewModel
 class NotesListViewModel @Inject constructor(
@@ -182,7 +182,8 @@ class NotesListViewModel @Inject constructor(
                                 event.originalEvent.binnedNote,
                                 event.originalEvent.binnedNote.copy(binnedAt = null)
                             )
-                            onNextNotesListShow = event.originalEvent.binnedNote.copy(binnedAt = null)
+                            onNextNotesListShow =
+                                event.originalEvent.binnedNote.copy(binnedAt = null)
                         }
                     }
                     else -> Unit
@@ -229,15 +230,6 @@ class NotesListViewModel @Inject constructor(
             binNoteUseCase(note)
             mediator.broadcast(uiParticipantRepresentative, UIEvent.NoteBinned(note))
         }
-    }
-
-    fun shareNote(note: Note): Intent {
-        val sendIntent: Intent = Intent().apply {
-            action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_TEXT, "${note.title}\n${note.text}")
-            type = "text/plain"
-        }
-        return Intent.createChooser(sendIntent, null)
     }
 
     private fun filterNotes(query: String) {
