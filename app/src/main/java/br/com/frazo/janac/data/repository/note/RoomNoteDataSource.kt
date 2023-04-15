@@ -5,11 +5,12 @@ import br.com.frazo.janac.data.db.room.dao.NotesDAO
 import br.com.frazo.janac.data.repository.note.mappers.toNote
 import br.com.frazo.janac.data.repository.note.mappers.toRoomNote
 import br.com.frazo.janac.domain.models.Note
+import br.com.frazo.janac.util.files.FilesDisposer
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.io.File
 
-class RoomNoteDataSource(database: RoomAppDatabase, private val audioNotesDir: File) :
+class RoomNoteDataSource(database: RoomAppDatabase, private val audioNotesDir: File, private val filesDisposer: FilesDisposer) :
     NoteDataSource {
 
     private val notesDAO: NotesDAO = database.notesDAO()
@@ -69,7 +70,8 @@ class RoomNoteDataSource(database: RoomAppDatabase, private val audioNotesDir: F
         foundNotes.let { roomNotes ->
             roomNotes.forEach {
                 updatesMade += notesDAO.updateNote(newNote.toRoomNote(it.id))
-                if (oldNote.audioNote != newNote.audioNote) oldNote.audioNote?.delete()
+                if (oldNote.audioNote!=null && oldNote.audioNote != newNote.audioNote)
+                    filesDisposer.moveToBin(oldNote.audioNote)
             }
         }
         return updatesMade

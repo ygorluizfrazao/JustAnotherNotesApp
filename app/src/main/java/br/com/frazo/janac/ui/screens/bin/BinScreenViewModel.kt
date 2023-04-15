@@ -170,6 +170,7 @@ class BinScreenViewModel @Inject constructor(
     }
 
     fun deleteNote(note: Note) {
+        if(note == _audioNotePLaying.value) resetAudioPlayer()
         viewModelScope.launch {
             val notesDeleted = deleteNoteUseCase(note)
             if (notesDeleted <= 0)
@@ -180,7 +181,15 @@ class BinScreenViewModel @Inject constructor(
         }
     }
 
+    private fun resetAudioPlayer() {
+        audioPlayer.stop()
+        _audioNotePlayingData.value =
+            AudioPlayingData(AudioPlayerStatus.NOT_INITIALIZED, 0, 0)
+        _audioNotePLaying.value = null
+    }
+
     fun restoreNote(note: Note) {
+        if (note == _audioNotePLaying.value) resetAudioPlayer()
         viewModelScope.launch {
             val notesUpdated = updateNoteUseCase(note, note.copy(binnedAt = null))
             if (notesUpdated <= 0)
@@ -212,12 +221,13 @@ class BinScreenViewModel @Inject constructor(
             else
                 _screenState.value = ScreenState.Success(_filteredNotes.value)
         } else {
-            if( System.currentTimeMillis() - startTime >= 3000 || fetchDataFromRepository)
+            if (System.currentTimeMillis() - startTime >= 3000 || fetchDataFromRepository)
                 _screenState.value = ScreenState.NoData
         }
     }
 
     fun clearFilter() {
+        resetAudioPlayer()
         mediator.broadcast(uiParticipantRepresentative, UIEvent.FinishSearchQuery)
         filterNotes("")
     }
@@ -254,17 +264,17 @@ class BinScreenViewModel @Inject constructor(
     }
 
     fun pauseAudioNote(note: Note) {
-        if(note == _audioNotePLaying.value)
+        if (note == _audioNotePLaying.value)
             audioPlayer.pause()
     }
 
     private fun resumeAudioNote(note: Note) {
-        if(note == _audioNotePLaying.value)
+        if (note == _audioNotePLaying.value)
             audioPlayer.resume()
     }
 
     fun seekAudioNote(note: Note, positionPercent: Float) {
-        if(note == _audioNotePLaying.value)
+        if (note == _audioNotePLaying.value)
             audioPlayer.seek((positionPercent * _audioNotePlayingData.value.duration).toLong())
     }
 

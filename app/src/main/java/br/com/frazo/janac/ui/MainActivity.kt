@@ -49,11 +49,12 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
 
     @Inject
-    private lateinit var filesDisposer: FilesDisposer
+    lateinit var filesDisposer: FilesDisposer
 
     override fun onDestroy() {
-        filesDisposer.clearBin()
         super.onDestroy()
+        if(isFinishing)
+            filesDisposer.clearBin()
     }
 
     private sealed class MainActivitySnackBarVisuals(

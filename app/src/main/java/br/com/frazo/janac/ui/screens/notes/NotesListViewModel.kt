@@ -78,7 +78,7 @@ class NotesListViewModel @Inject constructor(
     private var _audioNotePLaying = MutableStateFlow<Note?>(null)
     val audioNotePlaying = _audioNotePLaying.asStateFlow()
 
-    var onNextNotesListShow: Note? = null
+    var focusListOnNote: Note? = null
 
     init {
         mediator.addParticipant(uiParticipantRepresentative)
@@ -173,7 +173,7 @@ class NotesListViewModel @Inject constructor(
     private fun handleMediatorMessage(event: UIEvent) {
 
         when (event) {
-            is UIEvent.NoteCreated -> emitShowNote(0)
+            is UIEvent.NoteCreated -> emitShowFirstNote()
             is UIEvent.Rollback -> {
                 when (event.originalEvent) {
                     is UIEvent.NoteBinned -> {
@@ -182,7 +182,7 @@ class NotesListViewModel @Inject constructor(
                                 event.originalEvent.binnedNote,
                                 event.originalEvent.binnedNote.copy(binnedAt = null)
                             )
-                            onNextNotesListShow =
+                            focusListOnNote =
                                 event.originalEvent.binnedNote.copy(binnedAt = null)
                         }
                     }
@@ -194,15 +194,15 @@ class NotesListViewModel @Inject constructor(
 
     }
 
-    private fun emitShowNote(index: Int) {
-        if (!_showNote.tryEmit(index)) {
+    private fun emitShowFirstNote() {
+        if (!_showNote.tryEmit(0)) {
             viewModelScope.launch {
-                _showNote.emit(index)
+                _showNote.emit(0)
             }
         }
     }
 
-    private fun emitShowNote(note: Note) {
+    private fun emitShowFirstNote(note: Note) {
         val noteIdx = _filteredNotes.value.indexOf(note)
         if (noteIdx >= 0) {
             if (!_showNote.tryEmit(noteIdx)) {
@@ -226,6 +226,7 @@ class NotesListViewModel @Inject constructor(
     }
 
     fun binNote(note: Note) {
+        if (note == _audioNotePLaying.value) resetAudioPlayer()
         viewModelScope.launch {
             binNoteUseCase(note)
             mediator.broadcast(uiParticipantRepresentative, UIEvent.NoteBinned(note))
@@ -239,15 +240,27 @@ class NotesListViewModel @Inject constructor(
             }
         else
             _filteredNotes.value = _notes.value
-        onNextNotesListShow?.let {
-            emitShowNote(it)
-            onNextNotesListShow = null
+
+        if (!_filteredNotes.value.contains(_audioNotePLaying.value)) {
+            resetAudioPlayer()
+        }
+
+        focusListOnNote?.let {
+            emitShowFirstNote(it)
+            focusListOnNote = null
         }
         mediator.broadcast(
             uiParticipantRepresentative,
             UIEvent.NotBinnedNotesFiltered(_filteredNotes.value)
         )
         updateScreenState()
+    }
+
+    private fun resetAudioPlayer() {
+        audioPlayer.stop()
+        _audioNotePlayingData.value =
+            AudioPlayingData(AudioPlayerStatus.NOT_INITIALIZED, 0, 0)
+        _audioNotePLaying.value = null
     }
 
     private fun updateScreenState() {

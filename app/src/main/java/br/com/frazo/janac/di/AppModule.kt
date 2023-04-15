@@ -45,7 +45,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideFilesManager(): FilesDisposer{
+    fun provideFilesManager(): FilesDisposer {
         return FilesDisposerImpl()
     }
 
@@ -59,8 +59,12 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideNoteDataSource(roomAppDatabase: RoomAppDatabase, @ApplicationContext appContext: Context): NoteDataSource {
-        return RoomNoteDataSource(roomAppDatabase, appContext.filesDir)
+    fun provideNoteDataSource(
+        roomAppDatabase: RoomAppDatabase,
+        @ApplicationContext appContext: Context,
+        filesDisposer: FilesDisposer
+    ): NoteDataSource {
+        return RoomNoteDataSource(roomAppDatabase, appContext.filesDir, filesDisposer)
     }
 
     @Provides
