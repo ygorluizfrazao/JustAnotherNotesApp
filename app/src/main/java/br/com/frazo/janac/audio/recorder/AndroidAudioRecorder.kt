@@ -22,8 +22,9 @@ class AndroidAudioRecorder(
 
     private var recorder: MediaRecorder? = null
     private var audioRecordingDataFlowID: String? = null
-    private var _audioRecordingData =
+    private val _audioRecordingData =
         MutableStateFlow<AudioRecordingData>(AudioRecordingData.NotStarted)
+    private val audioRecordingData = _audioRecordingData.asStateFlow()
 
     private fun createRecorder(): MediaRecorder {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -57,7 +58,7 @@ class AndroidAudioRecorder(
             }
         }
 
-        return _audioRecordingData.asStateFlow()
+        return audioRecordingData
 
     }
 

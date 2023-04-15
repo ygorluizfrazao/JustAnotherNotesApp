@@ -38,13 +38,23 @@ import br.com.frazo.janac.ui.theme.NotesAppTheme
 import br.com.frazo.janac.ui.theme.spacing
 import br.com.frazo.janac.ui.util.IconResource
 import br.com.frazo.janac.ui.util.composables.MyTextField
+import br.com.frazo.janac.util.files.FilesDisposer
 import br.com.frazo.splashscreens.CenteredImageAndText
 import br.com.frazo.splashscreens.CountDownSplashScreen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    private lateinit var filesDisposer: FilesDisposer
+
+    override fun onDestroy() {
+        filesDisposer.clearBin()
+        super.onDestroy()
+    }
 
     private sealed class MainActivitySnackBarVisuals(
         val action: Pair<String, () -> Unit>?,

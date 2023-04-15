@@ -20,6 +20,7 @@ import br.com.frazo.janac.ui.mediator.CallBackUIParticipant
 import br.com.frazo.janac.ui.mediator.UIEvent
 import br.com.frazo.janac.ui.mediator.UIMediator
 import br.com.frazo.janac.ui.util.TextResource
+import br.com.frazo.janac.util.files.FilesDisposer
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -40,6 +41,7 @@ class EditNoteViewModel @AssistedInject constructor(
     private val mediator: UIMediator,
     private val audioRecorder: AudioRecorder,
     private val audioPlayer: AudioPlayer,
+    private val filesDisposer: FilesDisposer,
     @Assisted noteToEdit: Note,
 ) :
     ViewModel() {
@@ -107,6 +109,7 @@ class EditNoteViewModel @AssistedInject constructor(
     private var _audioNotePlayingData =
         MutableStateFlow(AudioPlayingData(AudioPlayerStatus.NOT_INITIALIZED, 0, 0))
     val audioNotePlayingData = _audioNotePlayingData.asStateFlow()
+    private var lastDeletedAudioFile: File? = null
 
 
     init {
@@ -157,9 +160,16 @@ class EditNoteViewModel @AssistedInject constructor(
     }
 
     private fun reset() {
-        _inEditionNote.value = Note("", "", null)
+        toEditNote = Note("", "")
+        _inEditionNote.value = toEditNote
         _uiState.value = UIState.Editing
+        audioPlayer.stop()
         audioRecorder.stopRecording()
+        if (toEditNote.isNewNote()) {
+            _inEditionNote.value.audioNote?.let {
+                filesDisposer.moveToBin(it)
+            }
+        }
         _audioRecordFlow.value = emptyList()
         _audioNoteStatus.value = AudioNoteStatus.HAVE_TO_RECORD
     }
@@ -234,6 +244,7 @@ class EditNoteViewModel @AssistedInject constructor(
     }
 
     private suspend fun editNote(): Int {
+        lastDeletedAudioFile = toEditNote.audioNote
         return updateNoteUseCase(toEditNote, _inEditionNote.value)
     }
 
@@ -244,7 +255,12 @@ class EditNoteViewModel @AssistedInject constructor(
     fun startRecordingAudioNote(audioDirectory: File) {
         viewModelScope.launch {
             _audioRecordFlow.value = emptyList()
-            _inEditionNote.value.audioNote?.delete()
+            if (toEditNote.isNewNote()) {
+                _inEditionNote.value.audioNote?.let {
+                    filesDisposer.moveToBin(it)
+                }
+            } else
+                _inEditionNote.value = _inEditionNote.value.copy(audioNote = null)
             _inEditionNote.value = _inEditionNote.value.copy(
                 audioNote = File(
                     audioDirectory,
@@ -256,7 +272,7 @@ class EditNoteViewModel @AssistedInject constructor(
                     audioRecorder.startRecording(fileOutput)
                 flow.catch {
                     audioRecorder.stopRecording()
-                    fileOutput.delete()
+                    filesDisposer.moveToBin(fileOutput)
                     _inEditionNote.value = _inEditionNote.value.copy(audioNote = null)
                     _uiState.value = UIState.Error(it)
                     UIEvent.Error(
@@ -317,7 +333,12 @@ class EditNoteViewModel @AssistedInject constructor(
 
     fun deleteAudioNote() {
         audioPlayer.stop()
-        _inEditionNote.value.audioNote?.delete()
+        if (toEditNote.isNewNote()) {
+            _inEditionNote.value.audioNote?.let {
+                filesDisposer.moveToBin(it)
+            }
+        } else
+            _inEditionNote.value = _inEditionNote.value.copy(audioNote = null)
         _audioNoteStatus.value = AudioNoteStatus.HAVE_TO_RECORD
     }
 

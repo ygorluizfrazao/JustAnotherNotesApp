@@ -28,6 +28,8 @@ import br.com.frazo.janac.ui.mediator.UIMediator
 import br.com.frazo.janac.ui.mediator.UIMediatorImpl
 import br.com.frazo.janac.util.DateTimeFormatterFactory
 import br.com.frazo.janac.util.Dispatchers
+import br.com.frazo.janac.util.files.FilesDisposerImpl
+import br.com.frazo.janac.util.files.FilesDisposer
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -40,6 +42,12 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+
+    @Provides
+    @Singleton
+    fun provideFilesManager(): FilesDisposer{
+        return FilesDisposerImpl()
+    }
 
     @Provides
     @Singleton

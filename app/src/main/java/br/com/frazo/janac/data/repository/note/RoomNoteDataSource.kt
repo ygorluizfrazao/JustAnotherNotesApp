@@ -9,13 +9,23 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.io.File
 
-class RoomNoteDataSource(database: RoomAppDatabase, private val audioNotesDir: File) : NoteDataSource {
+class RoomNoteDataSource(database: RoomAppDatabase, private val audioNotesDir: File) :
+    NoteDataSource {
 
     private val notesDAO: NotesDAO = database.notesDAO()
 
     override fun getAll(): Flow<List<Note>> {
         return notesDAO.getAll().map { list ->
-            list.map { it.toNote(audioNotesDir) }
+            list.map {
+                it.toNote(audioNotesDir).let { note ->
+                    if (note.audioNote?.exists() == false) {
+                        val newNote = note.copy(audioNote = null)
+                        updateNote(note,newNote)
+                        newNote
+                    } else
+                        note
+                }
+            }
         }
     }
 
@@ -32,7 +42,7 @@ class RoomNoteDataSource(database: RoomAppDatabase, private val audioNotesDir: F
     }
 
     override suspend fun getNotesByTitleAndText(title: String, text: String): List<Note> {
-        return notesDAO.getByTitleAndText(title,text).map { it.toNote(audioNotesDir) }
+        return notesDAO.getByTitleAndText(title, text).map { it.toNote(audioNotesDir) }
     }
 
     override suspend fun insertAll(vararg notes: Note): Int {
@@ -45,8 +55,10 @@ class RoomNoteDataSource(database: RoomAppDatabase, private val audioNotesDir: F
         notes.map { it.toRoomNote() }.forEach {
             val toDeleteNotes = notesDAO.getByCreationDate(it.createdAt)
             itemsDeleted += notesDAO.deleteAll(*toDeleteNotes.toTypedArray())
+            toDeleteNotes.forEach { toDeleteNote ->
+                toDeleteNote.toNote(audioNotesDir).audioNote?.delete()
+            }
         }
-
         return itemsDeleted
     }
 
@@ -57,6 +69,7 @@ class RoomNoteDataSource(database: RoomAppDatabase, private val audioNotesDir: F
         foundNotes.let { roomNotes ->
             roomNotes.forEach {
                 updatesMade += notesDAO.updateNote(newNote.toRoomNote(it.id))
+                if (oldNote.audioNote != newNote.audioNote) oldNote.audioNote?.delete()
             }
         }
         return updatesMade
